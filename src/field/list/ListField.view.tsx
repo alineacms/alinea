@@ -190,6 +190,8 @@ export interface ListFieldViewProps {
   typeGroup?: (id: string) => string | undefined
   /** Called to remove a row, eg. to confirm it first */
   onRemove?: (row: ListValue, remove: () => void) => void
+  /** Rows move between the lists of a `SortableListGroup`, see `SortableList` */
+  group?: string
 }
 
 export function ListFieldView({
@@ -198,7 +200,8 @@ export function ListFieldView({
   badges,
   addLabel,
   typeGroup,
-  onRemove
+  onRemove,
+  group
 }: ListFieldViewProps) {
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
@@ -339,6 +342,7 @@ export function ListFieldView({
     <SortableList
       aria-label={options.label || 'List items'}
       onReorder={readOnly ? undefined : moveRow}
+      group={group}
     >
       {nodes.map((row, index) => (
         <ListFieldRow

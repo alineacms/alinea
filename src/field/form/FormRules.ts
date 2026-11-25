@@ -211,6 +211,45 @@ export function withoutRulesOn(rows: unknown, id: string): unknown {
   })
 }
 
+/**
+ * The rows with the row with this id moved to `index` in the inputs of a
+ * section, or of the form without a section. The row keeps its id, so rules
+ * that use it still do.
+ */
+export function moveRow(
+  rows: Array<unknown>,
+  id: string,
+  section: string | undefined,
+  index: number
+): Array<unknown> {
+  let moved: unknown
+  function take(rows: Array<unknown>): Array<unknown> {
+    return rows.flatMap(row => {
+      if (!isRecord(row)) return [row]
+      if (row._id === id) {
+        moved = row
+        return []
+      }
+      if (!Array.isArray(row.inputs)) return [row]
+      return [{...row, inputs: take(row.inputs)}]
+    })
+  }
+  function put(rows: Array<unknown>): Array<unknown> {
+    return [...rows.slice(0, index), moved, ...rows.slice(index)]
+  }
+  const rest = take(rows)
+  if (!moved) return rows
+  if (section === undefined) return put(rest)
+  let found = false
+  const result = rest.map(row => {
+    if (!isRecord(row) || row._id !== section) return row
+    found = true
+    return {...row, inputs: put(Array.isArray(row.inputs) ? row.inputs : [])}
+  })
+  // A row does not go missing when the section does
+  return found ? result : rows
+}
+
 /** The rules in words, eg. "Service is IT" or "2 rules match" */
 export function describeCondition(
   value: unknown,

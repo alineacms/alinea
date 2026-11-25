@@ -4,7 +4,10 @@ import {
   type ComponentPropsWithoutRef,
   createContext,
   type PointerEvent,
+  type ReactNode,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef
 } from 'react'
@@ -18,7 +21,10 @@ import {
 } from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import {Icon} from './Icon.js'
-import {pressSortableItem} from './internal/sortableDrag.js'
+import {
+  pressSortableItem,
+  type SortableDropList
+} from './internal/sortableDrag.js'
 import css from './SortableList.module.css'
 import type {DragMoveEvent, Key} from './types.js'
 
@@ -34,6 +40,79 @@ interface SortableListContextValue {
 
 const SortableListContext = createContext<SortableListContextValue | null>(null)
 
+interface SortableListGroupContextValue {
+  register(list: GroupList): () => void
+  /** The other lists of the group that can take the item */
+  targets(key: Key, from: Key): Array<GroupList>
+  move(event: SortableListMoveEvent): void
+}
+
+interface GroupList extends SortableDropList {
+  key: Key
+}
+
+const SortableListGroupContext =
+  createContext<SortableListGroupContextValue | null>(null)
+
+export interface SortableListMoveEvent {
+  /** The moved item */
+  key: Key
+  /** The `group` of the list it moved into */
+  list: Key
+  /** Its place among the items of that list */
+  index: number
+}
+
+export interface SortableListGroupProps {
+  /**
+   * Called when an item is dropped in another list of the group. Update the
+   * lists synchronously, like `onReorder`.
+   */
+  onMove: (event: SortableListMoveEvent) => void
+  /** Whether an item can move into a list, by its `group` */
+  canMove?: (key: Key, list: Key) => boolean
+  children?: ReactNode
+}
+
+/**
+ * Lets items move between the sortable lists inside that set a `group`, eg.
+ * into a list nested in an item: dragged over another list, an item drops
+ * into it.
+ */
+export function SortableListGroup({
+  onMove,
+  canMove,
+  children
+}: SortableListGroupProps) {
+  const lists = useRef(new Set<GroupList>())
+  const handlers = useRef({onMove, canMove})
+  handlers.current = {onMove, canMove}
+  const context = useMemo<SortableListGroupContextValue>(
+    () => ({
+      register(list) {
+        lists.current.add(list)
+        return () => lists.current.delete(list)
+      },
+      targets(key, from) {
+        return Array.from(lists.current).filter(
+          list =>
+            list.key !== from &&
+            (handlers.current.canMove?.(key, list.key) ?? true)
+        )
+      },
+      move(event) {
+        flushSync(() => handlers.current.onMove(event))
+      }
+    }),
+    []
+  )
+  return (
+    <SortableListGroupContext.Provider value={context}>
+      {children}
+    </SortableListGroupContext.Provider>
+  )
+}
+
 /** The key of a reorderable item, for its header */
 const SortableListItemContext = createContext<Key | null>(null)
 
@@ -47,12 +126,19 @@ export interface SortableListProps extends ComponentPropsWithoutRef<'div'> {
    * glides into the place it renders in right after this returns.
    */
   onReorder?: (event: DragMoveEvent) => void
+  /**
+   * Joins the closest `SortableListGroup` while the list can be reordered,
+   * its items can then move to the other lists of the group. Identifies the
+   * list in the group, eg. the key of the item it is nested in.
+   */
+  group?: Key
 }
 
 export function SortableList({
   className,
   role = 'list',
   onReorder,
+  group,
   ...props
 }: SortableListProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -60,16 +146,22 @@ export function SortableList({
   const reorderRef = useRef(onReorder)
   reorderRef.current = onReorder
   const reorderable = Boolean(onReorder)
+  const groups = useContext(SortableListGroupContext)
+  const joined = reorderable && groups && group !== undefined ? groups : null
+  const items = useCallback(() => {
+    const list = ref.current
+    if (!list) return []
+    return Array.from(list.children).filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && keys.current.has(child)
+    )
+  }, [])
+  useEffect(() => {
+    if (!joined || !ref.current) return
+    return joined.register({key: group!, element: ref.current, items})
+  }, [joined, group, items])
   const context = useMemo<SortableListContextValue | null>(() => {
     if (!reorderable) return null
-    function items() {
-      const list = ref.current
-      if (!list) return []
-      return Array.from(list.children).filter(
-        (child): child is HTMLElement =>
-          child instanceof HTMLElement && keys.current.has(child)
-      )
-    }
     function element(key: Key) {
       for (const [element, current] of keys.current)
         if (current === key) return element
@@ -101,12 +193,18 @@ export function SortableList({
         const list = ref.current
         const item = element(key)
         if (!list || !item) return
+        const targets = joined ? joined.targets(key, group!) : []
         pressSortableItem({
           event: event.nativeEvent,
           list,
           item,
           items,
-          onDrop: move
+          onDrop: move,
+          lists: targets,
+          onMove(element, index) {
+            const target = targets.find(list => list.element === element)
+            if (target) joined!.move({key, list: target.key, index})
+          }
         })
       },
       step(key, direction) {
@@ -127,7 +225,7 @@ export function SortableList({
         return true
       }
     }
-  }, [reorderable])
+  }, [reorderable, items, joined, group])
   return (
     <SortableListContext.Provider value={context}>
       <div

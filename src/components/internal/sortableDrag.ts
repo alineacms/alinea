@@ -23,6 +23,15 @@ export interface SortableDragOptions {
     target: HTMLElement,
     position: 'before' | 'after'
   ): void
+  /** Other lists the item can move into, eg. nested in an item of the list */
+  lists?: Array<SortableDropList>
+  /** Moves `item` into one of `lists`, at this index among its items */
+  onMove?(list: HTMLElement, index: number): void
+}
+
+export interface SortableDropList {
+  element: HTMLElement
+  items(): Array<HTMLElement>
 }
 
 /** Finishes the glide of items that were just dropped, keyed by element */
@@ -38,18 +47,22 @@ export function pressSortableItem({
   list,
   item,
   items,
-  onDrop
+  onDrop,
+  lists = [],
+  onMove
 }: SortableDragOptions) {
   const startX = event.clientX
   const startY = event.clientY
+  let pointerX = startX
   let pointerY = startY
   let drag: ActiveDrag | null = null
 
-  function onMove(event: PointerEvent) {
+  function onPointerMove(event: PointerEvent) {
     if (event.pointerId !== pointerId) return
+    pointerX = event.clientX
     pointerY = event.clientY
     if (!drag) {
-      const distance = Math.hypot(event.clientX - startX, pointerY - startY)
+      const distance = Math.hypot(pointerX - startX, pointerY - startY)
       if (distance < threshold) return
       drag = startDrag()
       if (!drag) return finish(false)
@@ -73,14 +86,14 @@ export function pressSortableItem({
   }
   const pointerId = event.pointerId
   // Captured, so a handler that stops the events can not leave a drag running
-  window.addEventListener('pointermove', onMove, true)
+  window.addEventListener('pointermove', onPointerMove, true)
   window.addEventListener('pointerup', onUp, true)
   window.addEventListener('pointercancel', onCancel, true)
   window.addEventListener('keydown', onKeyDown, true)
   window.addEventListener('blur', onBlur)
 
   function finish(commit: boolean) {
-    window.removeEventListener('pointermove', onMove, true)
+    window.removeEventListener('pointermove', onPointerMove, true)
     window.removeEventListener('pointerup', onUp, true)
     window.removeEventListener('pointercancel', onCancel, true)
     window.removeEventListener('keydown', onKeyDown, true)
@@ -112,7 +125,11 @@ export function pressSortableItem({
     const scroller = scrollParent(list)
     const startScroll = scroller.scrollTop
     const others = elements.filter(element => element !== item)
+    // A list in the item moves along with it
+    const targets = lists.filter(list => !item.contains(list.element))
     let to = from
+    let over: {list: SortableDropList; index: number} | undefined
+    let marked: Array<HTMLElement> = []
     let frame = 0
     const userSelect = document.body.style.userSelect
     document.body.style.userSelect = 'none'
@@ -126,12 +143,54 @@ export function pressSortableItem({
 
     function offset() {
       const dy = pointerY - startY + scroller.scrollTop - startScroll
+      if (over) return dy
       // Stays within the list
       const min = rects[0].top - rects[from].top
       const max = rects[rects.length - 1].bottom - rects[from].bottom
       return Math.min(max, Math.max(min, dy))
     }
+    // The innermost list under the pointer, when it is another one
+    function target() {
+      const under = [list, ...targets.map(target => target.element)].filter(
+        element => {
+          const rect = element.getBoundingClientRect()
+          return (
+            pointerX >= rect.left &&
+            pointerX <= rect.right &&
+            pointerY >= rect.top &&
+            pointerY <= rect.bottom
+          )
+        }
+      )
+      const inner = under.find(element =>
+        under.every(other => other === element || !element.contains(other))
+      )
+      const found = targets.find(target => target.element === inner)
+      if (!found) return undefined
+      const index = found
+        .items()
+        .filter(
+          element => pointerY > middle(element.getBoundingClientRect())
+        ).length
+      return {list: found, index}
+    }
+    // Shows where the item lands in another list: the list, and a line
+    // between its items
+    function mark() {
+      for (const element of marked) delete element.dataset.drop
+      marked = []
+      if (!over) return
+      const next = over.list.items()
+      const at = next[over.index] ?? next.at(-1)
+      over.list.element.dataset.drop = ''
+      marked.push(over.list.element)
+      if (!at) return
+      at.dataset.drop = over.index < next.length ? 'before' : 'after'
+      marked.push(at)
+    }
     function update() {
+      over = target()
+      mark()
       const dy = offset()
       item.style.transform = `translateY(${dy}px)`
       const top = rects[from].top + dy
@@ -141,6 +200,8 @@ export function pressSortableItem({
         if (top < middle(rects[index])) to = index
       for (let index = from + 1; index < rects.length; index++)
         if (bottom > middle(rects[index])) to = index
+      // Leaves its place open while it is over another list
+      if (over) to = from
       const size = rects[from].height
       elements.forEach((element, index) => {
         if (element === item) return
@@ -174,6 +235,19 @@ export function pressSortableItem({
       cancelAnimationFrame(frame)
       document.body.style.userSelect = userSelect
       delete document.documentElement.dataset.sortableDragging
+      for (const element of marked) delete element.dataset.drop
+      if (commit && over && onMove) {
+        // The item renders in the other list from here
+        for (const other of others) {
+          other.style.transition = ''
+          other.style.transform = ''
+        }
+        item.style.transform = ''
+        delete item.dataset.dragging
+        delete list.dataset.dragging
+        onMove(over.list.element, over.index)
+        return
+      }
       const moved = commit && to !== from
       for (const other of others) {
         // The new order puts them in place at once, otherwise they move back

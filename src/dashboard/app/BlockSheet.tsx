@@ -263,17 +263,19 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     )
   )
   const open = state === 'open'
-  // The last focus event that passed through the sheet in the React tree,
-  // which includes popovers that its fields render in portals. Matched by
-  // event, the sheet focuses its first field before this listens.
-  const focusInside = useRef<Event | null>(null)
+  // The focus events that passed through the sheet in the React tree, which
+  // includes popovers that its fields render in portals. Matched by event,
+  // the sheet focuses its first field before this listens. Not only the last
+  // one: the virtual focus of a searchable list moves focus to its search
+  // field while its own event is still on its way to the document.
+  const focusInside = useRef(new WeakSet<Event>())
   useEffect(() => {
     if (!context || !open) return
     const close = () =>
       store.set(context.open, current => (current === id ? null : current))
     // Focus moved somewhere else, a trigger toggles the sheet on its own
     const onFocusIn = (event: FocusEvent) => {
-      if (focusInside.current === event) return
+      if (focusInside.current.has(event)) return
       const target = event.target
       if (target instanceof Element && target.closest(`[${triggerAttribute}]`))
         return
@@ -337,7 +339,7 @@ export function BlockSheet({id, children}: BlockSheetProps) {
       data-closing={!open || undefined}
       inert={!open}
       onFocusCapture={event => {
-        focusInside.current = event.nativeEvent
+        focusInside.current.add(event.nativeEvent)
       }}
       onBlur={onBlur}
     >

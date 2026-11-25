@@ -1,4 +1,11 @@
-import {Badge, Button, Text} from '#/components.js'
+import {
+  Badge,
+  Button,
+  type Key,
+  SortableListGroup,
+  type SortableListMoveEvent,
+  Text
+} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import type {FieldPath} from '#/core/Validation.js'
 import {isEmptyValue, isRecord} from '#/core/util/Objects.js'
@@ -9,7 +16,7 @@ import {
   DashboardModalFooter
 } from '#/dashboard/app/ui/DashboardModal.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
+import {useEditor, useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
 import {
   IcBaselineErrorOutline,
   IcRoundCallSplit,
@@ -42,6 +49,7 @@ import {
   dependents,
   describeCondition,
   entryLabel,
+  moveRow,
   readingOrder,
   withoutRulesOn
 } from './FormRules.js'
@@ -74,9 +82,19 @@ export interface FormFieldViewProps {
 
 export function FormFieldView({field}: FormFieldViewProps) {
   const parent = useContext(FormBuilderContext)
-  const view = <FormFieldList field={field} />
-  if (parent) return view
-  return <FormFieldRoot field={field}>{view}</FormFieldRoot>
+  if (parent) return <FormSectionList field={field} />
+  return (
+    <FormFieldRoot field={field}>
+      <FormFieldList field={field} group="" />
+    </FormFieldRoot>
+  )
+}
+
+/** The inputs of a section, in the editor of the section row */
+function FormSectionList({field}: FormFieldViewProps) {
+  const editor = useEditor()
+  const id = useAtomValueRaw(editor.node.field('_id')) as string
+  return <FormFieldList field={field} group={id} />
 }
 
 interface FormFieldRootProps {
@@ -115,6 +133,18 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
     }
   }, [field, inputs, node, store])
 
+  // Inputs move into and out of sections, sections stay in the form
+  function canMove(key: Key, list: Key) {
+    const entry = store.get(builder.order).find(entry => entry.row._id === key)
+    return list === '' || entry?.input.control !== 'section'
+  }
+
+  function move({key, list, index}: SortableListMoveEvent) {
+    const section = list === '' ? undefined : String(list)
+    const rows = moveRow(store.get(node.value), String(key), section, index)
+    store.set(node.value, rows as Array<ListValue>)
+  }
+
   function finish(removeRules: boolean) {
     if (!removing) return
     removing.remove()
@@ -128,16 +158,18 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
 
   return (
     <FormBuilderContext.Provider value={builder}>
-      {builder.shared ? (
-        <fieldSharingContext.Provider value={isSharedFormField}>
-          {children}
-        </fieldSharingContext.Provider>
-      ) : (
-        <>
-          <FormTranslationAlert field={field} rows={rows} />
-          {children}
-        </>
-      )}
+      <SortableListGroup onMove={move} canMove={canMove}>
+        {builder.shared ? (
+          <fieldSharingContext.Provider value={isSharedFormField}>
+            {children}
+          </fieldSharingContext.Provider>
+        ) : (
+          <>
+            <FormTranslationAlert field={field} rows={rows} />
+            {children}
+          </>
+        )}
+      </SortableListGroup>
       <FormRemoveModal
         removal={removing}
         onCancel={() => setRemoving(undefined)}
@@ -149,13 +181,16 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
 
 interface FormFieldListProps {
   field: FormField
+  /** The id of the section of the list, empty for the form itself */
+  group: string
 }
 
-function FormFieldList({field}: FormFieldListProps) {
+function FormFieldList({field, group}: FormFieldListProps) {
   const builder = useContext(FormBuilderContext)
   return (
     <ListFieldView
       field={field}
+      group={group}
       labelField="label"
       badges={FormRowBadges}
       addLabel="Add input"

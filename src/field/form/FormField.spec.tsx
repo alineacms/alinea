@@ -158,3 +158,101 @@ test('mails pick their recipient and rules from the form', async ({
     'I agree to the privacy policy'
   ])
 })
+
+type Page = Parameters<Parameters<typeof test>[2]>[0]['page']
+
+/** Drags a row by its header onto the top or bottom edge of another row */
+async function dragOnto(
+  page: Page,
+  from: string,
+  to: string,
+  edge: 'top' | 'bottom'
+) {
+  const header = (name: string) =>
+    page
+      .getByRole('listitem', {name})
+      .locator('[data-slot="sortable-list-item-header"]')
+      .first()
+  const start = (await header(from).boundingBox())!
+  const end = (await header(to).boundingBox())!
+  const x = start.x + 40
+  const y = start.y + start.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x, y + 10, {steps: 3})
+  const top = edge === 'top' ? end.y + 4 : end.y + end.height - 4
+  await page.mouse.move(end.x + 60, top, {steps: 12})
+  await page.mouse.up()
+}
+
+test('moves inputs into, out of and between sections', async ({
+  mount,
+  page
+}) => {
+  await mount(<Builder />)
+  const form = page.getByRole('list', {name: 'Inputs'})
+  const section = (label: string) =>
+    form
+      .getByRole('listitem', {name: /^Section/})
+      .filter({hasText: label})
+      .getByRole('list')
+  const about = section('About you')
+  const request = section('Your request')
+  const names = (list: typeof form) =>
+    list
+      .locator('[data-slot="sortable-list-item-description"]')
+      .allTextContents()
+
+  // Into a section, before Phone
+  await dragOnto(page, 'Check item 3', 'Phone item 3', 'top')
+  await expect
+    .poll(() => names(about))
+    .toEqual(['Name', 'Email', 'I agree to the privacy policy', 'Phone'])
+  await expect(form.getByRole('listitem', {name: /^Check/})).toHaveCount(1)
+
+  // Out of a section into the form, its rule still uses Service
+  await dragOnto(page, 'File item 3', 'Section item 2', 'top')
+  const screenshots = form.getByRole('listitem', {name: 'File item 2'})
+  await expect(screenshots).toContainText('Screenshots')
+  await expect(screenshots).toContainText(
+    'Its rule uses Service, which is below it'
+  )
+
+  // Between sections, before Description
+  await dragOnto(page, 'Email item 2', 'Textarea item 2', 'top')
+  await expect
+    .poll(() => names(request))
+    .toEqual(['Service', 'Email', 'Description', 'How did we do last time?'])
+
+  // Sections stay in the form
+  await dragOnto(page, 'Section item 1', 'Textarea item 3', 'top')
+  await expect(form.getByRole('listitem', {name: /^Section/})).toHaveCount(2)
+  await expect
+    .poll(() => names(request))
+    .toEqual(['Service', 'Email', 'Description', 'How did we do last time?'])
+})
+
+test('picks the options of a rule without closing the sheet', async ({
+  mount,
+  page
+}) => {
+  await mount(<Builder />)
+  const screenshots = page.getByRole('listitem', {name: 'File item 3'})
+  await screenshots.getByRole('button', {name: 'File settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Screenshots'})
+  await sheet
+    .getByRole('radiogroup', {name: 'Disable this input'})
+    .getByRole('radio', {name: 'When…'})
+    .click()
+  await sheet
+    .getByRole('button', {name: /Input of rule 1/})
+    .last()
+    .click()
+  await page.getByRole('option', {name: 'Service'}).click()
+  // The list focuses its first option as focus moves to its search field
+  await sheet.locator('[data-slot="multiple-select-trigger"]').last().click()
+  await expect(screenshots).toHaveAttribute('aria-current', 'true')
+  await page.getByRole('option', {name: 'Facilities'}).click()
+  await expect(screenshots).toHaveAttribute('aria-current', 'true')
+  await expect(screenshots).toContainText('Disabled if Service is Facilities')
+})
