@@ -1,5 +1,10 @@
 import {expect, test} from 'bun:test'
-import {contentProblem, isAccepted, sniffType} from './FormFileTypes.js'
+import {
+  contentProblem,
+  fileType,
+  isAccepted,
+  sniffType
+} from './FormFileTypes.js'
 
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0])
 const pdf = new TextEncoder().encode('%PDF-1.7 ...')
@@ -18,6 +23,15 @@ test('the accept list matches extensions and types', () => {
   expect(isAccepted('image/*', file)).toBe(true)
   expect(isAccepted('.pdf', file)).toBe(false)
   expect(isAccepted('', file)).toBe(true)
+})
+
+test('a type in the accept list is matched by the name, not the browser', () => {
+  const page = {name: 'x.html', size: 9, type: 'image/png'}
+  expect(isAccepted('image/*', page)).toBe(false)
+  expect(isAccepted('image/png', page)).toBe(false)
+  expect(isAccepted('application/pdf', {name: 'cv.PDF'})).toBe(true)
+  expect(fileType('x.html')).toBe('application/octet-stream')
+  expect(fileType('photo.JPG')).toBe('image/jpeg')
 })
 
 test('a file must be what its name says', () => {

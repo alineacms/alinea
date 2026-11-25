@@ -36,6 +36,40 @@ const extensions: Record<string, string> = {
   csv: 'text/plain'
 }
 
+/** The media types of files by their extension */
+const mediaTypes: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  heic: 'image/heic',
+  pdf: 'application/pdf',
+  zip: 'application/zip',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  odt: 'application/vnd.oasis.opendocument.text',
+  ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  mp3: 'audio/mpeg',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime'
+}
+
+/**
+ * The media type of a file by its name. The type a browser declares is not
+ * used, anyone can send `x.html` as `image/png`.
+ */
+export function fileType(name: string): string {
+  return mediaTypes[extensionOf(name)] ?? 'application/octet-stream'
+}
+
 /** The type of a file by its first bytes, for the types we can tell apart */
 export function sniffType(bytes: Uint8Array): string | undefined {
   for (const [type, at, signature] of signatures)
@@ -66,16 +100,19 @@ function extensionOf(name: string): string {
 
 /**
  * Whether a file matches the accept list of an input (`.png, .jpg`,
- * `image/*`), like the browser checks it. An empty list accepts any file.
+ * `image/*`) by its name. An empty list accepts any file.
  */
-export function isAccepted(accept: string, file: FormFileInfo): boolean {
+export function isAccepted(
+  accept: string,
+  file: Pick<FormFileInfo, 'name'>
+): boolean {
   const tokens = accept
     .split(',')
     .map(token => token.trim().toLowerCase())
     .filter(Boolean)
   if (tokens.length === 0) return true
   const extension = `.${extensionOf(file.name)}`
-  const type = file.type.toLowerCase()
+  const type = fileType(file.name)
   return tokens.some(token => {
     if (token.startsWith('.')) return token === extension
     if (token.endsWith('/*')) return type.startsWith(token.slice(0, -1))
