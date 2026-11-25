@@ -348,7 +348,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Content sits between the inputs and has no answer, like the built-in Text input. Make it with `Form.content`, which takes a label, an `icon`, the `fields` editors fill in under the row and the `settings` of its tab:"
+          "text": "Content sits between the inputs and has no answer, like the built-in Text block. Make it with `Form.content`, which takes a label, an `icon`, the `fields` editors fill in under the row and the `settings` of its tab:"
         }
       ]
     },
@@ -366,7 +366,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Its fields are resolved like those of an entry, so images and links arrive ready to render. They are in the `data` of the content in the definition. Render it with a view under the key of its type. Content without a view shows a rich text field named `body`, as the Text input does."
+          "text": "Its fields are resolved like those of an entry, so images and links arrive ready to render. They are in the `data` of the content in the definition. Render it with a view under the key of its type. Content without a view shows a rich text field named `body`, as the Text block does."
         }
       ]
     },

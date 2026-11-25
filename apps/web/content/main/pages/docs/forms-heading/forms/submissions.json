@@ -914,7 +914,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "With `shared: true` every language asks the same. The inputs, their order, keys, settings, options and rules and the mails are shared: saving the form in one language writes them into the others. Each language keeps its own texts: labels, help, placeholders, option labels, the titles of sections, Text content and the subject and body of mails."
+          "text": "With `shared: true` every language asks the same. The inputs, their order, keys, settings, options and rules and the mails are shared: saving the form in one language writes them into the others. Each language keeps its own texts: labels, help, placeholders, option labels, the titles of sections, Text blocks and the subject and body of mails."
         }
       ]
     },

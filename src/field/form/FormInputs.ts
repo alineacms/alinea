@@ -265,7 +265,7 @@ export const section = input('Section', {
  * Text between the inputs, eg. how the answers are kept. It is shown in the
  * form and has no answer.
  */
-export const textContent = content('Text', {
+export const textContent = content('Text block', {
   icon: IcRoundSubject,
   fields: {body: richText('Text')},
   strings: ['body']
