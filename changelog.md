@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2] - 2026-11-25
+
+### Fixes
+
+- The caret below a block that ends a rich text field shows where the new
+  line starts, inside the editor, and leaves no space behind when the field
+  is left without typing. The first and last block keep some room from the
+  edges of the editor.
+
 ## [2.0.1] - 2026-11-25
 
 ### New
