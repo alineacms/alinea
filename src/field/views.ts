@@ -7,7 +7,7 @@ import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'
 import {DateFieldView} from './date/DateField.view.js'
 import {FormConditionView} from './form/FormCondition.view.js'
-import {FormFieldView} from './form/FormField.view.js'
+import {FormFieldView, FormOptionsView} from './form/FormField.view.js'
 import {FormMailsView} from './form/FormMails.view.js'
 import {FormSubmissionsView} from './form/FormSubmissions.view.js'
 import {HiddenInput} from './hidden/HiddenField.view.js'
@@ -48,6 +48,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.FormConditionInput]: FormConditionView,
   [viewKeys.FormInput]: FormFieldView,
   [viewKeys.FormMailsInput]: FormMailsView,
+  [viewKeys.FormOptionsInput]: FormOptionsView,
   [viewKeys.FormSubmissions]: FormSubmissionsView,
   [viewKeys.JsonInput]: JsonFieldView,
   [viewKeys.LocalisedInput]: LocalisedFieldView,

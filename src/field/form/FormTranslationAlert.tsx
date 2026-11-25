@@ -73,7 +73,7 @@ function FormTranslationCheck({
       <AlertTitle>Other languages ask other questions</AlertTitle>
       <AlertDescription>
         Answers are stored by key, so submissions and exports only line up when
-        every language has the same keys, input types and option values.
+        every language has the same keys, input types and option keys.
       </AlertDescription>
       <ul className={styles.FormTranslationAlert.list()}>
         {differences.flatMap(difference =>

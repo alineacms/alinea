@@ -61,7 +61,7 @@ function answersOf(
 
 /**
  * The other languages of a form that differ from this one in the keys they
- * ask, the type of an input or the values of its options
+ * ask, the type of an input or the keys of its options
  */
 export function translationDifferences(
   inputs: Record<string, Input>,
@@ -86,7 +86,7 @@ export function translationDifferences(
           `${answer.label} is ${typeLabel(answer.type)} here and ${typeLabel(theirs.type)} in ${language}`
         )
       else if (theirs.options !== answer.options)
-        problems.push(`${answer.label} has other option values in ${language}`)
+        problems.push(`${answer.label} has other option keys in ${language}`)
     }
     for (const [key, answer] of other)
       if (!own.has(key))

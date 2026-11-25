@@ -1,6 +1,11 @@
 import type {Submission} from '#/core/Connection.js'
 import {expect, test} from 'bun:test'
-import {answerGroups, submissionsCsv} from './FormAnswers.js'
+import {
+  answerGroups,
+  formColumns,
+  submissionText,
+  submissionsCsv
+} from './FormAnswers.js'
 import type {FormDefinition} from './FormDefinition.js'
 
 const definition: FormDefinition = [
@@ -141,4 +146,17 @@ test('csv lines up the answers of other languages by key', () => {
     'Received,Status,Language,Page,Name,Phone,Service,Room number'
   )
   expect(en.replace(',en,', ',,')).toBe(nl)
+})
+
+test('an answer shows the label of its option, or the key it was sent with', () => {
+  // The key of IT changed after the submission was sent
+  const current = definition.map(item =>
+    item.id === 'service'
+      ? {...item, choices: [{id: 'it', label: 'IT', value: 'support'}]}
+      : item
+  )
+  const service = formColumns(current).find(column => column.key === 'service')!
+  expect(submissionText(service, submission)).toBe('IT')
+  const unknown = {...submission, values: {service: 'old-key'}}
+  expect(submissionText(service, unknown)).toBe('old-key')
 })

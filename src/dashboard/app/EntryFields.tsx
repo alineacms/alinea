@@ -6,7 +6,10 @@ import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
 import {type ReactNode, memo, useContext} from 'react'
-import {FieldMissingIn} from '#/components/internal/FieldTranslation.js'
+import {
+  FieldMissingIn,
+  FieldTranslationValue
+} from '#/components/internal/FieldTranslation.js'
 import {type EntryContextValue, entryContext} from '../contexts.js'
 import {useMissingLanguages} from './useMissingLanguages.js'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
@@ -165,17 +168,22 @@ interface FieldTranslationProps {
   children: ReactNode
 }
 
-/** Tells the chrome of a field which other languages filled it in */
+/**
+ * Tells the chrome of a field which other languages filled it in, and the
+ * field what they filled in
+ */
 function FieldTranslation({
   context,
   field,
   shared,
   children
 }: FieldTranslationProps) {
-  const missingIn = useMissingLanguages(context, field, shared)
+  const {languages, value} = useMissingLanguages(context, field, shared)
   return (
-    <FieldMissingIn.Provider value={missingIn}>
-      {children}
+    <FieldMissingIn.Provider value={languages}>
+      <FieldTranslationValue.Provider value={value}>
+        {children}
+      </FieldTranslationValue.Provider>
     </FieldMissingIn.Provider>
   )
 }

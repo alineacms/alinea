@@ -7,8 +7,10 @@ import {
   Text
 } from '#/components.js'
 import {Field} from '#/core/Field.js'
+import type {ListRow} from '#/core/ListRow.js'
 import type {FieldPath} from '#/core/Validation.js'
 import {isEmptyValue, isRecord} from '#/core/util/Objects.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -196,6 +198,31 @@ function FormFieldList({field, group}: FormFieldListProps) {
       addLabel="Add input"
       onRemove={builder?.remove}
     />
+  )
+}
+
+export interface FormOptionsViewProps {
+  field: Field<Array<ListRow>>
+}
+
+/** The options of a choice, each with the key its answers are stored by */
+export function FormOptionsView({field}: FormOptionsViewProps) {
+  return <ListFieldView field={field} badges={FormOptionKey} />
+}
+
+function FormOptionKey({row}: ListFieldBadgesProps) {
+  const label = useAtomValueRaw(row.field('label'))
+  const value = useAtomValueRaw(row.field('value'))
+  // Like the key field, it follows the label until it is changed
+  const key =
+    typeof value === 'string' && value
+      ? value
+      : slugify(typeof label === 'string' ? label : '')
+  if (!key) return null
+  return (
+    <Badge size="sm" title="Key, shared by all languages">
+      {key}
+    </Badge>
   )
 }
 

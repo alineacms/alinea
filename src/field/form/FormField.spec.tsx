@@ -83,10 +83,16 @@ test('edits the options of a choice under its row', async ({mount, page}) => {
   await expect(third.getByRole('textbox')).toBeFocused()
   await page.keyboard.type('HR')
   await expect.poll(labels).toEqual(['IT', 'Facilities', 'HR'])
-  // The value of an option is in its settings
-  await third.getByRole('button', {name: 'Option settings'}).click()
-  const sheet = page.getByRole('dialog', {name: 'HR'})
-  await expect(sheet.getByRole('textbox', {name: 'Value'})).toHaveValue('hr')
+  // The key follows the label and shows on the row, it opens its settings
+  const settings = third.getByRole('button', {name: 'Option settings'})
+  await expect(settings).toHaveText('hr')
+  await settings.click()
+  const key = page.getByRole('dialog', {name: 'HR'}).getByRole('textbox', {
+    name: 'Key'
+  })
+  await expect(key).toHaveValue('hr')
+  await key.fill('human-resources')
+  await expect(settings).toHaveText('human-resources')
 })
 
 test('rules of an input use the inputs above it', async ({mount, page}) => {

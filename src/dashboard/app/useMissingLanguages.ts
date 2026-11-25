@@ -10,7 +10,14 @@ import {
 } from '../contexts.js'
 import {useLocale} from '../hooks.js'
 
-const noLanguages: ReadonlyArray<string> = []
+export interface MissingTranslation {
+  /** The other languages that filled the field in */
+  languages: ReadonlyArray<string>
+  /** What the first of them filled in, to show what is to be translated */
+  value?: unknown
+}
+
+const translatedField: MissingTranslation = {languages: []}
 
 /** The records of an entry with an id, eg. list rows and blocks, by id */
 const byIdCache = new WeakMap<object, Map<string, Record<string, unknown>>>()
@@ -75,15 +82,16 @@ export function useOtherLanguages(
 
 /**
  * The other languages of the entry that filled in a field the language
- * being edited left empty. Fields of the entry are found by key, fields of
- * list rows and blocks by the id of their row. Shared fields are the same
- * in every language and are not compared.
+ * being edited left empty, and what the first of them filled in. Fields of
+ * the entry are found by key, fields of list rows and blocks by the id of
+ * their row. Shared fields are the same in every language and are not
+ * compared.
  */
 export function useMissingLanguages(
   context: EntryContextValue,
   field: Field,
   shared: boolean
-): ReadonlyArray<string> {
+): MissingTranslation {
   const locale = useLocale()
   const info = useFieldInfo(field)
   const value = useAtomValueRaw(info.value)
@@ -94,20 +102,22 @@ export function useMissingLanguages(
   const data = useAtomValueRaw(context.entry.data)
   const untranslated = useAtomValueRaw(context.localeData.untranslated)
   return useMemo(() => {
-    if (!locale || shared || untranslated) return noLanguages
-    if (!Field.isEmpty(field, value)) return noLanguages
+    if (!locale || shared || untranslated) return translatedField
+    if (!Field.isEmpty(field, value)) return translatedField
     const nested = Boolean(info.editor.parent)
     const rowId = typeof container?._id === 'string' ? container._id : null
     // Fields of an object have no row id to find them by
-    if (nested && !rowId) return noLanguages
-    const result = Array<string>()
+    if (nested && !rowId) return translatedField
+    const languages = Array<string>()
+    let first: unknown
     for (const version of otherLanguages(data.entries, locale)) {
       const theirs = nested
         ? recordsById(version.data as object).get(rowId!)
         : (version.data as Record<string, unknown>)
-      if (theirs && !Field.isEmpty(field, theirs[info.key]))
-        result.push(version.locale!)
+      const other = theirs?.[info.key]
+      if (!theirs || Field.isEmpty(field, other)) continue
+      if (languages.push(version.locale!) === 1) first = other
     }
-    return result.length > 0 ? result : noLanguages
+    return languages.length > 0 ? {languages, value: first} : translatedField
   }, [container, data, field, info, locale, shared, untranslated, value])
 }

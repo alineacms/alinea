@@ -33,7 +33,7 @@ test('languages that ask the same keys do not differ', () => {
   ).toEqual([])
 })
 
-test('missing keys, other types and other option values are reported', () => {
+test('missing keys, other types and other option keys are reported', () => {
   const english = [
     {...dutch[0], key: 'name'},
     {...dutch[1], _type: 'text'},
@@ -49,7 +49,7 @@ test('missing keys, other types and other option values are reported', () => {
       problems: [
         'Naam (naam) is not in EN',
         'E-mail is Email here and Text in EN',
-        'Kot has other option values in EN',
+        'Kot has other option keys in EN',
         'Naam (name) is only in EN'
       ]
     }

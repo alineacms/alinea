@@ -6,6 +6,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  Icon,
   SortableListItem,
   type DragMoveEvent,
   SortableList,
@@ -182,7 +183,7 @@ export interface ListFieldViewProps {
    * it in its settings
    */
   labelField?: string
-  /** Shown in the header of a row, after its name */
+  /** Shown after the name of a row, in the settings button of a compact row */
   badges?: ComponentType<ListFieldBadgesProps>
   /** One button with this label adds a row, instead of one per type */
   addLabel?: string
@@ -656,6 +657,7 @@ const ListFieldRow = memo(function ListFieldRow({
           sheet={sheet}
           type={type}
           typeName={typeName}
+          badges={Badges && <Badges row={row} />}
           focus={focus}
           onDelete={deleteRow}
           onFocusRow={onFocusRow}
@@ -884,6 +886,8 @@ interface ListFieldCompactRowProps {
   sheet: BlockSheetState
   type: Type
   typeName: string
+  /** Shown in the button that opens the settings */
+  badges?: ReactNode
   focus?: RowFocus['at']
   onDelete: () => void
   onFocusRow: (focus: RowFocus) => void
@@ -903,6 +907,7 @@ function ListFieldCompactRow({
   sheet,
   type,
   typeName,
+  badges,
   focus,
   onDelete,
   onFocusRow,
@@ -977,12 +982,20 @@ function ListFieldCompactRow({
         <Button
           {...sheet.triggerProps}
           variant="ghost"
-          size="icon-sm"
-          icon={IcRoundMoreHoriz}
+          size={badges ? 'sm' : 'icon-sm'}
+          icon={badges ? undefined : IcRoundMoreHoriz}
           aria-label={`${label} settings`}
           aria-expanded={sheet.open}
           onClick={() => sheet.toggle()}
-        />
+          className={styles.ListFieldCompactRow.settings()}
+        >
+          {badges && (
+            <>
+              {badges}
+              <Icon icon={IcRoundMoreHoriz} />
+            </>
+          )}
+        </Button>
       )}
       <Button
         variant="ghost"

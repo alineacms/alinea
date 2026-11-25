@@ -1,8 +1,10 @@
-import type {ListField} from '#/core/field/ListField.js'
+import {ListField} from '#/core/field/ListField.js'
+import {getField} from '#/core/Internal.js'
 import type {InferQueryValue, InferStoredValue} from '#/core/Infer.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {type ListOptions, list} from '#/field/list.js'
 import {path} from '#/field/path.js'
@@ -25,9 +27,12 @@ const Option = type('Option', {
   tabs: {
     option: tab('Option', {
       fields: {
-        value: path('Value', {
+        value: path('Key', {
           from: 'label',
-          help: 'Sent and stored for this option, follows the label until you change it'
+          help:
+            'Shared by all languages and stored with each answer, it follows ' +
+            'the label until you change it. Answers already sent keep the ' +
+            'key they were sent with.'
         })
       }
     })
@@ -44,11 +49,17 @@ export function options(
   InferQueryValue<OptionRows> & ListRow,
   ListOptions<OptionRows>
 > {
-  return list(label, {
-    schema: {option: Option},
+  const schema = {option: Option}
+  const field = list(label, {
+    schema,
     compact: true,
     min: 1,
     initialValue: [{_type: 'option', label: 'Option 1'}]
+  })
+  // The same list with a view that shows the key of each option
+  return new ListField(schema, {
+    options: getField(field).options,
+    view: viewKeys.FormOptionsInput
   })
 }
 
