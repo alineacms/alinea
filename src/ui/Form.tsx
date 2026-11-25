@@ -135,7 +135,10 @@ export interface FormProps extends Omit<
    * hidden input on the page of a product
    */
   values?: Record<string, string>
-  /** The language of the form entry, which rules on the language test */
+  /**
+   * The language rules on the language test, that of the form entry it was
+   * queried from by default
+   */
   locale?: string | null
   /** Errors by the key of the input, when the form is sent another way */
   errors?: FormErrors
@@ -167,10 +170,13 @@ export function Form({
     () => ({...defaultLabels, ...labelsProp}),
     [labelsProp]
   )
-  const definition = useMemo(
-    () => (prefilled ? prefill(defined, prefilled) : defined),
-    [defined, prefilled]
-  )
+  // Hidden inputs can take a parameter of the address of the page, which
+  // the server rendering the form does not see
+  const [address, setAddress] = useState<Record<string, string>>({})
+  const definition = useMemo(() => {
+    const given = {...prefilled, ...address}
+    return Object.keys(given).length > 0 ? prefill(defined, given) : defined
+  }, [defined, prefilled, address])
   const nextItem = useRef(0)
   // The items of each repeatable section, by an id that stays with an item
   // when one above it is removed
@@ -178,6 +184,14 @@ export function Form({
     initialItems(definition, () => nextItem.current++)
   )
   const [values, setValues] = useState(() => initialValues(definition, items))
+  // Before the rules see the answers, so the server, which sees them, does
+  // not hold the visitor to inputs the form never showed
+  useEffect(() => {
+    const found = addressValues(defined)
+    if (Object.keys(found).length === 0) return
+    setAddress(found)
+    setValues(current => ({...current, ...found}))
+  }, [defined])
   const state = useMemo(
     () => formState(definition, values, locale),
     [definition, values, locale]
@@ -262,7 +276,7 @@ export function Form({
     // React resets after it is sent, losing the answers when one is invalid
     event.preventDefault()
     const data = new FormData(event.currentTarget)
-    fromAddress(definition, data)
+    data.set(formPage, window.location.href)
     startTransition(() => send(data))
   }
 
@@ -354,26 +368,23 @@ function prefill(
   })
 }
 
-/**
- * Fills in what is taken from the address of the page: the page itself, and
- * hidden inputs that read a parameter of it
- */
-function fromAddress(definition: FormDefinition, data: FormData) {
-  const {href, search} = window.location
-  data.set(formPage, href)
-  const params = new URLSearchParams(search)
+/** The answers of hidden inputs that read a parameter of the address */
+function addressValues(definition: FormDefinition): Record<string, string> {
+  const params = new URLSearchParams(window.location.search)
   const inputs = inputsOf(
     definition.flatMap(item =>
       item.control !== 'section' ? [item] : item.repeat ? [] : item.inputs
     )
   )
+  const result: Record<string, string> = {}
   for (const input of inputs) {
     const param = input.settings.param
     if (input.attributes.type !== 'hidden' || typeof param !== 'string')
       continue
     const value = param && params.get(param)
-    if (value && data.has(input.key)) data.set(input.key, value)
+    if (value) result[input.key] = value
   }
+  return result
 }
 
 // Out of sight for people, without styles of the site

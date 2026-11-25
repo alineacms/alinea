@@ -160,6 +160,79 @@ test('repeatable sections add and remove items', () => {
   expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('')
 })
 
+test('a hidden input takes its parameter before the rules see it', () => {
+  const {happyDOM} = window as unknown as {
+    happyDOM: {setURL(url: string): void}
+  }
+  happyDOM.setURL('http://localhost/?utm=spring')
+  const campaign: FormDefinition = [
+    {
+      id: 'c',
+      type: 'hidden',
+      label: 'Campaign',
+      control: 'input',
+      key: 'campaign',
+      required: false,
+      width: 'full',
+      attributes: {type: 'hidden'},
+      settings: {param: 'utm'}
+    },
+    {
+      id: 'p',
+      type: 'text',
+      label: 'Promo',
+      control: 'input',
+      key: 'promo',
+      required: true,
+      width: 'full',
+      attributes: {type: 'text'},
+      settings: {},
+      showWhen: {
+        match: 'all',
+        rules: [{input: 'campaign', op: 'is', value: 'spring'}]
+      }
+    }
+  ]
+  try {
+    const {container} = render(
+      <Form action={async () => ({ok: true})} definition={campaign} />
+    )
+    expect(container.querySelector('[name=promo]')).not.toBeNull()
+    const hidden = container.querySelector<HTMLInputElement>('[name=campaign]')
+    expect(hidden?.value).toBe('spring')
+  } finally {
+    happyDOM.setURL('about:blank')
+  }
+})
+
+test('rules on the language test the language the form was queried in', () => {
+  const dutch: FormDefinition = [
+    {
+      id: 'vat',
+      type: 'text',
+      label: 'VAT',
+      control: 'input',
+      key: 'vat',
+      required: false,
+      width: 'full',
+      attributes: {type: 'text'},
+      settings: {},
+      showWhen: {
+        match: 'all',
+        rules: [{input: '@locale', op: 'is', value: ['nl'], locale: 'nl'}]
+      }
+    }
+  ]
+  const shown = (locale?: string) => {
+    const {container} = render(<Form definition={dutch} locale={locale} />)
+    const found = container.querySelector('[name=vat]') !== null
+    cleanup()
+    return found
+  }
+  expect(shown()).toBe(true)
+  expect(shown('en')).toBe(false)
+})
+
 test('labels replace the texts of the form', () => {
   render(
     <Form
