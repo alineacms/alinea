@@ -94,7 +94,8 @@ async function setup(forms?: FormsOptions) {
     const request = new Request(url, {method: 'PUT', body})
     if (chunked) expect(request.headers.get('content-length')).toBeNull()
     const response = await handle(request, context)
-    return {status: response.status, text: await response.text()}
+    const text = await response.text()
+    return {status: response.status, error: text && JSON.parse(text).error}
   }
   async function submit(data: Array<[string, string]>) {
     const response = await handle(
@@ -107,14 +108,14 @@ async function setup(forms?: FormsOptions) {
     )
     return response.json()
   }
-  return {entryId, store, prepare, upload, submit}
+  return {entryId, store, prepare, upload, submit, handle}
 }
 
 test('an uploaded file is stored with the submission', async () => {
   const {entryId, store, prepare, upload, submit} = await setup()
   const ticket = await prepare('error.png', png.length)
   if (!ticket.ok) throw new Error(ticket.message)
-  expect(await upload(ticket.url, png)).toEqual({status: 204, text: ''})
+  expect(await upload(ticket.url, png)).toEqual({status: 204, error: ''})
   const result = await submit([
     ['name', 'Ann'],
     ['screenshot', ticket.token]
@@ -161,11 +162,11 @@ test('files are checked before and while they are uploaded', async () => {
   if (!ticket.ok) throw new Error(ticket.message)
   expect(await upload(ticket.url, script)).toEqual({
     status: 415,
-    text: 'error.png is not the kind of file its name says'
+    error: 'error.png is not the kind of file its name says'
   })
   expect(await upload(`${ticket.url}x`, png)).toEqual({
     status: 401,
-    text: 'Upload the file again'
+    error: 'Upload the file again'
   })
   expect(await submit([['name', 'Ann']])).toEqual({
     ok: false,
@@ -255,7 +256,7 @@ test('a ticket uploads one file', async () => {
   other[8] = 2
   expect(await upload(ticket.url, other)).toEqual({
     status: 409,
-    text: 'This file was uploaded already'
+    error: 'Upload the file again'
   })
   expect([...kept.values()].map(content => content[8])).toEqual([1])
 })
@@ -268,6 +269,37 @@ test('a body without a length stops once it is larger than said', async () => {
   big.set(png)
   expect(await upload(ticket.url, big, true)).toEqual({
     status: 413,
-    text: 'The file is larger than said'
+    error: 'The file could not be uploaded'
   })
+})
+
+test('uploads are refused in the texts of the form', async () => {
+  const {prepare, upload} = await setup({
+    messages: {en: {fileMismatch: ({name}) => `${name} is no image`}}
+  })
+  const script = new TextEncoder().encode('#!/bin/sh\n')
+  const ticket = await prepare('error.png', script.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  expect(await upload(ticket.url, script)).toEqual({
+    status: 415,
+    error: 'error.png is no image'
+  })
+})
+
+test('a browser on another origin may upload', async () => {
+  const {prepare, handle} = await setup()
+  const ticket = await prepare('error.png', png.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  const preflight = new Request(ticket.url, {
+    method: 'OPTIONS',
+    headers: {
+      origin: 'https://www.example.com',
+      'access-control-request-method': 'PUT',
+      'access-control-request-headers': 'content-type'
+    }
+  })
+  const response = await handle(preflight, context)
+  expect(response.status).toBe(204)
+  expect(response.headers.get('access-control-allow-origin')).toBe('*')
+  expect(response.headers.get('access-control-allow-methods')).toBe('PUT')
 })

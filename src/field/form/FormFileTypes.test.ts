@@ -23,11 +23,13 @@ test('the accept list matches extensions and types', () => {
 test('a file must be what its name says', () => {
   const info = (name: string) => ({name, size: 0, type: ''})
   expect(contentProblem(info('error.png'), png)).toBeUndefined()
-  expect(contentProblem(info('invoice.pdf'), script)).toBe(
-    'invoice.pdf is not the kind of file its name says'
-  )
-  expect(contentProblem(info('notes.txt'), png)).toBe(
-    'notes.txt is not the kind of file its name says'
-  )
+  expect(contentProblem(info('invoice.pdf'), script)).toEqual({
+    code: 'fileMismatch',
+    name: 'invoice.pdf'
+  })
+  expect(contentProblem(info('notes.txt'), png)).toEqual({
+    code: 'fileMismatch',
+    name: 'notes.txt'
+  })
   expect(contentProblem(info('photo.heic'), png)).toBeUndefined()
 })

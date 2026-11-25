@@ -21,6 +21,7 @@ export const GET = handler
 export const POST = handler
 // Files visitors add to forms are uploaded with a PUT
 export const PUT = handler
+export const OPTIONS = handler
 
 function hook(name: string) {
   return (input: unknown) => console.log(`Hook triggered: ${name}`, input)

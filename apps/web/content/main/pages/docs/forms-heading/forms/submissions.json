@@ -534,7 +534,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LNvdENodhfF6VxP3TtNqTXkBln",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail})\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail})\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler\nexport const OPTIONS = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false

@@ -1,3 +1,5 @@
+import type {FormMessage} from './FormMessages.js'
+
 /** A file a visitor adds to a file input */
 export interface FormFileInfo {
   name: string
@@ -88,11 +90,11 @@ export function isAccepted(accept: string, file: FormFileInfo): boolean {
 export function contentProblem(
   file: FormFileInfo,
   bytes: Uint8Array
-): string | undefined {
+): FormMessage | undefined {
   const expected = extensions[extensionOf(file.name)]
   const actual = sniffType(bytes)
   if (expected && expected !== actual)
-    return `${file.name} is not the kind of file its name says`
+    return {code: 'fileMismatch', name: file.name}
   // A known binary type under a name we cannot check is let through, the
   // accept list is checked on the name
   return undefined

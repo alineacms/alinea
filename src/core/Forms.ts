@@ -1,5 +1,6 @@
 import type {DatabaseDeclaration} from '#/backend/api/CreateBackend.js'
 import {type FormLocaleMessages, translate} from '#/field/form/FormMessages.js'
+import {isRecord} from './util/Objects.js'
 import type {
   FormStatus,
   FormStatusRequest,
@@ -214,13 +215,9 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
           errors[key] = ticket.message
           continue
         }
-        const uploaded = await fetch(ticket.url, {
-          method: ticket.method,
-          headers: {'content-type': value.type || 'application/octet-stream'},
-          body: value
-        })
-        if (uploaded.ok) entries.push([key, ticket.token])
-        else errors[key] = await uploadError(uploaded, options.locale)
+        const error = await uploadFile(ticket, value, options.locale)
+        if (error) errors[key] = error
+        else entries.push([key, ticket.token])
       }
       if (Object.keys(errors).length > 0) return {ok: false, errors}
       return (await client()).submit({
@@ -234,16 +231,56 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
   }
 }
 
-/** What a visitor sees when the handler refused their file */
-export async function uploadError(
-  response: Response,
+/**
+ * Uploads a file with its ticket, or tells what a visitor sees when that
+ * failed: the reason the handler refused it, or that it could not be
+ * uploaded. What went wrong beyond that is for the console.
+ */
+export async function uploadFile(
+  ticket: {url: string; method: 'PUT'},
+  file: Blob,
   locale?: string | null
-): Promise<string> {
-  const fallback = translate(locale)({code: 'uploadFailed'})
-  if (response.status !== 405) return (await response.text()) || fallback
+): Promise<string | undefined> {
+  const failed = (problem: string, ...details: Array<unknown>) => {
+    console.error(`Alinea could not upload a file: ${problem}`, ...details)
+    return translate(locale)({code: 'uploadFailed'})
+  }
+  let response: Response
+  try {
+    response = await fetch(ticket.url, {
+      method: ticket.method,
+      headers: {'content-type': file.type || 'application/octet-stream'},
+      body: file
+    })
+  } catch (cause) {
+    // Browsers ask the handler first when it is on another origin than the
+    // page, which a route without OPTIONS does not answer for it
+    return failed(
+      `${URL.parse(ticket.url)?.origin} could not be reached, export OPTIONS ` +
+        'from the route of createHandler',
+      cause
+    )
+  }
+  if (response.ok) return undefined
+  const text = await response.text()
+  const refused = parseRefusal(text)
+  if (refused) return refused
   // Routes made before forms had file inputs only export GET and POST
-  console.error(
-    'Alinea could not upload a file: export PUT from the route of createHandler'
-  )
-  return fallback
+  if (response.status === 405)
+    return failed('export PUT from the route of createHandler')
+  if (response.status === 413)
+    return failed(
+      'the host refused a request this large, keep the maximum size of ' +
+        'file inputs below its limit'
+    )
+  return failed(`the handler answered ${response.status}`, text)
+}
+
+/** The reason the handler refused a file, see `receiveUpload` */
+function parseRefusal(text: string): string | undefined {
+  try {
+    const body: unknown = JSON.parse(text)
+    if (isRecord(body) && typeof body.error === 'string') return body.error
+  } catch {}
+  return undefined
 }

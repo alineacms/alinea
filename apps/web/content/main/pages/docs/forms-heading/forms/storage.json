@@ -135,7 +135,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LdZysffaIRD3DzQshAJjm73na5",
-      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 100, uploads: 200}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests\nexport const PUT = handler",
+      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 100, uploads: 200}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests, OPTIONS lets them\n// do so from another address of your site\nexport const PUT = handler\nexport const OPTIONS = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false
@@ -233,7 +233,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LDK3NBofdRqjrli8yJEBhFAAjL",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    database: {\n      driver: 'pg',\n      client: new Pool({connectionString: process.env.DATABASE_URL})\n    }\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    database: {\n      driver: 'pg',\n      client: new Pool({connectionString: process.env.DATABASE_URL})\n    }\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler\nexport const OPTIONS = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false

@@ -13,7 +13,11 @@ import {sign, verify} from '#/core/util/JWT.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {type FormInputData, nameKey} from '#/field/form/FormDefinition.js'
 import {contentProblem, isAccepted} from '#/field/form/FormFileTypes.js'
-import {type FormProblems, translate} from '#/field/form/FormMessages.js'
+import {
+  type FormMessage,
+  type FormProblems,
+  translate
+} from '#/field/form/FormMessages.js'
 import {HandleAction} from './HandleAction.js'
 import {fileKey, overLimit, submissionStore, visitorHash} from './FormSubmit.js'
 import {fileInputs, loadForm} from './FormLoad.js'
@@ -29,6 +33,8 @@ interface UploadTicket extends FormFileRef {
   input: string
   /** A hash of the visitor, see `visitorHash` */
   visitor: string | null
+  /** The locale of the form, for the messages the upload answers with */
+  locale?: string | null
 }
 
 /** The browser uploads from the site to the handler, which may be elsewhere */
@@ -111,6 +117,7 @@ export async function prepareUpload(
     entryId: request.entryId,
     input: input.key,
     visitor,
+    locale: entry.locale,
     id: createId(),
     name: request.name,
     size: request.size,
@@ -147,19 +154,21 @@ export async function receiveUpload(
   api: SubmissionsApi,
   {forms = {}, secret}: {forms?: FormsOptions; secret: string}
 ): Promise<Response> {
-  const fail = (status: number, message: string) =>
-    new Response(message, {status, headers: uploadCors})
   const ticket = await readTicket(
     new URL(request.url).searchParams.get('token') ?? '',
     secret
   )
-  if (!ticket) return fail(401, 'Upload the file again')
+  const text = translate(ticket?.locale, forms.messages)
+  // As JSON, so the browser tells our reasons apart from errors of the host
+  const fail = (status: number, message: string | FormMessage) =>
+    Response.json({error: text(message)}, {status, headers: uploadCors})
+  if (!ticket) return fail(401, {code: 'uploadAgain'})
   const length = Number(request.headers.get('content-length'))
-  if (length > ticket.size) return fail(413, 'The file is larger than said')
+  if (length > ticket.size) return fail(413, {code: 'uploadFailed'})
   const content = await readBody(request, ticket.size)
-  if (!content) return fail(413, 'The file is larger than said')
+  if (!content) return fail(413, {code: 'uploadFailed'})
   if (content.byteLength !== ticket.size)
-    return fail(400, 'The file is not the size that was said')
+    return fail(400, {code: 'uploadFailed'})
   const problem = contentProblem(ticket, content)
   if (problem) return fail(415, problem)
   const {storeFormFile, formFiles} = api
@@ -182,7 +191,7 @@ export async function receiveUpload(
     })
   } catch (error) {
     const [stored] = await formFiles.call(api, ticket.entryId, [ticket.id])
-    if (stored) return fail(409, 'This file was uploaded already')
+    if (stored) return fail(409, {code: 'uploadAgain'})
     throw error
   }
   if (forms.files)

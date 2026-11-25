@@ -338,7 +338,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3L33ThSasP2Gv6akH2qqklgWXXG",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler\nexport const OPTIONS = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false
@@ -349,7 +349,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A route made before Alinea had forms only exports `GET` and `POST`. Without `PUT` the handler never receives the files: `<Form>` shows that the file could not be uploaded under its input and logs what is missing in the console of the browser."
+          "text": "A route made before Alinea had forms only exports `GET` and `POST`. Without `PUT` the handler never receives the files. Without `OPTIONS` browsers refuse to upload when a visitor is on another address than the `baseUrl` of your config, for example `www.` or a preview deployment, since Next.js answers that request itself. In both cases `<Form>` shows that the file could not be uploaded under its input and logs what is missing in the console of the browser."
         }
       ]
     },

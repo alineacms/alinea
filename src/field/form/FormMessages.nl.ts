@@ -21,6 +21,8 @@ export const nl: FormMessages = {
   oneFile: 'Voeg één bestand toe',
   fileTooLarge: ({max}) => `Kies een bestand van hoogstens ${max} MB`,
   fileType: ({accept}) => `Kies een bestand van het type ${accept}`,
+  fileMismatch: ({name}) =>
+    `${name} is niet het soort bestand dat zijn naam zegt`,
   tooFewItems: ({min}) => `Voeg minstens ${items(min)} toe`,
   tooManyItems: ({max}) => `Voeg hoogstens ${items(max)} toe`,
   alreadySent: 'Dit antwoord werd al verzonden',

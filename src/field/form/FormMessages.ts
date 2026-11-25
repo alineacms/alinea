@@ -21,6 +21,8 @@ export interface FormMessageParams {
   /** A file input's maximum size, in megabytes */
   fileTooLarge: {max: number}
   fileType: {accept: string}
+  /** A file whose first bytes are not of the type its name says */
+  fileMismatch: {name: string}
   tooFewItems: {min: number}
   tooManyItems: {max: number}
   alreadySent: object
@@ -71,6 +73,7 @@ export const en: FormMessages = {
   oneFile: 'Add one file',
   fileTooLarge: ({max}) => `Choose a file of at most ${max} MB`,
   fileType: ({accept}) => `Choose a file of type ${accept}`,
+  fileMismatch: ({name}) => `${name} is not the kind of file its name says`,
   tooFewItems: ({min}) => `Add at least ${items(min)}`,
   tooManyItems: ({max}) => `Add at most ${items(max)}`,
   alreadySent: 'This answer was already sent',

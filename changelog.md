@@ -7,7 +7,12 @@
 - Visitors upload the files of form file inputs to the handler with `PUT`
   requests. Add `export const PUT = handler` next to `GET` and `POST` in the
   route of `createHandler`, eg. `app/(alinea)/api/cms/route.ts`: routes made
-  before only export those two and refuse the uploads.
+  before only export those two and refuse the uploads. Export
+  `OPTIONS = handler` as well: browsers ask before they upload to the
+  `baseUrl` of your config from another address, eg. `www.` or a preview
+  deployment, and Next.js answers that itself without allowing it. A file
+  that could not be uploaded shows an error under its input in the language
+  of the form, and the console of the browser tells why.
 - The help texts of form inputs and the descriptions of sections are rich
   text, so they can include links. In a form definition `help` is a `TextDoc`,
   render it with `RichText`. Help saved as plain text reads as paragraphs.

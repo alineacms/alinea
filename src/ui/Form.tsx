@@ -3,7 +3,7 @@
 import {type FormState, formState} from '#/field/form/FormConditions.js'
 import {formPage, formSpam} from '#/field/form/FormSpam.js'
 import type {PrepareUploadResult} from '#/core/Connection.js'
-import {type FormUploadFile, uploadError} from '#/core/Forms.js'
+import {type FormUploadFile, uploadFile} from '#/core/Forms.js'
 import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
 import {
   type FormContentData,
@@ -183,7 +183,9 @@ export function Form({
   )
   const [result, send, pending] = useActionState(
     async (_: FormResult | undefined, posted: FormData) => {
-      const uploaded = upload ? await uploadFiles(upload, posted) : posted
+      const uploaded = upload
+        ? await uploadFiles(upload, posted, locale)
+        : posted
       if (!(uploaded instanceof FormData)) return uploaded
       const result = await action!(uploaded)
       if (result.ok && result.redirect) window.location.assign(result.redirect)
@@ -569,7 +571,8 @@ function FormSection({
 /** The answers with each file replaced by the token of its upload */
 async function uploadFiles(
   upload: (file: FormUploadFile) => Promise<PrepareUploadResult>,
-  posted: FormData
+  posted: FormData,
+  locale?: string | null
 ): Promise<FormData | FormResult> {
   const data = new FormData()
   const errors: FormErrors = {}
@@ -590,13 +593,9 @@ async function uploadFiles(
       errors[key] = ticket.message
       continue
     }
-    const response = await fetch(ticket.url, {
-      method: ticket.method,
-      headers: {'content-type': value.type || 'application/octet-stream'},
-      body: value
-    })
-    if (response.ok) data.append(key, ticket.token)
-    else errors[key] = await uploadError(response)
+    const error = await uploadFile(ticket, value, locale)
+    if (error) errors[key] = error
+    else data.append(key, ticket.token)
   }
   if (Object.keys(errors).length > 0) return {ok: false, errors}
   return data

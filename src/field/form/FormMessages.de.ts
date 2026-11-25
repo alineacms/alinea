@@ -21,6 +21,8 @@ export const de: FormMessages = {
   oneFile: 'Fügen Sie nur eine Datei hinzu',
   fileTooLarge: ({max}) => `Wählen Sie eine Datei von höchstens ${max} MB`,
   fileType: ({accept}) => `Wählen Sie eine Datei vom Typ ${accept}`,
+  fileMismatch: ({name}) =>
+    `${name} ist nicht die Art Datei, die ihr Name angibt`,
   tooFewItems: ({min}) => `Fügen Sie mindestens ${items(min)} hinzu`,
   tooManyItems: ({max}) => `Fügen Sie höchstens ${items(max)} hinzu`,
   alreadySent: 'Diese Antwort wurde bereits gesendet',
