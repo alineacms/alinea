@@ -57,9 +57,6 @@ function LinkFileDetails({entry, href}: LinkFileDetailsProps) {
   if (!file) return null
   const extension = file.extension ?? ''
   const image = Boolean(isImage(extension))
-  const location = [entry.rootLabel, ...entry.parents.map(p => p.title)]
-    .filter(Boolean)
-    .join(' / ')
   return (
     <div className={styles.LinkDetails()}>
       {preview && hasPreviewImage(extension) && (
@@ -79,7 +76,6 @@ function LinkFileDetails({entry, href}: LinkFileDetailsProps) {
         width={image ? file.width : undefined}
         height={image ? file.height : undefined}
         alt={image ? (file.alt ?? '') : undefined}
-        location={location}
         url={href}
       />
     </div>
