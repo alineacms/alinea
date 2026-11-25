@@ -24,6 +24,7 @@ export interface FormLocation {
 }
 
 interface FormVersion {
+  type: string
   locale: string | null
   workspace: string
   root: string
@@ -36,9 +37,8 @@ export async function loadForm(
   graph: Graph,
   {entryId, locale, field: fieldKey}: FormLocation
 ) {
-  const entry = await graph.first({
+  const versions = await graph.find({
     id: entryId,
-    ...(locale ? {locale} : {}),
     status: 'published',
     select: {
       type: Entry.type,
@@ -48,6 +48,11 @@ export async function loadForm(
       data: Entry.data
     }
   })
+  const entry = locale
+    ? versions.find(
+        version => version.locale?.toLowerCase() === locale.toLowerCase()
+      )
+    : defaultVersion(config, versions)
   if (!entry) throw new HttpError(404, 'Form not found')
   const type = config.schema[entry.type]
   const fields = type ? entries(Type.fields(type)) : []
@@ -61,7 +66,7 @@ export async function loadForm(
     throw new HttpError(400, 'The entry has no form')
   const options = Field.options(field)
   const data = options.shared
-    ? await withFallbacks(config, graph, entryId, entry, key, options.inputs)
+    ? withFallbacks(config, versions, entry, key, options.inputs)
     : entry.data
   const rows = data[key]
   const inputs = formInputs(formDefinition(options.inputs, rows))
@@ -73,23 +78,16 @@ export async function loadForm(
  * yet taken from the other languages, so visitors, errors, submissions and
  * mails see the same texts
  */
-async function withFallbacks(
+function withFallbacks(
   config: Config,
-  graph: Graph,
-  entryId: string,
+  versions: Array<FormVersion>,
   entry: FormVersion,
   key: string,
   inputs: Record<string, Input>
-): Promise<Record<string, unknown>> {
+): Record<string, unknown> {
   const {data} = entry
   if (!entry.locale) return data
-  const workspace = config.workspaces[entry.workspace]
-  const root = workspace && getWorkspace(workspace).roots[entry.root]
-  const versions = await graph.find({
-    id: entryId,
-    status: 'published',
-    select: {locale: Entry.locale, data: Entry.data}
-  })
+  const root = rootOf(config, entry)
   const others = Root.fallbackOrder(
     root && Root.data(root).i18n,
     entry.locale,
@@ -109,6 +107,25 @@ async function withFallbacks(
       )
     })
   }
+}
+
+function rootOf(config: Config, entry: FormVersion): Root | undefined {
+  const workspace = config.workspaces[entry.workspace]
+  return workspace && getWorkspace(workspace).roots[entry.root]
+}
+
+/**
+ * The version a site that does not say which language it shows gets: that
+ * of the default locale of the root
+ */
+function defaultVersion<Version extends FormVersion>(
+  config: Config,
+  versions: Array<Version>
+): Version | undefined {
+  const [first] = versions
+  const root = first && rootOf(config, first)
+  const locale = root && Root.defaultLocale(root)
+  return versions.find(version => version.locale === locale) ?? first
 }
 
 /** Whether entries of a type hold a form */

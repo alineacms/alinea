@@ -5,9 +5,9 @@ export type {
 } from '#/core/Connection.js'
 export type {
   FormFileStorage,
-  FormLimits,
   FormMail,
   FormMailer,
+  FormRateLimit,
   FormSubmitEvent,
   FormsOptions,
   FormUploadFile

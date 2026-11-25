@@ -11,30 +11,20 @@ import type {
 import {Entry} from '#/core/Entry.js'
 import {Field} from '#/core/Field.js'
 import type {
-  FormLimits,
   FormMailAttachment,
   FormMailer,
+  FormRateLimit,
   FormsOptions
 } from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
-import {Type} from '#/core/Type.js'
 import {encode} from '#/core/util/BufferToBase64.js'
-import {entries, isRecord, keys} from '#/core/util/Objects.js'
+import {sha256} from '#/core/util/ContentHash.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {href} from '#/dashboard/Href.js'
-import {
-  answerText,
-  formColumns,
-  formInputs,
-  submissionIndex
-} from '#/field/form/FormAnswers.js'
-import {
-  type FormDefinition,
-  type FormInputData,
-  formDefinition
-} from '#/field/form/FormDefinition.js'
-import {FormField} from '#/field/form/FormField.js'
+import {formColumns, submissionIndex} from '#/field/form/FormAnswers.js'
+import type {FormDefinition} from '#/field/form/FormDefinition.js'
 import {
   type FormMailOut,
   formMails,
@@ -52,7 +42,11 @@ import {
   type FormValues,
   validateSubmission
 } from '#/field/form/FormSubmission.js'
-import {isFormType} from '#/field/form/FormType.js'
+import {
+  type FormSettings,
+  formSettings,
+  isFormType
+} from '#/field/form/FormType.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import {type FormLocation, fileInputs, loadForm} from './FormLoad.js'
 import {resolveFiles} from './FormUploads.js'
@@ -157,10 +151,13 @@ export async function submitForm(
   const store = submissionStore(api)
   const locale = entry.locale ?? null
   const text = translate(locale, forms.messages)
+  const settings = formSettings(type, data)
   const posted = new FormData()
   for (const [name, value] of request.data) posted.append(name, value)
   const sent = () =>
-    type && isFormType(type) ? afterSending(graph, data) : {ok: true as const}
+    type && isFormType(type)
+      ? afterSending(graph, data, locale)
+      : {ok: true as const}
   // Bots see what people see, so they can not tell they were caught
   if (isSpam(posted)) return sent()
   const now = Math.floor(Date.now() / 1000)
@@ -173,7 +170,7 @@ export async function submitForm(
     'submissions'
   )
   if (limited) return {ok: false, message: text(limited)}
-  const full = await fullMessage(store, request.entryId, data)
+  const full = await fullMessage(store, request.entryId, settings)
   if (full) return {ok: false, message: text(full)}
   const files = await resolveFiles(
     store,
@@ -188,14 +185,6 @@ export async function submitForm(
     messages: forms.messages
   })
   if (!result.ok) return {ok: false, errors: result.errors, codes: result.codes}
-  const repeated = await repeatedAnswers(
-    store,
-    request.entryId,
-    result.definition,
-    result.values
-  )
-  if (keys(repeated).length > 0)
-    return {ok: false, ...translateErrors(repeated, text)}
   const submission: Submission = {
     id: createId(),
     entryId: request.entryId,
@@ -208,20 +197,42 @@ export async function submitForm(
     notified: [],
     page: pageOf(posted.get(formPage))
   }
-  const keep = retentionOf(data)
-  await store.storeSubmission({
+  // Submissions sent before expire by the setting as it is now too
+  await store.retainSubmissions(request.entryId, settings.keep)
+  const repeated = await store.storeSubmission({
     ...submission,
     ...submissionIndex(result.definition, result.values),
+    unique: uniqueAnswers(result.definition, result.values),
     visitor,
-    expiresAt: keep === null ? null : now + keep
+    expiresAt: settings.keep === null ? null : now + settings.keep
   })
+  if (repeated.length > 0) {
+    const errors: FormProblems = {}
+    for (const key of repeated) errors[key] = {code: 'alreadySent'}
+    return {ok: false, ...translateErrors(errors, text)}
+  }
+  // Submissions sent at the same time all passed the check above, the one
+  // that took a place too many is refused after all
+  const over = await fullMessage(store, request.entryId, settings, 1)
+  if (over) {
+    await store.deleteSubmission(request.entryId, submission.id)
+    return {ok: false, message: text(over)}
+  }
   // Files of inputs the rules hid stay behind and are cleaned up later
   const submitted = submittedFiles(result.values)
-  await store.attachFormFiles(
+  const attached = await store.attachFormFiles(
     request.entryId,
     submission.id,
     submitted.map(file => file.id)
   )
+  // An upload sent twice at the same time goes to one submission
+  if (attached.length < submitted.length) {
+    await removeFiles(
+      forms,
+      await store.deleteSubmission(request.entryId, submission.id)
+    )
+    return {ok: false, message: text({code: 'uploadAgain'})}
+  }
   // Mails go out once the answers are kept, so none is sent for answers
   // that were lost
   if (type && isFormType(type)) {
@@ -267,7 +278,6 @@ export async function submitForm(
         submission.notified
       )
   }
-  await store.retainSubmissions(request.entryId, keep)
   await purgeSubmissions(store, forms, now)
   if (forms.onSubmit)
     try {
@@ -287,96 +297,63 @@ export async function formStatus(
   location: FormLocation,
   forms: FormsOptions = {}
 ): Promise<FormStatus> {
-  const {entry, data} = await loadForm(config, graph, location)
-  const full = await fullMessage(submissionStore(api), location.entryId, data)
+  const {entry, type, data} = await loadForm(config, graph, location)
+  const full = await fullMessage(
+    submissionStore(api),
+    location.entryId,
+    formSettings(type, data)
+  )
   if (!full) return {open: true}
   return {open: false, message: translate(entry.locale, forms.messages)(full)}
 }
 
 /**
- * The most submissions a form takes by its Most submissions setting, or null
- * when it takes any number
+ * What visitors see once a form took its most submissions, or `over` more
+ * than that
  */
-export function limitOf(data: Record<string, unknown>): number | null {
-  const limit = Number(data.limit)
-  return Number.isInteger(limit) && limit > 0 ? limit : null
-}
-
-/** What visitors see once a form took its most submissions */
 async function fullMessage(
   store: Required<SubmissionsApi>,
   entryId: string,
-  data: Record<string, unknown>
+  {limit, full}: FormSettings,
+  over = 0
 ): Promise<string | FormMessage | undefined> {
-  const limit = limitOf(data)
   if (limit === null) return undefined
   // Archived submissions count, deleted ones free their place
   const {total} = await store.listSubmissions(entryId, {
     status: 'all',
     limit: 1
   })
-  if (total < limit) return undefined
-  const full = typeof data.full === 'string' ? data.full.trim() : ''
+  if (total < limit + over) return undefined
   return full || {code: 'closed'}
 }
 
 /**
- * Errors for answers to unique inputs that an earlier submission sent, eg.
- * an email address that is on the waiting list. Inputs of repeatable
- * sections are not compared.
+ * The answers to unique inputs as they are compared, eg. an email address
+ * that is on the waiting list. Inputs of repeatable sections are not.
  */
-async function repeatedAnswers(
-  store: Required<SubmissionsApi>,
-  entryId: string,
+function uniqueAnswers(
   definition: FormDefinition,
   values: FormValues
-): Promise<FormProblems> {
-  const errors: FormProblems = {}
-  const unique = formColumns(definition).filter(
-    (column): column is FormInputData =>
-      column.control !== 'section' && column.unique === true
-  )
-  for (const input of unique) {
-    const value = values[input.key]
-    if (value === undefined) continue
-    // The search text holds answers as text, which narrows it down
-    const {submissions} = await store.listSubmissions(entryId, {
-      status: 'all',
-      search: answerText(input, value),
-      limit: 500
-    })
-    const same = submissions.some(
-      submission =>
-        comparable(submission.values[input.key]) === comparable(value)
-    )
-    if (same) errors[input.key] = {code: 'alreadySent'}
+): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const column of formColumns(definition)) {
+    if (column.control === 'section' || column.unique !== true) continue
+    const value = values[column.key]
+    if (value !== undefined)
+      result[column.key] = String(value ?? '')
+        .trim()
+        .toLowerCase()
   }
-  return errors
-}
-
-function comparable(value: unknown): string {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
+  return result
 }
 
 const hour = 60 * 60
-const day = 24 * hour
 
 type LimitKind = 'submissions' | 'uploads'
 
 /** What a form takes per hour, and one visitor of it */
 const formLimits = {submissions: 500, uploads: 1000}
 const visitorLimits = {submissions: 20, uploads: 50}
-
-/**
- * How long the submissions of a form are kept, in seconds, by its Keep
- * submissions setting, or null to keep them until they are deleted
- */
-export function retentionOf(data: Record<string, unknown>): number | null {
-  const days = Number(data.keep)
-  return days > 0 ? days * day : null
-}
 
 /**
  * Why a form takes no more submissions or files now: it took as many as it
@@ -389,17 +366,19 @@ export async function overLimit(
   visitor: string | null,
   kind: LimitKind
 ): Promise<FormMessage | undefined> {
-  if (forms.limits === false) return undefined
-  const limits: FormLimits = forms.limits ?? {}
+  if (forms.rateLimit === false) return undefined
+  const limits: FormRateLimit = forms.rateLimit ?? {}
   const since = Math.floor(Date.now() / 1000) - hour
-  const count = async (visitor?: string) => {
-    const recent = await store.recentActivity(entryId, since, visitor)
-    return kind === 'submissions' ? recent.submissions : recent.files
-  }
+  const recent = await store.recentActivity(
+    entryId,
+    since,
+    kind === 'submissions' ? 'submissions' : 'files',
+    visitor ?? undefined
+  )
   const perForm = limits[kind] ?? formLimits[kind]
-  if (perForm > 0 && (await count()) >= perForm) return {code: 'busy'}
+  if (perForm > 0 && recent.form >= perForm) return {code: 'busy'}
   const perVisitor = limits.perVisitor?.[kind] ?? visitorLimits[kind]
-  if (visitor && perVisitor > 0 && (await count(visitor)) >= perVisitor)
+  if (visitor && perVisitor > 0 && recent.visitor >= perVisitor)
     return {code: 'tooOften'}
   return undefined
 }
@@ -410,11 +389,7 @@ export async function visitorHash(
   visitor: string | undefined
 ): Promise<string | null> {
   if (!visitor) return null
-  const data = new TextEncoder().encode(`${secret}:${visitor}`)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return [...new Uint8Array(digest).slice(0, 16)]
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('')
+  return (await sha256(`${secret}:${visitor}`)).slice(0, 32)
 }
 
 /** Where the answers were sent from, without the query, which may be private */
@@ -447,12 +422,20 @@ export async function removeFiles(
   }
 }
 
-/** Removes expired submissions and uploads that were never submitted */
+const purgeEvery = 10 * 60
+let purgedAt = 0
+
+/**
+ * Removes expired submissions and uploads that were never submitted, once
+ * in a while: lists leave out those that expired meanwhile
+ */
 export async function purgeSubmissions(
   store: Required<SubmissionsApi>,
   forms: FormsOptions,
   now = Math.floor(Date.now() / 1000)
 ): Promise<void> {
+  if (now - purgedAt < purgeEvery) return
+  purgedAt = now
   await removeFiles(forms, await store.purgeSubmissions(now))
 }
 
@@ -551,7 +534,8 @@ async function sendMails(
 /** What a form made with `Form.type` does after it is sent */
 async function afterSending(
   graph: Graph,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  locale: string | null
 ): Promise<FormResult> {
   const message = typeof data.message === 'string' ? data.message.trim() : ''
   if (data.after !== 'page')
@@ -561,7 +545,8 @@ async function afterSending(
   const url = await graph.first({
     id: page,
     select: Entry.url,
-    status: 'published'
+    status: 'published',
+    preferredLocale: locale ?? undefined
   })
   return url ? {ok: true, redirect: url} : {ok: true}
 }

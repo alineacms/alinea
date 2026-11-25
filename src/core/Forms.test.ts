@@ -1,5 +1,5 @@
 import {expect, spyOn, test} from 'bun:test'
-import {uploadFile} from './Forms.js'
+import {type FormsClient, formsOf, uploadFile} from './Forms.js'
 
 const file = new Blob(['%PDF-1.4'], {type: 'application/pdf'})
 const ticket = {url: 'https://example.com/api?token=x', method: 'PUT'} as const
@@ -62,4 +62,14 @@ test('an upload the browser could not send shows an error', async () => {
     message: 'Het bestand kon niet worden geüpload',
     logged: 1
   })
+})
+
+test('submit makes its own messages in the texts it is given', async () => {
+  const forms = formsOf(async () => ({}) as FormsClient)
+  const result = await forms.submit('form', new FormData(), {
+    locale: 'nl',
+    verify: () => false,
+    messages: {nl: {notVerified: 'Probeer het opnieuw'}}
+  })
+  expect(result).toEqual({ok: false, message: 'Probeer het opnieuw'})
 })

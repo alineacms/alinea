@@ -12,7 +12,11 @@ import {createId} from '#/core/Id.js'
 import {sign, verify} from '#/core/util/JWT.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {type FormInputData, nameKey} from '#/field/form/FormDefinition.js'
-import {contentProblem, isAccepted} from '#/field/form/FormFileTypes.js'
+import {
+  contentProblem,
+  fileType,
+  isAccepted
+} from '#/field/form/FormFileTypes.js'
 import {
   type FormMessage,
   type FormProblems,
@@ -121,7 +125,8 @@ export async function prepareUpload(
     id: createId(),
     name: request.name,
     size: request.size,
-    type: request.type
+    // By its name, mails attach it as this type
+    type: fileType(request.name)
   }
   const token = await sign(
     {...ticket, iat: issuedAt, exp: issuedAt + ticketLifetime},
@@ -163,6 +168,19 @@ export async function receiveUpload(
   const fail = (status: number, message: string | FormMessage) =>
     Response.json({error: text(message)}, {status, headers: uploadCors})
   if (!ticket) return fail(401, {code: 'uploadAgain'})
+  if (!api.storeFormFile)
+    return fail(501, 'Configure a database to store submissions')
+  const store = submissionStore(api)
+  // Tickets were given within the limits, a script that collected many is
+  // stopped as it uploads them
+  const limited = await overLimit(
+    store,
+    forms,
+    ticket.entryId,
+    ticket.visitor,
+    'uploads'
+  )
+  if (limited) return fail(429, limited)
   const length = Number(request.headers.get('content-length'))
   if (length > ticket.size) return fail(413, {code: 'uploadFailed'})
   const content = await readBody(request, ticket.size)
@@ -171,13 +189,10 @@ export async function receiveUpload(
     return fail(400, {code: 'uploadFailed'})
   const problem = contentProblem(ticket, content)
   if (problem) return fail(415, problem)
-  const {storeFormFile, formFiles} = api
-  if (!storeFormFile || !formFiles)
-    return fail(501, 'Configure a database to store submissions')
   // The row is stored first so a ticket that is sent again is refused before
   // it overwrites the bytes in forms.files
   try {
-    await storeFormFile.call(api, {
+    await store.storeFormFile({
       id: ticket.id,
       entryId: ticket.entryId,
       input: ticket.input,
@@ -190,7 +205,7 @@ export async function receiveUpload(
       createdAt: Math.floor(Date.now() / 1000)
     })
   } catch (error) {
-    const [stored] = await formFiles.call(api, ticket.entryId, [ticket.id])
+    const [stored] = await store.formFiles(ticket.entryId, [ticket.id])
     if (stored) return fail(409, {code: 'uploadAgain'})
     throw error
   }

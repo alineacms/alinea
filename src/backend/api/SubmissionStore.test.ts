@@ -66,7 +66,65 @@ test('submissions are found by status, time, choice and text', async () => {
     'Bo'
   ])
   expect(await ids({search: 'REPAIR'})).toEqual(['Ann'])
-  expect(await ids({search: '%'})).toEqual(['Bo', 'Ann'])
+  expect(await ids({search: '%'})).toEqual([])
+})
+
+test('wildcards in a search are matched as they are', async () => {
+  const store = createStore()
+  await store.storeSubmission(submission('a', 1, {search: 'john_doe@x.com'}))
+  await store.storeSubmission(submission('b', 2, {search: 'johnxdoe@x.com'}))
+  await store.storeSubmission(
+    submission('c', 3, {choices: '|size=100%|', search: '50!'})
+  )
+  const ids = async (query: object) =>
+    (await store.listSubmissions('form', query)).submissions.map(s => s.id)
+  expect(await ids({search: 'john_doe'})).toEqual(['a'])
+  expect(await ids({search: '50!'})).toEqual(['c'])
+  expect(await ids({choice: {key: 'size', value: '100%'}})).toEqual(['c'])
+  expect(await ids({choice: {key: 'size', value: '1%'}})).toEqual([])
+})
+
+test('a unique answer is stored once', async () => {
+  const store = createStore()
+  const email = {unique: {email: 'john_doe@x.com'}}
+  expect(await store.storeSubmission(submission('a', 1, email))).toEqual([])
+  expect(await store.storeSubmission(submission('b', 2, email))).toEqual([
+    'email'
+  ])
+  expect(
+    await store.storeSubmission(
+      submission('c', 3, {unique: {email: 'johnxdoe@x.com'}})
+    )
+  ).toEqual([])
+  expect((await store.listSubmissions('form')).total).toBe(2)
+  // Deleting the submission frees its answer
+  await store.deleteSubmission('form', 'a')
+  expect(await store.storeSubmission(submission('d', 4, email))).toEqual([])
+})
+
+test('a file is attached to one submission', async () => {
+  const store = createStore()
+  await store.storeFormFile({
+    id: 'file',
+    entryId: 'form',
+    submissionId: null,
+    input: 'cv',
+    name: 'cv.pdf',
+    type: 'application/pdf',
+    size: 1,
+    content: null,
+    visitor: null,
+    createdAt: 1
+  })
+  expect(await store.attachFormFiles('form', 'a', ['file'])).toEqual(['file'])
+  expect(await store.attachFormFiles('form', 'b', ['file'])).toEqual([])
+})
+
+test('expired submissions are not listed before they are purged', async () => {
+  const store = createStore()
+  await store.storeSubmission(submission('old', 1, {expiresAt: 10}))
+  await store.storeSubmission(submission('kept', 2))
+  expect((await store.listSubmissions('form')).total).toBe(1)
 })
 
 test('expired submissions and their files are purged', async () => {
@@ -106,28 +164,32 @@ test('what a form or one visitor sent within a time is counted', async () => {
   await store.storeSubmission(submission('a', 100, {visitor: 'v'}))
   await store.storeSubmission(submission('b', 200, {visitor: 'v'}))
   await store.storeSubmission(submission('c', 200, {visitor: 'w'}))
-  expect(await store.recentActivity('form', 150, 'v')).toEqual({
-    submissions: 1,
-    files: 0
+  expect(await store.recentActivity('form', 150, 'submissions', 'v')).toEqual({
+    form: 2,
+    visitor: 1
   })
-  // Without a visitor, all the form took
-  expect(await store.recentActivity('form', 150)).toEqual({
-    submissions: 2,
-    files: 0
+  expect(await store.recentActivity('form', 150, 'files', 'v')).toEqual({
+    form: 0,
+    visitor: 0
+  })
+  expect(await store.recentActivity('form', 150, 'submissions')).toEqual({
+    form: 2,
+    visitor: 0
   })
 })
 
 test('a retention set later applies to submissions sent before', async () => {
   const store = createStore()
-  await store.storeSubmission(submission('old', 100))
-  await store.storeSubmission(submission('new', 1000))
+  const now = Math.floor(Date.now() / 1000)
+  await store.storeSubmission(submission('old', now - 1000))
+  await store.storeSubmission(submission('new', now))
   await store.retainSubmissions('form', 500)
-  await store.purgeSubmissions(700)
+  await store.purgeSubmissions(now)
   const {submissions} = await store.listSubmissions('form')
   expect(submissions.map(s => s.id)).toEqual(['new'])
   // Keeping them until deleted again clears when they expire
   await store.retainSubmissions('form', null)
-  await store.purgeSubmissions(10_000)
+  await store.purgeSubmissions(now + 10_000)
   expect((await store.listSubmissions('form')).total).toBe(1)
 })
 

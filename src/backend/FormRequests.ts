@@ -8,6 +8,7 @@ import type {FormsOptions} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {Permission} from '#/core/Role.js'
+import {formSettings} from '#/field/form/FormType.js'
 import {
   fileKey,
   formStatus,
@@ -15,7 +16,6 @@ import {
   parseSubmitRequest,
   purgeSubmissions,
   removeFiles,
-  retentionOf,
   submissionStore,
   submitForm
 } from './FormSubmit.js'
@@ -26,6 +26,11 @@ import {
   uploadCors
 } from './FormUploads.js'
 import {HandleAction} from './HandleAction.js'
+
+function expectJson(request: Request) {
+  if (!request.headers.get('content-type')?.includes('application/json'))
+    throw new HttpError(400, 'Expected JSON')
+}
 
 /** The store of forms.database, when it is set */
 export function databaseStore(
@@ -174,17 +179,17 @@ export async function handleFormRequest(
     const store = submissionStore(api)
     if (request.method === 'GET') {
       await authorize(entryId, Permission.Read)
-      // The form keeps its submissions as long as it says now, and those
-      // that expired are gone before the list is read
-      const data = await graph.first({
+      // The form keeps its submissions as long as it says now
+      const entry = await graph.first({
         id: entryId,
         status: 'preferPublished',
-        select: Entry.data
+        select: {type: Entry.type, data: Entry.data}
       })
-      await store.retainSubmissions(
-        entryId,
-        retentionOf((data ?? {}) as Record<string, unknown>)
-      )
+      if (entry)
+        await store.retainSubmissions(
+          entryId,
+          formSettings(config.schema[entry.type], entry.data).keep
+        )
       await purgeSubmissions(store, forms)
       const query = url.searchParams.get('query')
       return Response.json(
@@ -195,6 +200,8 @@ export async function handleFormRequest(
       )
     }
     const id = param('id')
+    // Browsers ask before they send json to another site, a form can not
+    expectJson(request)
     if (request.method === 'DELETE') {
       await authorize(entryId, Permission.Delete)
       await removeFiles(forms, await store.deleteSubmission(entryId, id))

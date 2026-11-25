@@ -11,6 +11,7 @@ import type {
 import PLazy from 'p-lazy'
 import {
   type Database,
+  type HasSql,
   and,
   count,
   desc,
@@ -18,15 +19,18 @@ import {
   gte,
   inArray,
   index,
+  isNotNull,
   isNull,
-  like,
   lt,
   ne,
   or,
   sql,
-  table
+  table,
+  uniqueIndex
 } from 'rado'
 import * as column from 'rado/universal/columns'
+import {sha256} from '#/core/util/ContentHash.js'
+import {entries} from '#/core/util/Objects.js'
 import {choiceText} from '#/field/form/FormAnswers.js'
 import {optionalLargeBlob} from './DatabaseApi.js'
 
@@ -92,7 +96,26 @@ const FileTable = table(
   ]
 )
 
-const tables = [VersionTable, SubmissionTable, FileTable]
+/** The answers to unique inputs, a form takes each of them once */
+const AnswerTable = table(
+  'alinea_submission_answer',
+  {
+    entryId: column.varchar(undefined, {length: 27}).notNull(),
+    // A hash of the input and its answer, which keeps the index short
+    answer: column.varchar(undefined, {length: 64}).notNull(),
+    input: column.text().notNull(),
+    submissionId: column.varchar(undefined, {length: 27}).notNull()
+  },
+  row => [
+    uniqueIndex('alinea_submission_answer_by_entry').on(
+      row.entryId,
+      row.answer
+    ),
+    index('alinea_submission_answer_by_submission').on(row.submissionId)
+  ]
+)
+
+const tables = [VersionTable, SubmissionTable, FileTable, AnswerTable]
 
 /** Files that were uploaded but not submitted are removed after this long */
 const pendingFor = 24 * 60 * 60
@@ -113,10 +136,38 @@ export class SubmissionStore implements SubmissionsApi {
 
   async storeSubmission({
     definition,
+    unique = {},
     ...submission
-  }: StoredSubmission): Promise<void> {
+  }: StoredSubmission): Promise<Array<string>> {
     const db = await this.#db
-    const version = await definitionHash(submission.entryId, definition)
+    const {id, entryId} = submission
+    const answers = await Promise.all(
+      entries(unique).map(async ([input, value]) => ({
+        entryId,
+        answer: await sha256(`${input}:${value}`),
+        input,
+        submissionId: id
+      }))
+    )
+    const sent = async () => {
+      if (answers.length === 0) return []
+      const rows = await db
+        .select(AnswerTable.input)
+        .from(AnswerTable)
+        .where(
+          and(
+            eq(AnswerTable.entryId, entryId),
+            inArray(
+              AnswerTable.answer,
+              answers.map(row => row.answer)
+            )
+          )
+        )
+      return [...new Set(rows)]
+    }
+    const before = await sent()
+    if (before.length > 0) return before
+    const version = await sha256(`${entryId}:${JSON.stringify(definition)}`)
     const [known] = await db
       .select(VersionTable.id)
       .from(VersionTable)
@@ -130,6 +181,17 @@ export class SubmissionStore implements SubmissionsApi {
         // Another submission of this version stored it meanwhile
       }
     await db.insert(SubmissionTable).values({...submission, version})
+    if (answers.length === 0) return []
+    // The index refuses an answer another submission stored meanwhile
+    try {
+      await db.insert(AnswerTable).values(answers)
+      return []
+    } catch (error) {
+      await db.delete(SubmissionTable).where(eq(SubmissionTable.id, id))
+      const meanwhile = await sent()
+      if (meanwhile.length > 0) return meanwhile
+      throw error
+    }
   }
 
   async listSubmissions(
@@ -148,14 +210,19 @@ export class SubmissionStore implements SubmissionsApi {
       query.until !== undefined
         ? lt(SubmissionTable.createdAt, query.until)
         : undefined,
+      // Those that expired are gone, also before they are purged
+      or(
+        isNull(SubmissionTable.expiresAt),
+        gte(SubmissionTable.expiresAt, Math.floor(Date.now() / 1000))
+      ),
       query.choice
-        ? like(
+        ? contains(
             SubmissionTable.choices,
-            `%${choiceText(query.choice.key, query.choice.value)}%`
+            choiceText(query.choice.key, query.choice.value)
           )
         : undefined,
       query.search?.trim()
-        ? like(SubmissionTable.search, `%${searchPattern(query.search)}%`)
+        ? contains(SubmissionTable.search, query.search.trim().toLowerCase())
         : undefined
     )
     const limit = Math.min(Math.max(query.limit ?? pageSize, 1), maxPageSize)
@@ -218,15 +285,22 @@ export class SubmissionStore implements SubmissionsApi {
     seconds: number | null
   ): Promise<void> {
     const db = await this.#db
+    const row = SubmissionTable
+    const expiresAt =
+      seconds === null ? null : sql<number>`${row.createdAt} + ${seconds}`
+    // Only rows that expire otherwise, so nothing is written until the form
+    // keeps its submissions for another time
     await db
-      .update(SubmissionTable)
-      .set({
-        expiresAt:
-          seconds === null
-            ? null
-            : sql<number>`${SubmissionTable.createdAt} + ${seconds}`
-      })
-      .where(eq(SubmissionTable.entryId, entryId))
+      .update(row)
+      .set({expiresAt})
+      .where(
+        and(
+          eq(row.entryId, entryId),
+          expiresAt === null
+            ? isNotNull(row.expiresAt)
+            : or(isNull(row.expiresAt), ne(row.expiresAt, expiresAt))
+        )
+      )
   }
 
   async deleteSubmission(
@@ -240,6 +314,14 @@ export class SubmissionStore implements SubmissionsApi {
     )
     const kept = await keptOutside(db, files)
     await db.delete(FileTable).where(files)
+    await db
+      .delete(AnswerTable)
+      .where(
+        and(
+          eq(AnswerTable.entryId, entryId),
+          id === undefined ? undefined : eq(AnswerTable.submissionId, id)
+        )
+      )
     await db
       .delete(SubmissionTable)
       .where(
@@ -268,6 +350,9 @@ export class SubmissionStore implements SubmissionsApi {
     )
     const kept = await keptOutside(db, files)
     await db.delete(FileTable).where(files)
+    await db
+      .delete(AnswerTable)
+      .where(inArray(AnswerTable.submissionId, expired))
     await db.delete(SubmissionTable).where(lt(SubmissionTable.expiresAt, now))
     return kept
   }
@@ -275,38 +360,21 @@ export class SubmissionStore implements SubmissionsApi {
   async recentActivity(
     entryId: string,
     since: number,
+    kind: 'submissions' | 'files',
     visitor?: string
-  ): Promise<{submissions: number; files: number}> {
+  ): Promise<{form: number; visitor: number}> {
     const db = await this.#db
-    const [[submissions], [files]] = await Promise.all([
-      db
-        .select({count: count()})
-        .from(SubmissionTable)
-        .where(
-          and(
-            eq(SubmissionTable.entryId, entryId),
-            gte(SubmissionTable.createdAt, since),
-            visitor === undefined
-              ? undefined
-              : eq(SubmissionTable.visitor, visitor)
-          )
-        ),
-      db
-        .select({count: count()})
-        .from(FileTable)
-        .where(
-          and(
-            eq(FileTable.entryId, entryId),
-            gte(FileTable.createdAt, since),
-            visitor === undefined ? undefined : eq(FileTable.visitor, visitor)
-          )
-        )
-    ])
-    return {
-      submissions: Number(submissions.count),
-      files: Number(files.count)
-    }
+    const row = kind === 'submissions' ? SubmissionTable : FileTable
+    const [counts] = await db
+      .select({
+        form: count(),
+        visitor: sql<number>`sum(case when ${row.visitor} = ${visitor ?? null} then 1 else 0 end)`
+      })
+      .from(row)
+      .where(and(eq(row.entryId, entryId), gte(row.createdAt, since)))
+    return {form: Number(counts.form), visitor: Number(counts.visitor ?? 0)}
   }
+
   async storeFormFile(file: StoredFormFile): Promise<void> {
     const db = await this.#db
     await db.insert(FileTable).values(file)
@@ -329,19 +397,23 @@ export class SubmissionStore implements SubmissionsApi {
     entryId: string,
     submissionId: string,
     ids: Array<string>
-  ): Promise<void> {
-    if (ids.length === 0) return
+  ): Promise<Array<string>> {
+    if (ids.length === 0) return []
     const db = await this.#db
+    const files = and(
+      eq(FileTable.entryId, entryId),
+      inArray(FileTable.id, ids)
+    )
+    // Only a file no submission has yet, so one sent twice at once goes to
+    // one of them
     await db
       .update(FileTable)
       .set({submissionId})
-      .where(
-        and(
-          eq(FileTable.entryId, entryId),
-          inArray(FileTable.id, ids),
-          isNull(FileTable.submissionId)
-        )
-      )
+      .where(and(files, isNull(FileTable.submissionId)))
+    return db
+      .select(FileTable.id)
+      .from(FileTable)
+      .where(and(files, eq(FileTable.submissionId, submissionId)))
   }
 
   async readFormFile(
@@ -357,12 +429,10 @@ export class SubmissionStore implements SubmissionsApi {
   }
 }
 
-/** Search text as it is matched, the wildcards of like are left out */
-function searchPattern(search: string): string {
-  return search
-    .trim()
-    .toLowerCase()
-    .replace(/[%_\\]/g, '')
+/** A text column that contains the text, its wildcards matched as they are */
+function contains(column: HasSql<string>, text: string): HasSql<boolean> {
+  const pattern = `%${text.replace(/[!%_]/g, '!$&')}%`
+  return sql<boolean>`${column} like ${pattern} escape '!'`
 }
 
 function statusCondition(status: NonNullable<SubmissionQuery['status']>) {
@@ -380,19 +450,6 @@ async function keptOutside(
     .select({entryId: FileTable.entryId, id: FileTable.id})
     .from(FileTable)
     .where(and(where, isNull(FileTable.content)))
-}
-
-async function definitionHash(
-  entryId: string,
-  definition: unknown
-): Promise<string> {
-  const data = new TextEncoder().encode(
-    `${entryId}:${JSON.stringify(definition)}`
-  )
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return [...new Uint8Array(digest)]
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('')
 }
 
 function prepare(db: Database): Promise<Database> {

@@ -129,7 +129,7 @@ test('an uploaded file is stored with the submission', async () => {
     id: file.id,
     name: 'error.png',
     size: png.length,
-    type: ''
+    type: 'image/png'
   })
   const saved = await store.readFormFile(entryId, file.id)
   expect(saved?.submissionId).toBe(stored.id)
@@ -259,6 +259,35 @@ test('a ticket uploads one file', async () => {
     error: 'Upload the file again'
   })
   expect([...kept.values()].map(content => content[8])).toEqual([1])
+})
+
+test('tickets collected beforehand are limited as they are uploaded', async () => {
+  const {prepare, upload} = await setup({rateLimit: {uploads: 2}})
+  const tickets = Array<PrepareUploadResult>()
+  for (let index = 0; index < 3; index++)
+    tickets.push(await prepare(`shot${index}.png`, png.length))
+  const urls = tickets.map(ticket => (ticket.ok ? ticket.url : ''))
+  expect(urls.every(Boolean)).toBe(true)
+  expect((await upload(urls[0], png)).status).toBe(204)
+  expect((await upload(urls[1], png)).status).toBe(204)
+  expect(await upload(urls[2], png)).toEqual({
+    status: 429,
+    error: 'This form takes no more answers right now, try again later'
+  })
+})
+
+test('an upload sent with two submissions at once goes to one', async () => {
+  const {entryId, store, prepare, upload, submit} = await setup()
+  const ticket = await prepare('error.png', png.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  await upload(ticket.url, png)
+  const answers: Array<[string, string]> = [
+    ['name', 'Ann'],
+    ['screenshot', ticket.token]
+  ]
+  const results = await Promise.all([submit(answers), submit(answers)])
+  expect(results.filter(result => result.ok)).toHaveLength(1)
+  expect((await store.listSubmissions(entryId)).total).toBe(1)
 })
 
 test('a body without a length stops once it is larger than said', async () => {

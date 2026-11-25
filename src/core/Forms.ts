@@ -64,7 +64,7 @@ export interface FormFileStorage {
 }
 
 /** How often a visitor may send to one form, per hour */
-export interface FormLimits {
+export interface FormRateLimit {
   /** Submissions one form takes per hour, 500 by default */
   submissions?: number
   /** Files one form takes per hour, 1000 by default */
@@ -95,10 +95,10 @@ export interface FormsOptions {
    */
   onSubmit?(event: FormSubmitEvent): unknown | Promise<unknown>
   /**
-   * Limits how often one visitor sends to a form, by the `visitor` the site
+   * Limits how often a form and one visitor send, by the `visitor` the site
    * passes to `cms.forms.submit`. Set to false to not limit.
    */
-  limits?: FormLimits | false
+  rateLimit?: FormRateLimit | false
   /**
    * Texts for the messages visitors see, by locale and code, which replace
    * those of alinea (en, nl, fr and de) or add a language, eg.
@@ -119,10 +119,16 @@ export interface FormSubmitOptions {
   verify?(): boolean | Promise<boolean>
   /**
    * Who sends it, to limit how often one visitor sends, see
-   * `forms.limits.perVisitor`: anything that identifies them on your site,
-   * eg. the id of their session. The handler only keeps a hash of it.
+   * `forms.rateLimit.perVisitor`: anything that identifies them on your
+   * site, eg. the id of their session. The handler only keeps a hash of it.
    */
   visitor?: string
+  /**
+   * Texts for the messages `submit` makes itself, before the answers reach
+   * the handler, eg. when `verify` fails or a file could not be uploaded.
+   * Pass the `forms.messages` of `createHandler`, which make the others.
+   */
+  messages?: FormLocaleMessages
 }
 
 /** A file a visitor is about to upload to a file input of a form */
@@ -152,7 +158,7 @@ export interface Forms {
   prepareUpload(
     entryId: string,
     file: FormUploadFile,
-    options?: Omit<FormSubmitOptions, 'verify'>
+    options?: Omit<FormSubmitOptions, 'verify' | 'messages'>
   ): Promise<PrepareUploadResult>
   /**
    * Whether a form still takes answers, eg. not once it took its most
@@ -174,7 +180,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
   async function prepareUpload(
     entryId: string,
     file: FormUploadFile,
-    options: Omit<FormSubmitOptions, 'verify'> = {}
+    options: Omit<FormSubmitOptions, 'verify' | 'messages'> = {}
   ) {
     return (await client()).prepareFormUpload({
       entryId,
@@ -194,7 +200,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
       })
     },
     async submit(entryId, data, options = {}) {
-      const text = translate(options.locale)
+      const text = translate(options.locale, options.messages)
       if (options.verify && !(await options.verify()))
         return {ok: false, message: text({code: 'notVerified'})}
       const entries = Array<[string, string]>()
@@ -215,7 +221,12 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
           errors[key] = ticket.message
           continue
         }
-        const error = await uploadFile(ticket, value, options.locale)
+        const error = await uploadFile(
+          ticket,
+          value,
+          options.locale,
+          options.messages
+        )
         if (error) errors[key] = error
         else entries.push([key, ticket.token])
       }
@@ -239,11 +250,12 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
 export async function uploadFile(
   ticket: {url: string; method: 'PUT'},
   file: Blob,
-  locale?: string | null
+  locale?: string | null,
+  messages?: FormLocaleMessages
 ): Promise<string | undefined> {
   const failed = (problem: string, ...details: Array<unknown>) => {
     console.error(`Alinea could not upload a file: ${problem}`, ...details)
-    return translate(locale)({code: 'uploadFailed'})
+    return translate(locale, messages)({code: 'uploadFailed'})
   }
   let response: Response
   try {

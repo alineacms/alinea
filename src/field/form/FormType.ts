@@ -2,11 +2,11 @@ import {track} from '#/core/Tracker.js'
 import {
   type FieldsDefinition,
   type TabFields,
-  type Type,
+  Type,
   type TypeConfig,
   type
 } from '#/core/Type.js'
-import {values} from '#/core/util/Objects.js'
+import {entries, values} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {
   IcOutlineTableRows,
@@ -233,45 +233,97 @@ export function submissionsTab(label = 'Submissions') {
   })
 }
 
+type FormSetting = 'keep' | 'limit' | 'full'
+
+const settingFields = new WeakMap<object, FormSetting>()
+
+function setting<F extends object>(name: FormSetting, field: F): F {
+  settingFields.set(field, name)
+  return field
+}
+
+export interface FormSettings {
+  /** How long submissions are kept, in seconds, or null until deleted */
+  keep: number | null
+  /** The most submissions the form takes, or null for any number */
+  limit: number | null
+  /** What visitors see once it took its most */
+  full: string
+}
+
+const day = 24 * 60 * 60
+
+/**
+ * The settings of a form entry, read from the fields made with `Form.keep`
+ * and `Form.limits` only: another field named `keep` is not one of them
+ */
+export function formSettings(
+  type: Type | undefined,
+  data: Record<string, unknown>
+): FormSettings {
+  const found: Partial<Record<FormSetting, unknown>> = {}
+  if (type)
+    for (const [key, field] of entries(Type.fields(type))) {
+      const name = settingFields.get(field)
+      if (name) found[name] = data[key]
+    }
+  const days = Number(found.keep)
+  const limit = Number(found.limit)
+  return {
+    keep: days > 0 ? days * day : null,
+    limit: Number.isInteger(limit) && limit > 0 ? limit : null,
+    full: typeof found.full === 'string' ? found.full.trim() : ''
+  }
+}
+
 /**
  * How long submissions are kept, in days, for the privacy of visitors. Add
- * it under the key `keep` to a type that holds a form with `Field.form`.
+ * it to a type that holds a form with `Field.form`.
  */
 export function keepFor() {
-  return select('Keep submissions', {
-    options: {
-      '30': 'For 30 days',
-      '90': 'For 90 days',
-      '365': 'For a year',
-      '730': 'For two years'
-    },
-    placeholder: 'Until they are deleted',
-    help: 'Older submissions and their files are removed',
-    // The submissions of every language are kept alike
-    shared: true
-  })
+  return setting(
+    'keep',
+    select('Keep submissions', {
+      options: {
+        '30': 'For 30 days',
+        '90': 'For 90 days',
+        '365': 'For a year',
+        '730': 'For two years'
+      },
+      placeholder: 'Until they are deleted',
+      help: 'Older submissions and their files are removed',
+      // The submissions of every language are kept alike
+      shared: true
+    })
+  )
 }
 
 /**
  * How many submissions a form takes, eg. the places on a waiting list, and
- * what visitors see once it is full. Spread them under the keys `limit` and
- * `full` into a type that holds a form with `Field.form`.
+ * what visitors see once it is full. Spread them into a type that holds a
+ * form with `Field.form`.
  */
 export function limitFields() {
-  const limit = number('Most submissions', {
-    minValue: 1,
-    // The places are those of all languages together
-    shared: true,
-    help: 'The form closes once this many were sent, eg. the places on a waiting list'
-  })
+  const limit = setting(
+    'limit',
+    number('Most submissions', {
+      minValue: 1,
+      // The places are those of all languages together
+      shared: true,
+      help: 'The form closes once this many were sent, eg. the places on a waiting list'
+    })
+  )
   return {
     limit,
-    full: track.options(
-      text('Message when full', {
-        multiline: true,
-        help: 'Shown instead of the form once it is full'
-      }),
-      get => ({hidden: !get(limit)})
+    full: setting(
+      'full',
+      track.options(
+        text('Message when full', {
+          multiline: true,
+          help: 'Shown instead of the form once it is full'
+        }),
+        get => ({hidden: !get(limit)})
+      )
     )
   }
 }

@@ -20,6 +20,25 @@ const Contact = Config.document('Contact', {
 
 const ServiceForm = Form.type('Request', {inputs: Form.defaults})
 
+// Fields named like the settings of a form that are not its settings
+const Named = Config.document('Named', {
+  fields: {
+    inputs: Field.form('Inputs', {inputs: Form.defaults}),
+    keep: Field.text('Keep'),
+    limit: Field.number('Limit')
+  }
+})
+
+const Kept = Config.document('Kept', {
+  fields: {
+    inputs: Field.form('Inputs', {inputs: Form.defaults}),
+    retention: Form.keep(),
+    ...Form.limits()
+  }
+})
+
+const Page = Config.document('Page', {fields: {}})
+
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {forms: Config.root('Forms')}
@@ -36,7 +55,7 @@ const rows = [
 ]
 
 interface SetupOptions {
-  form?: typeof Contact | typeof ServiceForm
+  form?: Type
   set?: Record<string, unknown>
   forms?: FormsOptions
   /** Places the form in a root with languages, in this one */
@@ -50,7 +69,7 @@ async function setup({
   locale
 }: SetupOptions = {}) {
   const cms = createCMS({
-    schema: {Contact, ServiceForm},
+    schema: {Contact, ServiceForm, Named, Kept, Page},
     workspaces: {main: locale ? translated : main}
   })
   const db = new LocalDB(cms.config)
@@ -95,7 +114,7 @@ async function setup({
     )
     return {status: response.status, body: await response.json()}
   }
-  return {entryId, store, submit, handle}
+  return {entryId, db, store, submit, handle}
 }
 
 const context: RequestContext = {
@@ -276,7 +295,7 @@ test('mails go out through the mailer and are noted on the submission', async ()
 
 test('a visitor the site names is limited, and so is the form', async () => {
   const {submit} = await setup({
-    forms: {limits: {submissions: 4, perVisitor: {submissions: 2}}}
+    forms: {rateLimit: {submissions: 4, perVisitor: {submissions: 2}}}
   })
   const answers = {name: 'Ann', email: 'ann@example.com'}
   expect((await submit(answers, 'test', 'session-a')).body).toEqual({ok: true})
@@ -423,6 +442,93 @@ test('a unique input takes each answer once', async () => {
   expect(
     (await submit({name: 'Ann', email: 'other@example.com'})).body.ok
   ).toBe(true)
+})
+
+test('a unique answer is compared as it is, wildcards and all', async () => {
+  const unique = [rows[0], {...rows[1], unique: true}]
+  const {submit} = await setup({set: {title: 'Contact', inputs: unique}})
+  const send = (email: string) => submit({name: 'Ann', email})
+  expect((await send('john_doe@x.com')).body.ok).toBe(true)
+  expect((await send('johnxdoe@x.com')).body.ok).toBe(true)
+  expect((await send('john_doe@x.com')).body.codes).toEqual({
+    email: 'alreadySent'
+  })
+})
+
+test('answers sent at the same time pass the checks one at a time', async () => {
+  const unique = [rows[0], {...rows[1], unique: true}]
+  const once = await setup({set: {title: 'Contact', inputs: unique}})
+  const ann = {name: 'Ann', email: 'ann@example.com'}
+  const both = await Promise.all([once.submit(ann), once.submit(ann)])
+  expect(both.map(result => result.body.ok).sort()).toEqual([false, true])
+  const full = await setup({
+    form: ServiceForm,
+    set: {title: 'Waiting list', inputs: rows, limit: 1}
+  })
+  await Promise.all([full.submit(ann), full.submit(ann), full.submit(ann)])
+  expect((await full.store.listSubmissions(full.entryId)).total).toBe(1)
+})
+
+test('settings are read from the fields of Form.keep and Form.limits', async () => {
+  const later = Date.now() / 1000 + 31 * 24 * 60 * 60
+  const ann = {name: 'Ann', email: 'ann@example.com'}
+  const named = await setup({
+    form: Named,
+    set: {title: 'Named', inputs: rows, keep: '30', limit: 1}
+  })
+  expect((await named.submit(ann)).body.ok).toBe(true)
+  expect((await named.submit(ann)).body.ok).toBe(true)
+  await named.store.purgeSubmissions(later)
+  expect((await named.store.listSubmissions(named.entryId)).total).toBe(2)
+  const kept = await setup({
+    form: Kept,
+    set: {title: 'Kept', inputs: rows, retention: '30', limit: 1}
+  })
+  expect((await kept.submit(ann)).body.ok).toBe(true)
+  expect((await kept.submit(ann)).body.ok).toBe(false)
+  await kept.store.purgeSubmissions(later)
+  expect((await kept.store.listSubmissions(kept.entryId)).total).toBe(0)
+})
+
+test('a form goes to the page in its own language', async () => {
+  const {db, submit} = await setup({
+    form: ServiceForm,
+    locale: 'nl',
+    set: {title: 'Aanvraag', inputs: rows, after: 'page'}
+  })
+  for (const locale of ['en', 'nl'])
+    await db.create({
+      type: Page,
+      id: 'thanks',
+      locale,
+      set: {title: 'Thanks', path: `thanks-${locale}`}
+    })
+  const formId = (await db.first({select: Entry.id, type: ServiceForm}))!
+  await db.update({
+    id: formId,
+    locale: 'nl',
+    set: {page: {_id: 'link', _type: 'entry', _entry: 'thanks'}} as never
+  })
+  const result = await submit({name: 'Ann', email: 'ann@example.com'})
+  expect(result.body).toEqual({ok: true, redirect: '/nl/thanks-nl'})
+})
+
+test('editors change submissions with json only', async () => {
+  const {entryId, store, submit, handle} = await setup()
+  await submit({name: 'Ann', email: 'ann@example.com'})
+  const [{id}] = (await store.listSubmissions(entryId)).submissions
+  const response = await handle(
+    new Request(
+      `http://localhost/api?action=submissions&entryId=${entryId}&id=${id}`,
+      {
+        method: 'POST',
+        headers: {'content-type': 'text/plain', authorization: 'Bearer test'},
+        body: JSON.stringify({status: 'archived'})
+      }
+    ),
+    context
+  )
+  expect(response.status).toBe(400)
 })
 
 test('submissions are listed by the language they were sent in', async () => {

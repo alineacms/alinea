@@ -59,3 +59,39 @@ test('a shared form loads with the texts of another language', async () => {
   const [sent] = data.mails as Array<{subject: string; body: string}>
   expect([sent.subject, sent.body]).toEqual(['Hallo', 'Hi'])
 })
+
+test('a form asked for without a locale is that of the default locale', async () => {
+  const FormEntry = Form.type('Form', {inputs: Form.defaults})
+  const cms = createCMS({
+    schema: {FormEntry},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          forms: Config.root('Forms', {
+            contains: ['FormEntry'],
+            i18n: {locales: ['en', 'nl']}
+          })
+        }
+      })
+    }
+  })
+  const db = await EntryStore.memory(cms.config, new MemorySource())
+  await db.sync()
+  for (const locale of ['nl', 'en'])
+    await db.mutate([
+      {
+        op: 'create',
+        id: 'form',
+        locale,
+        type: 'FormEntry',
+        workspace: 'main',
+        root: 'forms',
+        data: {title: locale, path: `form-${locale}`, inputs: []}
+      }
+    ])
+  const load = (locale?: string) =>
+    loadForm(cms.config, db, {entryId: 'form', locale})
+  expect((await load()).entry.locale).toBe('en')
+  expect((await load('NL')).entry.locale).toBe('nl')
+})

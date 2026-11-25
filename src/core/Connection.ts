@@ -139,6 +139,11 @@ export interface StoredSubmission extends Submission {
   visitor: string | null
   /** When it is removed, in seconds, see the retention of its form */
   expiresAt: number | null
+  /**
+   * The answers to unique inputs as they are compared, by key: a form
+   * takes each of them once
+   */
+  unique?: Record<string, string>
 }
 
 /** Which submissions of a form to list */
@@ -262,7 +267,11 @@ export type SubmitResult =
     }
 
 export interface SubmissionsApi {
-  storeSubmission?(submission: StoredSubmission): Promise<void>
+  /**
+   * Stores a submission unless it repeats a unique answer, and gives the
+   * keys of the unique inputs whose answer was sent before
+   */
+  storeSubmission?(submission: StoredSubmission): Promise<Array<string>>
   /** A page of the submissions of a form, the latest first */
   listSubmissions?(
     entryId: string,
@@ -295,14 +304,15 @@ export interface SubmissionsApi {
    */
   purgeSubmissions?(now: number): Promise<Array<FormFileKey>>
   /**
-   * How much a form took since a moment, in seconds, from one visitor when
-   * their hash is given
+   * How many submissions or files a form took since a moment, in seconds,
+   * and how many of them came from one visitor when their hash is given
    */
   recentActivity?(
     entryId: string,
     since: number,
+    kind: 'submissions' | 'files',
     visitor?: string
-  ): Promise<{submissions: number; files: number}>
+  ): Promise<{form: number; visitor: number}>
   /** Keeps an uploaded file until it is submitted, or a day at most */
   storeFormFile?(file: StoredFormFile): Promise<void>
   /** The files of a form with these ids, without their content */
@@ -310,11 +320,15 @@ export interface SubmissionsApi {
     entryId: string,
     ids: Array<string>
   ): Promise<Array<Omit<StoredFormFile, 'content'>>>
+  /**
+   * Attaches uploaded files to a submission unless another one has them,
+   * and gives the ids of those that are its own now
+   */
   attachFormFiles?(
     entryId: string,
     submissionId: string,
     ids: Array<string>
-  ): Promise<void>
+  ): Promise<Array<string>>
   readFormFile?(
     entryId: string,
     id: string
