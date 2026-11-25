@@ -251,7 +251,17 @@ async function forwardToApp(
     signal: request.signal,
     duplex: 'half'
   }
-  return fetch(new Request(target, init))
+  const response = await fetch(new Request(target, init))
+  // fetch decoded the body, but kept the headers of the encoded one, which
+  // browsers fail to decode again
+  const answer = new Headers(response.headers)
+  answer.delete('content-encoding')
+  answer.delete('content-length')
+  return new Response(response.body ?? undefined, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: answer
+  })
 }
 
 function forwardedHandlerUrl(
