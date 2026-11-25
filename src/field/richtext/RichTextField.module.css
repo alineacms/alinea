@@ -61,29 +61,32 @@
 }
 
 /* Room below a trailing block to click in, the space blocks keep between
-   them. A click opens a line there, as tall as it will be once typed in, with
-   a gap cursor until then. */
+   them. A click puts a gap cursor there. */
 .RichTextFieldView:not([data-read-only])
   :global(.ProseMirror:has(> [data-richtext-block-host]:last-child)) {
   padding-bottom: 24px;
-}
-
-.RichTextFieldView:not([data-read-only])
-  :global(.ProseMirror:has(> [data-richtext-block-host] + .ProseMirror-gapcursor:last-child)) {
-  padding-bottom: calc(1.5em + 24px);
 }
 
 .RichTextFieldView :global(.ProseMirror-gapcursor::after) {
   border-top-color: var(--alinea-fg);
 }
 
-/* Show it as a text caret where the new line starts */
+/* After a trailing block the gap cursor takes the place of the line it turns
+   into, so the caret shows where typing starts whatever the block looks like */
+.RichTextFieldView
+  :global([data-richtext-block-host])
+  + :global(.ProseMirror-gapcursor:last-child) {
+  position: relative;
+  height: 1.5em;
+}
+
 .RichTextFieldView
   :global([data-richtext-block-host])
   + :global(.ProseMirror-gapcursor:last-child)::after {
-  top: 16px;
+  top: 0;
+  left: 0;
   width: 0;
-  height: 1.5em;
+  height: 100%;
   border-top: none;
   border-left: 1px solid var(--alinea-fg);
 }

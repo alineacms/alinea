@@ -1459,6 +1459,27 @@ test('starts a new line below a trailing block', async ({mount, page}) => {
   })
 })
 
+test('shows the caret below a trailing block where typing starts', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  await clickBelowTrailingBlock(page)
+  const caret = await editor.locator('.ProseMirror-gapcursor').boundingBox()
+  const editorBox = await editor.boundingBox()
+  if (!caret || !editorBox) throw new Error('No caret')
+  // Inside the editor, not on its edge
+  expect(caret.y + caret.height).toBeLessThanOrEqual(
+    editorBox.y + editorBox.height - 4
+  )
+  await page.keyboard.type('After')
+  const line = await editor.locator('> p').last().boundingBox()
+  if (!line) throw new Error('No line')
+  expect(Math.abs(line.y - caret.y)).toBeLessThanOrEqual(1)
+  expect(Math.abs(line.x - caret.x)).toBeLessThanOrEqual(1)
+})
+
 test('leaves the value alone when clicking below a trailing block', async ({
   mount,
   page
