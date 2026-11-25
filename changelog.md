@@ -1,5 +1,40 @@
 # Changelog
 
+## [2.0.1] - 2026-11-25
+
+### New
+
+- Filter entries on the entries they link to with `_references`, the reverse
+  of `_referenced`: `filter: {_references: {_id: entry.id}}`, optionally
+  limited to a field.
+- The entry header shows in how many languages an entry is translated, with a
+  menu listing each language and its status.
+- Archiving or deleting a page asks where its url should redirect to, with the
+  references that will break. Republishing an archived page gives its url
+  back.
+- The settings sheet of a link shows where it points: the full url of a page
+  with its suffix and anchor, and a preview with file details for files and
+  images, which open in the media library. Link rows show the url suffix next
+  to the anchor.
+- Anchors of page links can be typed freely, the anchors of the linked entry
+  are suggested.
+- Clicking below a block that ends a rich text field starts a new line.
+
+### Fixes
+
+- Entry links resolve in the locale their entry exists in, also across
+  workspaces.
+- A plain media alt text is kept for the other languages when one language is
+  edited.
+- `EntryTable` no longer stays on its loading state when its query changes,
+  eg. when switching the language of the entry it is shown in.
+- Publishing a draft under a new path leaves no draft behind, shared links
+  keep their language.
+- An outdated dashboard tab is asked to reload and its changes are refused,
+  failing syncs are shown.
+- Moved files sync reliably, history leaves out commits that deleted a file.
+- Folders closed by hand stay closed while an entry inside them is open.
+
 ## [2.0.0] - 2026-11-17
 
 ### New
