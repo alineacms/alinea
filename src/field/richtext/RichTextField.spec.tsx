@@ -1437,7 +1437,7 @@ async function clickBelowTrailingBlock(page: Page) {
   const editorBox = await editor.boundingBox()
   if (!blockBox || !editorBox) throw new Error('Editor not rendered')
   const below = editorBox.y + editorBox.height - (blockBox.y + blockBox.height)
-  expect(below).toBeGreaterThanOrEqual(24)
+  expect(below).toBeGreaterThanOrEqual(8)
   await page.mouse.click(
     blockBox.x + blockBox.width / 2,
     blockBox.y + blockBox.height + below / 2
@@ -1459,6 +1459,27 @@ test('starts a new line below a trailing block', async ({mount, page}) => {
   })
 })
 
+test('shows the caret below a trailing block where typing starts', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  await clickBelowTrailingBlock(page)
+  const caret = await editor.locator('.ProseMirror-gapcursor').boundingBox()
+  const editorBox = await editor.boundingBox()
+  if (!caret || !editorBox) throw new Error('No caret')
+  // Inside the editor, not on its edge
+  expect(caret.y + caret.height).toBeLessThanOrEqual(
+    editorBox.y + editorBox.height - 4
+  )
+  await page.keyboard.type('After')
+  const line = await editor.locator('> p').last().boundingBox()
+  if (!line) throw new Error('No line')
+  expect(Math.abs(line.y - caret.y)).toBeLessThanOrEqual(1)
+  expect(Math.abs(line.x - caret.x)).toBeLessThanOrEqual(1)
+})
+
 test('leaves the value alone when clicking below a trailing block', async ({
   mount,
   page
@@ -1475,6 +1496,20 @@ test('leaves the value alone when clicking below a trailing block', async ({
 
   await expect(page.getByTestId('value')).toHaveText(before ?? '')
   await expect(page.getByTestId('dirty')).toHaveText('false')
+})
+
+test('leaves no room below a trailing block once blurred', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  const height = (await editor.boundingBox())?.height
+  await clickBelowTrailingBlock(page)
+  await editor.evaluate(element => (element as HTMLElement).blur())
+  await expect
+    .poll(async () => (await editor.boundingBox())?.height)
+    .toBe(height)
 })
 
 test('ignores clicks below a trailing block when read only', async ({

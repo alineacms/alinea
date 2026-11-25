@@ -5,9 +5,11 @@
 }
 
 :global([data-richtext-block-host]:first-child) > .RichTextBlock {
-  margin-top: 0;
+  margin-top: 8px;
 }
 
+/* Until a gap cursor after the last block is typed in, it keeps this margin:
+   the gap cursor brings the space of its line, and leaves none when blurred */
 :global(
     :is(
       [data-richtext-block-host]:last-child,
@@ -15,7 +17,7 @@
     )
   )
   > .RichTextBlock {
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .RichTextBlock-header[draggable='true'] {
