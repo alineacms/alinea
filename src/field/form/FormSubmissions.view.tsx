@@ -301,6 +301,8 @@ function FormSubmissions({entryId, definition, locales}: FormSubmissionsProps) {
   }, [selected, requested, openSheet, setRequested])
   const [exporting, setExporting] = useState(false)
   const visible = inputs.slice(0, columns)
+  const title = visible.slice(0, 1)
+  const rest = visible.slice(1)
   const current = [...submissions, linked].find(
     submission => submission && submission.id === (selected ?? shown)
   )
@@ -439,15 +441,24 @@ function FormSubmissions({entryId, definition, locales}: FormSubmissionsProps) {
             ? () => setPages(pages => pages + 1)
             : undefined
         }
+        // The status follows the answer that names a submission, so it stays
+        // in view next to the preview, later answers give up width first
         columns={[
-          ...visible.map((input, index) => ({
+          ...title.map(input => ({
             id: input.id,
             header: input.label,
-            width: index === 0 ? ('2fr' as const) : ('1fr' as const),
-            minWidth: 120
+            width: '2fr' as const,
+            minWidth: 140
           })),
-          {id: 'received', header: 'Received', width: 170},
-          {id: 'status', header: 'Status', width: 110}
+          {id: 'status', header: 'Status', width: 100},
+          ...rest.map(input => ({
+            id: input.id,
+            header: input.label,
+            width: '1fr' as const,
+            minWidth: 80,
+            collapsible: true
+          })),
+          {id: 'received', header: 'Received', width: 160}
         ]}
         dependencies={[visible, selected]}
         onRowAction={key => open(String(key))}
@@ -474,16 +485,21 @@ function FormSubmissions({entryId, definition, locales}: FormSubmissionsProps) {
             highlighted={submission.id === selected}
           >
             {[
-              ...visible.map(column => (
+              ...title.map(column => (
+                <TableCell key={column.id}>
+                  <AnswerText column={column} submission={submission} />
+                </TableCell>
+              )),
+              <TableCell key="status">
+                <SubmissionBadge status={submission.status} />
+              </TableCell>,
+              ...rest.map(column => (
                 <TableCell key={column.id}>
                   <AnswerText column={column} submission={submission} />
                 </TableCell>
               )),
               <TableCell key="received">
                 {formatDate(submission.createdAt)}
-              </TableCell>,
-              <TableCell key="status">
-                <SubmissionBadge status={submission.status} />
               </TableCell>
             ]}
           </TableRow>

@@ -32,7 +32,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Submissions tab lists the submissions of the form, the latest first, with the answers to its first four inputs, when each was received and its status. More load as you scroll. Above the table you narrow down the list:"
+          "text": "The Submissions tab lists the submissions of the form, the latest first, with the answers to its first four inputs, the status of each next to its first answer and when it was received. On small screens only the first answer, the status and the time show. More load as you scroll. Above the table you narrow down the list:"
         }
       ]
     },
