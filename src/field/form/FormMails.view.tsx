@@ -1,18 +1,15 @@
 import {Badge, ListError} from '#/components.js'
 import {Field} from '#/core/Field.js'
-import {Type} from '#/core/Type.js'
-import {entries, isRecord} from '#/core/util/Objects.js'
-import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
-import {rootEditor} from '#/dashboard/atoms/editor.js'
-import {entryContext, fieldSharingContext} from '#/dashboard/contexts.js'
-import {useEditor, useLocale} from '#/dashboard/hooks.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {useOtherVersions} from '#/dashboard/app/useMissingLanguages.js'
+import {fieldSharingContext} from '#/dashboard/contexts.js'
 import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {
   type ListFieldBadgesProps,
   ListFieldView
 } from '#/field/list/ListField.view.js'
 import {useAtomValueRaw} from 'jotai'
-import {useContext, useMemo} from 'react'
+import {useMemo} from 'react'
 import {mailTextProblem} from './FormMails.js'
 import {describeCondition, entryLabel} from './FormRules.js'
 import {isSharedFormField} from './FormShare.js'
@@ -33,44 +30,28 @@ export function FormMailsView({field}: FormMailsViewProps) {
   return (
     <fieldSharingContext.Provider value={isSharedFormField}>
       {view}
-      <FormMailLanguages field={field} />
+      <FormMailLanguages />
     </fieldSharingContext.Provider>
   )
 }
 
 /** The `{{key}}` problems of the texts of the other languages */
-function FormMailLanguages({field}: FormMailsViewProps) {
-  const context = useContext(entryContext)
-  if (!context) return null
-  return <FormMailLanguageCheck field={field} data={context.entry.data} />
-}
-
-interface FormMailLanguageCheckProps extends FormMailsViewProps {
-  data: EntryAtoms['data']
-}
-
-function FormMailLanguageCheck({field, data}: FormMailLanguageCheckProps) {
-  const editor = rootEditor(useEditor())
-  const locale = useLocale()
+function FormMailLanguages() {
   const keys = useFormKeys()
-  const {entries: versions} = useAtomValueRaw(data)
+  const versions = useOtherVersions()
   const problems = useMemo(() => {
-    const key = entries(Type.fields(editor.type)).find(
-      ([, other]) => other === field
-    )?.[0]
-    if (!key || !locale) return []
     const result = new Set<string>()
     for (const version of versions) {
-      if (!version.locale || version.locale === locale) continue
-      const mails = (version.data as Record<string, unknown>)[key]
+      // Form.type keeps its mails under this key
+      const {mails} = version.data as {mails?: unknown}
       if (!Array.isArray(mails)) continue
       for (const mail of mails.filter(isRecord)) {
-        const problem = mailTextProblem(mail, keys, version.locale)
+        const problem = mailTextProblem(mail, keys, version.locale!)
         if (problem) result.add(problem)
       }
     }
     return [...result]
-  }, [editor, field, keys, locale, versions])
+  }, [keys, versions])
   return problems.map(problem => <ListError key={problem}>{problem}</ListError>)
 }
 

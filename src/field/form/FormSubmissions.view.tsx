@@ -44,7 +44,6 @@ import type {
 } from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
 import {Root, type RootI18n} from '#/core/Root.js'
-import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
 import {
   BlockSheet,
@@ -102,7 +101,7 @@ import {
 import {formState} from './FormConditions.js'
 import type {FormDefinition, FormInputData} from './FormDefinition.js'
 import {formDefinition, inputsOf} from './FormDefinition.js'
-import {FormField} from './FormField.js'
+import {formOf} from './FormField.js'
 import {fillForm} from './FormShare.js'
 import css from './FormSubmissions.module.css'
 
@@ -243,15 +242,14 @@ function useFormDefinition(
   const editor = useEditor()
   const locale = useLocale()
   const versions = useOtherVersions()
-  const [key, field] =
-    entries(Type.fields(editor.type)).find(
-      ([, field]) => field instanceof FormField
-    ) ?? []
+  const form = formOf(editor.type)
+  const key = form?.key
   const rows = useAtomValueRaw(
     useMemo(() => editor.node.field(key ?? '_form'), [editor, key])
   )
+  const field = form?.field
   return useMemo(() => {
-    if (!key || !(field instanceof FormField)) return undefined
+    if (!key || !field) return undefined
     const {inputs, shared} = Field.options(field)
     // Columns show texts this language has not translated yet like the site
     const others =

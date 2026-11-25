@@ -1,11 +1,9 @@
 import {Field} from '#/core/Field.js'
-import {Type} from '#/core/Type.js'
-import {entries} from '#/core/util/Objects.js'
 import {rootEditor} from '#/dashboard/atoms/editor.js'
 import {useEditor} from '#/dashboard/hooks.js'
 import {atom, useAtomValueRaw} from 'jotai'
 import {useMemo} from 'react'
-import {FormField} from './FormField.js'
+import {formOf} from './FormField.js'
 import type {Input} from './FormInput.js'
 import {answerKeys} from './FormMails.js'
 import {type FormEntry, readingOrder} from './FormRules.js'
@@ -35,16 +33,10 @@ export function useFormKeys(): Set<string> {
 
 function useFormRows(): {inputs?: Record<string, Input>; rows: unknown} {
   const editor = rootEditor(useEditor())
-  const [key, field] =
-    entries(Type.fields(editor.type)).find(
-      ([, field]) => field instanceof FormField
-    ) ?? []
+  const form = formOf(editor.type)
+  const key = form?.key
   const rows = useAtomValueRaw(
     useMemo(() => (key ? editor.node.field(key) : none), [editor, key])
   )
-  return {
-    inputs:
-      field instanceof FormField ? Field.options(field).inputs : undefined,
-    rows
-  }
+  return {inputs: form && Field.options(form.field).inputs, rows}
 }

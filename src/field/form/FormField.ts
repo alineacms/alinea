@@ -3,7 +3,7 @@ import {ListFieldBase} from '#/core/field/ListField.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import type {Schema} from '#/core/Schema.js'
 import {type FieldGetter, track} from '#/core/Tracker.js'
-import {type Type, type} from '#/core/Type.js'
+import {Type, type} from '#/core/Type.js'
 import {entries, fromEntries, keys} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {IcRoundCallSplit} from '#/dashboard/icons.js'
@@ -109,6 +109,16 @@ export function form<Inputs extends Record<string, Input>>(
     }
   })
   return field
+}
+
+/** The form field of a type and its key, an entry holds one form */
+export function formOf(
+  type: Type | undefined
+): {key: string; field: FormField} | undefined {
+  if (!type) return undefined
+  for (const [key, field] of entries(Type.fields(type)))
+    if (field instanceof FormField) return {key, field}
+  return undefined
 }
 
 /** Inputs with one answer that can be compared, not files or checks */

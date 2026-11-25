@@ -56,6 +56,7 @@ function otherLanguages(versions: Array<Entry>, locale: string): Array<Entry> {
 }
 
 const noEntry = atom<{entries: Array<Entry>} | null>(null)
+const noId = atom(undefined)
 const translated = atom(false)
 
 /** The entry being edited in each other language, published first */
@@ -106,22 +107,25 @@ export function useMissingLanguages(
   const locale = useLocale()
   const info = useFieldInfo(field)
   const value = useAtomValueRaw(info.value)
-  const container = useAtomValueRaw(info.editor.node.value) as Record<
-    string,
-    unknown
-  >
-  const data = useAtomValueRaw(context.entry.data)
+  const nested = Boolean(info.editor.parent)
+  // Only the id of the row, its other fields change as the editor types
+  const id = useAtomValueRaw(
+    useMemo(
+      () => (nested ? info.editor.node.field('_id') : noId),
+      [info.editor, nested]
+    )
+  )
+  const versions = useOtherVersions()
   const untranslated = useAtomValueRaw(context.localeData.untranslated)
   return useMemo(() => {
     if (!locale || shared || untranslated) return translatedField
     if (!Field.isEmpty(field, value)) return translatedField
-    const nested = Boolean(info.editor.parent)
-    const rowId = typeof container?._id === 'string' ? container._id : null
+    const rowId = typeof id === 'string' ? id : null
     // Fields of an object have no row id to find them by
     if (nested && !rowId) return translatedField
     const languages = Array<string>()
     let first: unknown
-    for (const version of otherLanguages(data.entries, locale)) {
+    for (const version of versions) {
       const theirs = nested
         ? recordsById(version.data as object).get(rowId!)
         : (version.data as Record<string, unknown>)
@@ -130,5 +134,5 @@ export function useMissingLanguages(
       if (languages.push(version.locale!) === 1) first = other
     }
     return languages.length > 0 ? {languages, value: first} : translatedField
-  }, [container, data, field, info, locale, shared, untranslated, value])
+  }, [field, id, info, locale, nested, shared, untranslated, value, versions])
 }
