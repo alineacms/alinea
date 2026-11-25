@@ -104,7 +104,9 @@ import type {
   RefObject
 } from 'react'
 import {useId, useMemo, useRef, useState} from 'react'
+import {LinkDetails} from './LinkDetails.js'
 import css from './LinkField.module.css'
+import {openableUrl, suffixedUrl} from './LinkUrl.js'
 
 const styles = styler(css)
 
@@ -1131,17 +1133,6 @@ function UrlLinkRowAction({closeActions, url}: UrlLinkRowActionProps) {
   )
 }
 
-const openableProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:'])
-
-/** The absolute url of a link, unless it would run script like javascript: */
-function openableUrl(url: string | undefined, base: string) {
-  if (!url) return undefined
-  const parsed = URL.parse(url, base)
-  return parsed && openableProtocols.has(parsed.protocol)
-    ? parsed.href
-    : undefined
-}
-
 interface EntryLinkRowActionsProps {
   closeActions: () => void
   entryId: string
@@ -1262,6 +1253,7 @@ function LinkSheet({
           <SheetClose aria-label="Close link settings" />
         </SheetHeader>
         <SheetBody>
+          <LinkSheetDetails node={node} value={value} />
           <SheetSection>
             <LinkLabelField isDisabled={readOnly} node={node} value={value} />
             <EntryAnchorField
@@ -1301,6 +1293,52 @@ function LinkSheet({
         </SheetFooter>
       </SheetContent>
     </BlockSheet>
+  )
+}
+
+interface LinkSheetDetailsProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function LinkSheetDetails({node, value}: LinkSheetDetailsProps) {
+  if ('_url' in value)
+    return (
+      <SheetSection>
+        <LinkDetails url={value._url} />
+      </SheetSection>
+    )
+  if (!('_entry' in value)) return null
+  return (
+    <EntryLinkSheetDetails
+      entryId={value._entry}
+      locale={value._locale}
+      node={node}
+    />
+  )
+}
+
+interface EntryLinkSheetDetailsProps {
+  entryId: string
+  locale?: string
+  node: ReactiveNode<LinkFieldRow>
+}
+
+function EntryLinkSheetDetails({
+  entryId,
+  locale,
+  node
+}: EntryLinkSheetDetailsProps) {
+  const state = useLinkEntryState(entryId, locale)
+  const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
+  const suffix = useAtomValueRaw(node.field('_suffix')) as string | undefined
+  const entry = state.state === 'hasData' ? state.data : undefined
+  if (!entry) return null
+  const url = entry.file ? entry.url : suffixedUrl(entry.url, suffix, anchor)
+  return (
+    <SheetSection>
+      <LinkDetails entry={entry} url={entry.url && url} />
+    </SheetSection>
   )
 }
 
