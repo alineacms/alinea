@@ -15,7 +15,7 @@ import {Root} from '#/core/Root.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {entries} from '#/core/util/Objects.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {
@@ -270,8 +270,11 @@ export class EntryLocaleAtoms {
     // An old URL belongs to the language it was published in
     if (isUntranslated && data) data = dataWithoutAliases(data)
     if (isUntranslated && data && this.requestedLocale) {
+      // Shared values are saved to every language, their links stay as they are
+      const shared = Type.sharedData(type, data) ?? {}
+      const own = fromEntries(entries(data).filter(([key]) => !(key in shared)))
       const linkIds = new Set(
-        Type.references(type, data)
+        Type.references(type, own)
           .filter(reference => reference.linkType === 'entry')
           .map(reference => reference.targetId)
       )
@@ -283,10 +286,13 @@ export class EntryLocaleAtoms {
           locale: this.requestedLocale,
           status: 'preferDraft'
         })
-        data = Type.localizeLinks(type, data, {
-          locale: this.requestedLocale,
-          entryIds: new Set(translated)
-        })
+        data = {
+          ...data,
+          ...Type.localizeLinks(type, own, {
+            locale: this.requestedLocale,
+            entryIds: new Set(translated)
+          })
+        }
       }
     }
     const value = Type.withInitialValue(
@@ -674,6 +680,25 @@ export class EntryLocaleAtoms {
   })
 }
 
+export interface EntryTranslation {
+  locale: string
+  status?: EntryStatus | 'unpublished'
+}
+
+export function entryTranslations(
+  locales: ReadonlyArray<string>,
+  entries: Array<Pick<Entry, 'locale' | 'status' | 'active' | 'main'>>
+): Array<EntryTranslation> {
+  return locales.map(locale => {
+    const version = entries.find(
+      entry => entry.locale === locale && entry.active
+    )
+    if (version?.status === 'draft' && version.main)
+      return {locale, status: 'unpublished'}
+    return {locale, status: version?.status}
+  })
+}
+
 export class EntryAtoms {
   constructor(
     public readonly id: string,
@@ -713,7 +738,13 @@ export class EntryAtoms {
       rootData.preview ??
       workspaceData.preview ??
       config.preview
-    return {defaultView, fieldI18n: Root.fieldI18n(rootData), preview}
+    const locales = rootData.isMediaRoot ? [] : (rootData.i18n?.locales ?? [])
+    return {
+      defaultView,
+      fieldI18n: Root.fieldI18n(rootData),
+      locales,
+      preview
+    }
   })
 
   type = atom(get => get(this.data).type)
@@ -743,6 +774,16 @@ export class EntryAtoms {
         )
       )
     )
+  })
+  translations = atom(get => {
+    const {workspace, root, entries} = get(this.data)
+    const policy = get(policyAtom)
+    // Versions the user can not read are left out of the entries, so their
+    // locales would look untranslated
+    const locales = get(this.#settings).locales.filter(locale =>
+      policy.canRead({workspace, root, locale})
+    )
+    return entryTranslations(locales, entries)
   })
   view = atom(
     get => get(this.#selectedView) ?? get(this.#settings).defaultView,

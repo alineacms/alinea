@@ -68,8 +68,21 @@ export interface EdgeEntry {
  * Entries that link to the entry, through any field or through the given
  * link field of their type
  */
-export interface EdgeReferencedBy {
+export interface EdgeReferencedBy extends ReferenceOptions {
   edge: 'referencedBy'
+}
+
+/**
+ * Entries the entry links to, through any field or through the given link
+ * field of its type
+ */
+export interface EdgeReferences extends ReferenceOptions {
+  edge: 'references'
+}
+
+/** Options of the queries of entries linking to or from an entry */
+export interface ReferenceOptions {
+  /** Only follow this link field */
   field?: HasField & Expr
 }
 
@@ -84,6 +97,7 @@ export type Edge =
   | EdgeEntries
   | EdgeEntry
   | EdgeReferencedBy
+  | EdgeReferences
 
 /** Options that change a query result into a single entry or a count */
 export interface QueryModifiers {

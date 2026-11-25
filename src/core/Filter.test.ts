@@ -85,4 +85,6 @@ test('nested has and includes filters address the stored value', () => {
 test('relation conditions cannot be checked against loaded entries', () => {
   const filter = {_referenced: {edge: 'referencedBy', type: 'Product'}}
   expect(() => filterChecker(filter)).toThrow(/only work in queries/)
+  const references = {_references: {edge: 'references', id: 'a'}}
+  expect(() => filterChecker(references)).toThrow(/only work in queries/)
 })

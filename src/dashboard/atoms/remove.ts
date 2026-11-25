@@ -6,7 +6,6 @@ import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
-import type {Policy} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import type {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
@@ -15,7 +14,7 @@ import {atom, type Atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {atomWithStorage, createJSONStorage} from 'jotai/utils'
 import {configAtom, graphAtom} from './core.js'
 import {loadIncomingReferences, type EntryReferenceWithSource} from './entry.js'
-import type {ExplorerItemData, ExplorerLimitLocation} from './explorer.js'
+import type {ExplorerLimitLocation} from './explorer.js'
 import {policyAtom} from './user.js'
 
 /** Deleting removes the entries, archiving unpublishes them until restored */
@@ -211,22 +210,19 @@ function hasUrl(type: Type | undefined): boolean {
 const redirectStatuses = ['published', 'draft'] as const
 
 export interface RedirectPicker {
-  /** The entries of the types that hold URL aliases */
+  /** The entries of the types that hold URL aliases, except the removed
+   * entries */
   condition: Filter<EntryFields>
   /** The roots of the workspace of the removed entries */
   locations: Array<ExplorerLimitLocation>
-  /** Entries that are not removed and the user may add an alias to */
-  canSelect(item: ExplorerItemData): boolean
 }
 
 /** Which pages the URLs of the removed entries can redirect to */
 export function redirectPicker(
   config: Config,
-  policy: Policy,
   subjects: Array<RemoveSubject>
 ): RedirectPicker {
   const [first] = subjects
-  const removed = new Set(subjects.map(subject => subject.id))
   const types = entries(config.schema)
     .filter(([, type]) => hasUrl(type))
     .map(([name]) => name)
@@ -236,17 +232,11 @@ export function redirectPicker(
     .filter(([, root]) => !Root.isMediaRoot(root))
     .map(([root]) => ({workspace: first.workspace, root}))
   return {
-    condition: {_type: {in: types}},
-    locations,
-    canSelect(item) {
-      if (removed.has(item.id)) return false
-      if (item.parents.some(parent => removed.has(parent))) return false
-      // The aliases of a published version are published with it
-      return (
-        policy.canUpdate({...item, field: 'metadata.aliases'}) &&
-        policy.canPublish(item)
-      )
-    }
+    condition: {
+      _type: {in: types},
+      _id: {notIn: subjects.map(subject => subject.id)}
+    },
+    locations
   }
 }
 
@@ -376,10 +366,11 @@ async function redirects(
   })
   const locales = versions.map(version => version.locale)
   return versions.flatMap(({locale, status, data}): Array<Mutation> => {
-    const redirected = urls
+    // Marked with the removed entry, which takes its url back when it is
+    // published again
+    const next = urls
       .filter(url => redirectLocale(locales, url.locale) === locale)
-      .map(url => url.url)
-    const next = dataWithUrlAliases(data, redirected)
+      .reduce((data, url) => dataWithUrlAliases(data, [url.url], url.id), data)
     if (next === data) return []
     const set = {metadata: next.metadata}
     return [{op: 'update', id: target.id, locale, status, set}]

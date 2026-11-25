@@ -185,6 +185,26 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(home.getByRole('textbox', {name: 'URL suffix'})).toBeVisible()
 })
 
+test('suggests the anchors of the linked entry', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Page Home'}).click()
+  const settings = page.getByRole('dialog', {name: 'Home'})
+  const anchor = settings.getByRole('combobox', {name: 'Anchor'})
+  await expect(anchor).toBeEnabled()
+  await anchor.fill('rich')
+  await page.getByRole('option', {name: '#rich-text'}).click()
+  await expect(anchor).toHaveValue('rich-text')
+  await expect(relatedLink.getByText('#rich-text')).toBeVisible()
+
+  // Anchors the entry does not have yet can be typed
+  await anchor.fill('later')
+  await settings.getByRole('textbox', {name: 'Label'}).focus()
+  await expect(anchor).toHaveValue('later')
+  await expect(relatedLink.getByText('#later')).toBeVisible()
+})
+
 test('expands a folded link row when its settings open', async ({
   mount,
   page
@@ -201,6 +221,60 @@ test('expands a folded link row when its settings open', async ({
   await expect(
     firstRow.getByRole('button', {name: 'Collapse link'})
   ).toBeVisible()
+})
+
+test('shows what a link points to in its settings sheet', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const origin = new URL(page.url()).origin
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Page Home'}).click()
+  const home = page.getByRole('dialog', {name: 'Home'})
+  const homeUrl = home.getByRole('link', {name: `${origin}/home`})
+  await expect(homeUrl).toHaveAttribute('href', `${origin}/home`)
+  await expect(homeUrl).toHaveAttribute('target', '_blank')
+  await expect(homeUrl).toHaveAttribute('rel', 'noopener noreferrer')
+  const suffix = home.getByRole('textbox', {name: 'URL suffix'})
+  await suffix.fill('?s=search')
+  await expect(
+    home.getByRole('link', {name: `${origin}/home?s=search`})
+  ).toHaveAttribute('href', `${origin}/home?s=search`)
+  // A half typed suffix is no url yet
+  await suffix.fill('//')
+  await expect(home.getByRole('link', {name: origin})).toHaveCount(0)
+  await expect(suffix).toHaveValue('//')
+  await suffix.fill('')
+  await expect(homeUrl).toBeVisible()
+  await home.getByRole('button', {name: 'Close link settings'}).click()
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  await resources
+    .getByRole('button', {name: 'External link Alinea documentation'})
+    .click()
+  const docs = page.getByRole('dialog', {name: 'Alinea documentation'})
+  await expect(
+    docs.getByRole('link', {name: 'https://alineacms.com/docs'})
+  ).toHaveAttribute('href', 'https://alineacms.com/docs')
+  await docs.getByRole('button', {name: 'Close link settings'}).click()
+
+  const heroImage = page.getByRole('list', {name: 'Hero image'})
+  await heroImage.getByRole('button', {name: 'landscape'}).click()
+  const image = page.getByRole('dialog', {name: 'landscape'})
+  await expect(image.locator('[data-slot="media-preview"]')).toBeVisible()
+  const details = image.getByLabel('File details')
+  await expect(details.getByText('landscape.jpg', {exact: true})).toBeVisible()
+  await expect(details.getByText('919 kB', {exact: true})).toBeVisible()
+  await expect(
+    details.getByText('3970px x 2717px', {exact: true})
+  ).toBeVisible()
+  await expect(
+    details.getByText('A mountain path through a valley', {exact: true})
+  ).toBeVisible()
+  await expect(details.getByText('Media', {exact: true})).toBeVisible()
+  await expect(details.getByText('Extension')).toHaveCount(0)
 })
 
 test('shows read-only link rows without opening their settings', async ({

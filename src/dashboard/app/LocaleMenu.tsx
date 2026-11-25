@@ -40,7 +40,7 @@ interface LocaleLabelProps {
   locale: string
 }
 
-function localeDisplay(locale: string): LocaleDisplay {
+export function localeDisplay(locale: string): LocaleDisplay {
   let parsed: Intl.Locale
   try {
     parsed = new Intl.Locale(locale)

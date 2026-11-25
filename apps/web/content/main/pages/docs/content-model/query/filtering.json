@@ -118,6 +118,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_references`: whether the entry links to another entry, through any field including lists and rich text. `true` or `false` (only links to entries that exist under the query's status count), or a `Query.references(...)` query that the linked entry has to match, eg. `{_references: Query.references({id: personId})}`. Set `field` in the query to only follow one link field: `Query.references({field: Page.author, id: personId})`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

@@ -49,7 +49,7 @@ import {
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
-import {dataWithUrlAlias} from './EntryUrlAliases.js'
+import {dataWithUrlAlias, withoutRedirect} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
 
@@ -359,8 +359,6 @@ export class EntryTransaction implements AsyncDisposable {
         locale
       })
     if (status !== 'published' && existingPath) path = existingPath
-    if (existingPath && existingPath !== path && status === 'published')
-      await this.#rename(id, locale, path)
 
     if (overwrite && existingMain && this.#isFile(existingMain.type)) {
       const stored = existingMain.data
@@ -417,10 +415,6 @@ export class EntryTransaction implements AsyncDisposable {
           : await this.#siblingIndex(location, 'asc')
       index = generateKeyBetween(previous, next)
     }
-    if (status === 'published') {
-      for (const version of existing.filter(entry => entry.locale === locale))
-        this.#sourceTransaction.remove(version.filePath)
-    }
     const parentDir = await this.#parentDir(
       parentId,
       locale,
@@ -471,6 +465,17 @@ export class EntryTransaction implements AsyncDisposable {
       status
     )
     if (fromSeed && data.title === undefined) delete record.title
+    if (status === 'published') {
+      // Publishing replaces the versions of this locale, its children move
+      // along to a new path
+      for (const version of existing.filter(entry => entry.locale === locale))
+        this.#sourceTransaction.remove(version.filePath)
+      if (existingMain && existingMain.path !== path)
+        this.#sourceTransaction.rename(
+          existingMain.childrenDir,
+          paths.join(existingMain.parentDir, path)
+        )
+    }
     this.#addRecord(filePath, record)
     this.#messages.push(this.#report('create', title))
   }
@@ -1018,6 +1023,28 @@ export class EntryTransaction implements AsyncDisposable {
     }
   }
 
+  /**
+   * Archiving or deleting a page can redirect its url to another page, marked
+   * with its id. Publishing it again takes its url back.
+   */
+  async #releaseRedirects(candidate: UrlCandidate): Promise<void> {
+    if (this.#isFile(candidate.type)) return
+    const url = await this.#resolvedUrl(candidate)
+    const holders = await this.#findEntries({
+      workspace: candidate.workspace,
+      alias: url,
+      id: {isNot: candidate.id}
+    })
+    for (const holder of holders) {
+      const data = withoutRedirect(holder.data, url, candidate.id)
+      if (data === holder.data) continue
+      this.#addRecord(
+        holder.filePath,
+        createRecord({...holder, data}, holder.versionStatus)
+      )
+    }
+  }
+
   async #urlHasLocale(
     candidate: UrlCandidate,
     otherLocale: string | null
@@ -1088,17 +1115,21 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   /**
-   * Carry over the previous URL as an alias, share translated fields and
-   * guard URL uniqueness for an entry that is about to be published.
+   * Carry over the previous URL as an alias, release its redirects, share
+   * translated fields and guard URL uniqueness for an entry that is about to
+   * be published.
    */
   async #publishedData(
     candidate: UrlCandidate,
     previous: Entry | undefined,
-    shareFields = true
+    moving = false
   ): Promise<Record<string, unknown>> {
     const data = await this.#dataWithPreviousUrlAlias(candidate, previous)
     const {locale} = candidate
-    if (shareFields && locale !== null)
+    // Moved descendants are written from the data they had, which would put
+    // a released alias back
+    if (!moving) await this.#releaseRedirects(candidate)
+    if (!moving && locale !== null)
       await this.#persistSharedFields(
         candidate.id,
         locale,
@@ -1224,7 +1255,7 @@ export class EntryTransaction implements AsyncDisposable {
           data: entry.data
         },
         entry,
-        false
+        true
       )
       updates.push({
         entry,

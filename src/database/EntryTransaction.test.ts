@@ -51,6 +51,9 @@ const documentCms = createCMS({
       roots: {
         pages: Config.root('Pages', {
           contains: ['DocumentPage']
+        }),
+        docs: Config.root('Docs', {
+          contains: ['DocumentPage']
         })
       }
     })
@@ -684,6 +687,61 @@ test('creates a translation in the root of its other locales', async () => {
   test.equal(translation, {workspace: 'international', root: 'articles'})
 })
 
+test('publishing a translation under a new path leaves no draft behind', async () => {
+  const db = await EntryStore.memory(localizedCms.config, new MemorySource())
+  await db.sync()
+  const create = (
+    id: string,
+    locale: string,
+    status: 'draft' | 'published',
+    title: string,
+    parentId?: string
+  ) =>
+    db.mutate([
+      {
+        op: 'create',
+        id,
+        type: 'Page',
+        locale,
+        workspace: 'international',
+        root: 'articles',
+        parentId,
+        status,
+        overwrite: true,
+        data: {title, path: title.toLowerCase()}
+      }
+    ])
+  const nl = () =>
+    db.find({
+      id: 'article',
+      locale: 'nl',
+      status: 'all',
+      select: {status: Entry.status, title: Entry.title, path: Entry.path}
+    })
+  await create('article', 'en', 'published', 'Article')
+  // The translation starts as a copy of the source language, under its path
+  await create('article', 'nl', 'draft', 'Article')
+  await create('article', 'nl', 'published', 'Artikel')
+  test.equal(await nl(), [
+    {status: 'published', title: 'Artikel', path: 'artikel'}
+  ])
+  // A draft next to a published version with children
+  await create('child', 'nl', 'published', 'Child', 'article')
+  await create('article', 'nl', 'draft', 'Artikel')
+  await create('article', 'nl', 'published', 'Nieuw')
+  test.equal(await nl(), [{status: 'published', title: 'Nieuw', path: 'nieuw'}])
+  const child = await db.first({
+    id: 'child',
+    locale: 'nl',
+    status: 'all',
+    select: {filePath: Entry.filePath, parentId: Entry.parentId}
+  })
+  test.equal(child, {
+    filePath: 'international/articles/nl/nieuw/child.json',
+    parentId: 'article'
+  })
+})
+
 const localizedDocumentCms = createCMS({
   schema: {DocumentPage},
   workspaces: {
@@ -844,21 +902,21 @@ test('translations share urls and aliases when the url has no locale', async () 
   test.equal(urls, ['/', '/'])
 })
 
-async function createRedirectDb() {
+async function createRedirectDb(targetRoot = 'pages') {
   const db = await createDocumentDb()
-  for (const [id, title] of [
-    ['one', 'One'],
-    ['two', 'Two']
+  for (const [id, title, root] of [
+    ['one', 'One', 'pages'],
+    ['two', 'Two', targetRoot]
   ])
     await db.create({
       type: DocumentPage,
       id,
-      root: 'pages',
+      root,
       status: 'published',
       set: {title, path: id}
     })
   const metadata = await db.get({id: 'two', select: Entry.data})
-  const redirect = (url: string) => ({
+  const redirect = (url: string, removed?: string) => ({
     op: 'update' as const,
     id: 'two',
     locale: null,
@@ -867,7 +925,7 @@ async function createRedirectDb() {
       metadata: {
         ...metadata.metadata,
         aliases: Edit.list(DocumentPage.metadata.aliases)
-          .add('alias', {url})
+          .add('alias', removed ? {url, removed} : {url})
           .value()
       }
     }
@@ -885,6 +943,55 @@ test('an alias takes the url of an entry archived in the same commit', async () 
   const restored = await db.first({url: '/one', select: Entry.id})
   test.is(restored, 'one')
   test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
+})
+
+test('publishing an archived entry removes the redirect its archive left', async () => {
+  for (const root of ['pages', 'docs']) {
+    const {db, redirect} = await createRedirectDb(root)
+    await db.mutate([
+      {op: 'archive', id: 'one', locale: null},
+      redirect('/one', 'one')
+    ])
+    await db.publish({id: 'one', locale: null, status: 'archived'})
+    test.is(await db.first({url: '/one', select: Entry.id}), 'one')
+    test.is(await db.first({alias: '/one', select: Entry.id}), null)
+  }
+})
+
+test('another page at the url keeps the redirect', async () => {
+  const {db, redirect} = await createRedirectDb()
+  await db.mutate([
+    {op: 'remove', id: 'one', locale: null},
+    redirect('/one', 'one')
+  ])
+  await db.create({
+    type: DocumentPage,
+    id: 'three',
+    root: 'pages',
+    status: 'published',
+    set: {title: 'Three', path: 'one'}
+  })
+  test.is(await db.first({url: '/one', select: Entry.id}), 'three')
+  test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
+})
+
+test('a new page can take the url a renamed page left', async () => {
+  const db = await createDocumentDb()
+  const news = await db.create({
+    type: DocumentPage,
+    root: 'pages',
+    status: 'published',
+    set: {title: 'News', path: 'news'}
+  })
+  await db.update({id: news._id, status: 'published', set: {path: 'blog'}})
+  await db.create({
+    type: DocumentPage,
+    root: 'pages',
+    status: 'published',
+    set: {title: 'Latest', path: 'news'}
+  })
+  test.is(await db.first({alias: '/news', select: Entry.id}), news._id)
+  test.is(await db.first({url: '/news', select: Entry.title}), 'Latest')
 })
 
 test('an alias takes the url of an entry deleted in the same commit', async () => {

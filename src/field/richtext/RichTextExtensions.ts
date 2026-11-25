@@ -12,6 +12,7 @@ import {
   type AnyExtension
 } from '@tiptap/core'
 import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
+import {GapCursor} from '@tiptap/pm/gapcursor'
 import {Plugin, type Transaction} from '@tiptap/pm/state'
 import {dropPoint} from '@tiptap/pm/transform'
 import type {EditorView} from '@tiptap/pm/view'
@@ -330,6 +331,46 @@ export const richTextBlockClipboard = Extension.create({
             )
             draggedBlockId = undefined
             return handled
+          }
+        }
+      })
+    ]
+  }
+})
+
+// A block at the end leaves no line to click on. A click in the space below it
+// places a gap cursor there, which only turns into a paragraph once typed in.
+// This runs on mousedown rather than as handleClick: focusing the editor shows
+// its toolbar, which can shift the layout before mouseup so the click resolves
+// inside the block instead.
+export const richTextTrailingGap = Extension.create({
+  name: 'richTextTrailingGap',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handleDOMEvents: {
+            mousedown(view, event) {
+              if (!view.editable || event.button !== 0) return false
+              if (event.shiftKey || event.ctrlKey || event.metaKey) return false
+              const {doc} = view.state
+              const last = doc.lastChild
+              if (!last || !isRichTextBlockNode(last)) return false
+              const dom = view.nodeDOM(doc.content.size - last.nodeSize)
+              if (!(dom instanceof HTMLElement)) return false
+              if (event.target instanceof Node && dom.contains(event.target))
+                return false
+              if (event.clientY <= dom.getBoundingClientRect().bottom)
+                return false
+              event.preventDefault()
+              view.focus()
+              view.dispatch(
+                view.state.tr.setSelection(
+                  new GapCursor(doc.resolve(doc.content.size))
+                )
+              )
+              return true
+            }
           }
         }
       })

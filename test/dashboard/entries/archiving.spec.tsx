@@ -79,7 +79,9 @@ test('lists the links that break when an entry is archived', async ({
   )
   await expect(dialog.getByText('If this page was publicly')).toHaveCount(0)
   await expect(
-    dialog.getByText('Redirect the URL to another page (recommended)')
+    dialog.getByRole('list', {
+      name: 'Redirect to'
+    })
   ).toBeVisible()
   await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
   await expect(dialog).toHaveCount(0)
@@ -96,11 +98,19 @@ test('redirects the url of the archived page to the picked page', async ({
 
   await app.runEntryAction('Archive')
   const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
-  await dialog.getByRole('button', {name: 'Choose page…'}).click()
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  await picker.getByRole('row', {name: /^Alpha/}).click()
-  await expect(picker).toHaveCount(0)
-  await expect(dialog.getByText('/alpha', {exact: true})).toBeVisible()
+  const label = 'Redirect to'
+  const field = dialog.getByRole('list', {name: label})
+  const pick = async () => {
+    await field.getByRole('button', {name: label}).click()
+    const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+    await picker.getByRole('row', {name: /^Alpha/}).click()
+    await expect(picker).toHaveCount(0)
+    await expect(field.getByRole('button', {name: /Alpha/})).toBeVisible()
+  }
+  await pick()
+  await field.getByRole('button', {name: 'Remove link'}).click()
+  await expect(field.getByRole('button', {name: label})).toBeVisible()
+  await pick()
   await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
   await expect(dialog).toHaveCount(0)
   await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()

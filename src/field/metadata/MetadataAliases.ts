@@ -1,16 +1,21 @@
 import type {ListField} from '#/core/field/ListField.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {type Type, type} from '#/core/Type.js'
+import {type HiddenField, hidden} from '#/field/hidden.js'
 import {list} from '#/field/list.js'
 import {type TextField, text} from '#/field/text.js'
 
 export interface MetadataAlias extends ListRow {
   _type: 'alias'
   url: string
+  /** The entry archived or deleted at the url, which takes it back when
+   * published again */
+  removed?: string
 }
 
 export interface MetadataAliasFields {
   url: TextField
+  removed: HiddenField<string | undefined>
 }
 
 type MetadataAliasType = Type<MetadataAliasFields>
@@ -31,7 +36,8 @@ export function aliases(label = 'URL aliases'): AliasesField {
         fields: {
           url: text('URL', {
             help: 'A previous URL that should redirect to this entry'
-          })
+          }),
+          removed: hidden('Removed entry')
         }
       })
     }

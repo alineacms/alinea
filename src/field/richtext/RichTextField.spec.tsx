@@ -13,7 +13,9 @@ import {
   RichTextPlainStory,
   RichTextReadOnlyStory,
   RichTextReadOnlyImageStory,
-  RichTextStory
+  RichTextReadOnlyTrailingBlockStory,
+  RichTextStory,
+  RichTextTrailingBlockStory
 } from './RichTextField.story.js'
 
 /** The header of a block of `type`, which drags the block */
@@ -1426,4 +1428,82 @@ test('picks the clicked one of two links that touch', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Remove link'}).click()
   await expect(editor.locator('a')).toHaveCount(1)
   await expect(editor.locator('a')).toHaveText('beta')
+})
+
+async function clickBelowTrailingBlock(page: Page) {
+  const editor = page.locator('.ProseMirror').first()
+  const block = editor.locator('> [data-richtext-block-host]').last()
+  const blockBox = await block.boundingBox()
+  const editorBox = await editor.boundingBox()
+  if (!blockBox || !editorBox) throw new Error('Editor not rendered')
+  const below = editorBox.y + editorBox.height - (blockBox.y + blockBox.height)
+  expect(below).toBeGreaterThanOrEqual(24)
+  await page.mouse.click(
+    blockBox.x + blockBox.width / 2,
+    blockBox.y + blockBox.height + below / 2
+  )
+}
+
+test('starts a new line below a trailing block', async ({mount, page}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  await clickBelowTrailingBlock(page)
+  await page.keyboard.type('After')
+
+  await expect
+    .poll(async () => (await storedValue(page)).map(node => node._type))
+    .toEqual(['paragraph', 'Callout', 'paragraph'])
+  const value = await storedValue(page)
+  expect(value[2]).toEqual({
+    _type: 'paragraph',
+    content: [{_type: 'text', text: 'After'}]
+  })
+})
+
+test('leaves the value alone when clicking below a trailing block', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  const before = await page.getByTestId('value').textContent()
+  const height = (await editor.boundingBox())?.height
+  await clickBelowTrailingBlock(page)
+
+  await expect(editor.locator('.ProseMirror-gapcursor')).toHaveCount(1)
+  expect((await editor.boundingBox())?.height).toBe(height)
+
+  await expect(page.getByTestId('value')).toHaveText(before ?? '')
+  await expect(page.getByTestId('dirty')).toHaveText('false')
+})
+
+test('ignores clicks below a trailing block when read only', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextReadOnlyTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  const before = await page.getByTestId('value').textContent()
+  const box = await editor.boundingBox()
+  if (!box) throw new Error('Editor not rendered')
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 2)
+  await page.keyboard.type('After')
+
+  await expect(editor.locator('.ProseMirror-gapcursor')).toHaveCount(0)
+  await expect(page.getByTestId('value')).toHaveText(before ?? '')
+  await expect(page.getByTestId('dirty')).toHaveText('false')
+})
+
+test('reaches a new line with ArrowDown from a trailing block', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  await placeCaret(page.locator('.ProseMirror p').first(), 'end')
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.type('After')
+
+  await expect
+    .poll(async () => (await storedValue(page)).map(node => node._type))
+    .toEqual(['paragraph', 'Callout', 'paragraph'])
 })

@@ -1,6 +1,8 @@
 import {
   Button,
   type ButtonProps,
+  ComboBox,
+  ComboBoxItem,
   Dialog,
   DialogTrigger,
   type DragMoveEvent,
@@ -24,8 +26,6 @@ import {
   Popover,
   PopoverAnchor,
   PopoverContent,
-  Select,
-  SelectItem,
   SheetBody,
   SheetClose,
   SheetContent,
@@ -36,6 +36,7 @@ import {
   TextField
 } from '#/components.js'
 import {Config} from '#/core/Config.js'
+import type {EntryAnchorTarget} from '#/core/Field.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
@@ -54,7 +55,11 @@ import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
-import {linkEntryAtoms, type LinkEntrySummary} from '#/dashboard/atoms/link.js'
+import {
+  linkEntryAtoms,
+  type LinkEntryState,
+  type LinkEntrySummary
+} from '#/dashboard/atoms/link.js'
 import {
   ExternalLinkPicker,
   type ExternalLinkValue
@@ -99,7 +104,9 @@ import type {
   RefObject
 } from 'react'
 import {useId, useMemo, useRef, useState} from 'react'
+import {LinkDetails} from './LinkDetails.js'
 import css from './LinkField.module.css'
+import {openableUrl, suffixedUrl} from './LinkUrl.js'
 
 const styles = styler(css)
 
@@ -128,11 +135,28 @@ function getEntryPickerType(type: PickerType): EntryPickerType {
   return type === 'url' ? 'entry' : type
 }
 
-function useLinkEntryState(entryId: string, locale?: string) {
+const noLinkEntry = atom<LinkEntryState>({state: 'hasData', data: null})
+
+function useLinkEntryState(entryId: string | undefined, locale?: string) {
   const scope = useOptionalEntryAtoms()
   // Links stored without a locale follow the locale of the edited entry
   const linkLocale = locale ?? scope?.localeData.requestedLocale ?? undefined
-  return useAtomValueRawSync(linkEntryAtoms(entryId, linkLocale))
+  return useAtomValueRawSync(
+    entryId ? linkEntryAtoms(entryId, linkLocale) : noLinkEntry
+  )
+}
+
+/**
+ * Read by the link row with its label, so its settings sheet renders the
+ * suggestions without loading them itself
+ */
+function useLinkAnchors(value: LinkFieldRow): Array<EntryAnchorTarget> {
+  const entry = value[Reference.type] === 'entry' && '_entry' in value
+  const state = useLinkEntryState(
+    entry ? value._entry : undefined,
+    entry ? value._locale : undefined
+  )
+  return state.state === 'hasData' ? (state.data?.anchors ?? []) : []
 }
 
 function getLinkIcon(type: string) {
@@ -786,75 +810,58 @@ function EntryLinkSuffixField({
 }
 
 interface EntryAnchorFieldProps {
+  anchors: Array<EntryAnchorTarget>
   isDisabled?: boolean
   node: ReactiveNode<LinkFieldRow>
   value: LinkFieldRow
 }
 
-function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
+/** Any anchor can be typed, the anchors of the linked entry are suggested */
+function EntryAnchorField({
+  anchors,
+  isDisabled,
+  node,
+  value
+}: EntryAnchorFieldProps) {
   const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   const setAnchor = useSetAtom(node.field('_anchor'))
   if (value[Reference.type] !== 'entry') return null
+  const known = anchors.some(item => item.id === anchor)
   return (
-    <EntryAnchorFieldInner
-      anchor={anchor}
-      entryId={value._entry}
-      locale={value._locale}
-      isDisabled={isDisabled}
-      onChange={setAnchor}
-    />
+    <ComboBox
+      allowsCustomValue
+      disabled={isDisabled}
+      label="Anchor"
+      inputValue={anchor ?? ''}
+      onInputValueChange={next => setAnchor(next || undefined)}
+      value={known ? anchor : null}
+      onValueChange={next => {
+        if (next !== null) setAnchor(String(next))
+      }}
+    >
+      {anchors.map(item => (
+        <ComboBoxItem
+          key={item.id}
+          value={item.id}
+          textValue={item.id}
+          description={item.fieldLabel ?? item.fieldPath}
+        >
+          {item.label ?? `#${item.id}`}
+        </ComboBoxItem>
+      ))}
+    </ComboBox>
   )
 }
 
-function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
+interface EntryAnchorBadgeProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryAnchorBadge({node, value}: EntryAnchorBadgeProps) {
   const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   if (value[Reference.type] !== 'entry' || !anchor) return null
   return <Badge size="sm">#{anchor}</Badge>
-}
-
-interface EntryAnchorFieldInnerProps {
-  anchor?: string
-  entryId: string
-  locale?: string
-  isDisabled?: boolean
-  onChange(value: string | undefined): void
-}
-
-function EntryAnchorFieldInner({
-  anchor,
-  entryId,
-  locale,
-  isDisabled,
-  onChange
-}: EntryAnchorFieldInnerProps) {
-  const state = useLinkEntryState(entryId, locale)
-  const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
-  return (
-    <Select
-      clearable
-      disabled={isDisabled || anchors.length === 0}
-      label="Anchor"
-      onValueChange={next => onChange(next ?? undefined)}
-      value={anchor ?? null}
-    >
-      {anchors.map(item => (
-        <SelectItem
-          key={item.id}
-          value={item.id}
-          textValue={item.label ?? `#${item.id}`}
-        >
-          <span className={styles.LinkFieldView.anchorOption()}>
-            <span className={styles.LinkFieldView.anchorOption.label()}>
-              {item.label ?? `#${item.id}`}
-            </span>
-            <span className={styles.LinkFieldView.anchorOption.location()}>
-              {item.fieldLabel ?? item.fieldPath}
-            </span>
-          </span>
-        </SelectItem>
-      ))}
-    </Select>
-  )
 }
 
 interface LinkMetaLabelProps {
@@ -1126,17 +1133,6 @@ function UrlLinkRowAction({closeActions, url}: UrlLinkRowActionProps) {
   )
 }
 
-const openableProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:'])
-
-/** The absolute url of a link, unless it would run script like javascript: */
-function openableUrl(url: string | undefined, base: string) {
-  if (!url) return undefined
-  const parsed = URL.parse(url, base)
-  return parsed && openableProtocols.has(parsed.protocol)
-    ? parsed.href
-    : undefined
-}
-
 interface EntryLinkRowActionsProps {
   closeActions: () => void
   entryId: string
@@ -1221,6 +1217,7 @@ function LinkRowButton({children, sheet, onEdit, onOpen}: LinkRowButtonProps) {
 }
 
 interface LinkSheetProps {
+  anchors: Array<EntryAnchorTarget>
   node: ReactiveNode<LinkFieldRow>
   onEdit: () => void
   onRemove: () => void
@@ -1232,6 +1229,7 @@ interface LinkSheetProps {
 }
 
 function LinkSheet({
+  anchors,
   node,
   onEdit,
   onRemove,
@@ -1255,9 +1253,15 @@ function LinkSheet({
           <SheetClose aria-label="Close link settings" />
         </SheetHeader>
         <SheetBody>
+          <LinkSheetDetails node={node} value={value} />
           <SheetSection>
             <LinkLabelField isDisabled={readOnly} node={node} value={value} />
-            <EntryAnchorField isDisabled={readOnly} node={node} value={value} />
+            <EntryAnchorField
+              anchors={anchors}
+              isDisabled={readOnly}
+              node={node}
+              value={value}
+            />
             <EntryLinkSuffixField
               isDisabled={readOnly}
               node={node}
@@ -1292,6 +1296,52 @@ function LinkSheet({
   )
 }
 
+interface LinkSheetDetailsProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function LinkSheetDetails({node, value}: LinkSheetDetailsProps) {
+  if ('_url' in value)
+    return (
+      <SheetSection>
+        <LinkDetails url={value._url} />
+      </SheetSection>
+    )
+  if (!('_entry' in value)) return null
+  return (
+    <EntryLinkSheetDetails
+      entryId={value._entry}
+      locale={value._locale}
+      node={node}
+    />
+  )
+}
+
+interface EntryLinkSheetDetailsProps {
+  entryId: string
+  locale?: string
+  node: ReactiveNode<LinkFieldRow>
+}
+
+function EntryLinkSheetDetails({
+  entryId,
+  locale,
+  node
+}: EntryLinkSheetDetailsProps) {
+  const state = useLinkEntryState(entryId, locale)
+  const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
+  const suffix = useAtomValueRaw(node.field('_suffix')) as string | undefined
+  const entry = state.state === 'hasData' ? state.data : undefined
+  if (!entry) return null
+  const url = entry.file ? entry.url : suffixedUrl(entry.url, suffix, anchor)
+  return (
+    <SheetSection>
+      <LinkDetails entry={entry} url={entry.url && url} />
+    </SheetSection>
+  )
+}
+
 function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const [, setValue] = useField(field)
   const options = useFieldOptions(field)
@@ -1301,6 +1351,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const imagePreviewEntryId =
     type === 'image' && '_entry' in value ? value._entry : undefined
   const sheet = useBlockSheet(value[Reference.id])
+  const anchors = useLinkAnchors(value)
   const [editOpen, setEditOpen] = useState(false)
 
   function removeLink() {
@@ -1359,6 +1410,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
         )}
       </SortableListItem>
       <LinkSheet
+        anchors={anchors}
         node={node}
         onEdit={() => setEditOpen(true)}
         onRemove={removeLink}
@@ -1410,6 +1462,7 @@ function MultipleLinkRow({
   const itemId = value[Reference.id]
   const readOnly = Boolean(options.readOnly)
   const sheet = useBlockSheet(value[Reference.id])
+  const anchors = useLinkAnchors(value)
   const [editOpen, setEditOpen] = useState(false)
 
   function removeLink() {
@@ -1495,6 +1548,7 @@ function MultipleLinkRow({
         )}
       </SortableListItem>
       <LinkSheet
+        anchors={anchors}
         node={node}
         onEdit={() => setEditOpen(true)}
         onRemove={removeLink}
