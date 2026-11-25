@@ -44,7 +44,9 @@
   language with `forms.messages` in `createHandler`, eg.
   `{nl: {tooLong: ({max}) => ...}}`. Results that did not pass have the
   `codes` of their errors next to the `errors`, `validate` of an input can
-  return a message by its code and `Form.validate` takes a `locale`.
+  return a message by its code and `Form.validate` takes a `locale`. The
+  `locale` of the form is passed to `validate` as a third argument,
+  `{locale}`, so messages of your own can be in the language of the visitor.
 
 ## [2.0.0] - 2026-11-17
 

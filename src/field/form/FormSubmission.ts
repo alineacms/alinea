@@ -15,7 +15,7 @@ import {
   settingsOf
 } from './FormDefinition.js'
 import type {FormField} from './FormField.js'
-import {Input} from './FormInput.js'
+import {type FormValidateContext, Input} from './FormInput.js'
 import {
   type FormLocaleMessages,
   type FormMessage,
@@ -96,7 +96,7 @@ export function validateSubmission(
       )
   }
   const state = formState(definition, parsed, locale)
-  const check = new Checker(byId, state)
+  const check = new Checker(byId, state, {locale: locale ?? null})
   const values: FormValues = {}
   for (const item of definition) {
     if (item.control !== 'section')
@@ -122,10 +122,16 @@ class Checker {
   errors: FormProblems = {}
   #byId: Map<string, FormEntry>
   #state: FormState
+  #context: FormValidateContext
 
-  constructor(byId: Map<string, FormEntry>, state: FormState) {
+  constructor(
+    byId: Map<string, FormEntry>,
+    state: FormState,
+    context: FormValidateContext
+  ) {
     this.#byId = byId
     this.#state = state
+    this.#context = context
   }
 
   inputs(
@@ -145,7 +151,8 @@ class Checker {
           this.errors[name(item.key)] = required(input)
         continue
       }
-      const message = validate(input, value, settingsOf(input, row))
+      const settings = settingsOf(input, row)
+      const message = validate(input, value, settings, this.#context)
       if (message) this.errors[name(item.key)] = message
       else values[item.key] = value
     }
@@ -183,10 +190,11 @@ function same(key: string): string {
 function validate(
   input: Input,
   value: unknown,
-  settings: object
+  settings: object,
+  context: FormValidateContext
 ): string | FormMessage | undefined {
   try {
-    return input.validate?.(value as never, settings as never)
+    return input.validate?.(value as never, settings as never, context)
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }

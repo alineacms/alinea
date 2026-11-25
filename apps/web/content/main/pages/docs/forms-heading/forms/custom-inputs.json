@@ -153,7 +153,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`validate(value, settings)`: checks an answer on the server and returns a message for the visitor when it doesn't pass. It runs after the required check and the rules, and only for inputs that have an answer. A text is shown as is. To show a built-in message in the language of the form, return its code, such as `{code: 'tooHigh', max}`, see Rendering on your site."
+                  "text": "`validate(value, settings, {locale})`: checks an answer on the server and returns a message for the visitor when it doesn't pass. It runs after the required check and the rules, and only for inputs that have an answer. A text is shown as is. To show a built-in message in the language of the form, return its code, such as `{code: 'tooHigh', max}`, see Rendering on your site. `locale` is the locale of the form, eg. `nl`, or null when its root is not translated, so a text of your own can be in the language of the visitor."
                 }
               ]
             }
@@ -208,6 +208,24 @@
           "text": "Because its kind is `number`, rules of other inputs can test whether the rating is less than or more than a number. Answers are stored as `parse` returns them, so return something that turns into JSON."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A check of your own can answer in the language of the form, for example a bank account number:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3MbMefpOB44Mg6vdfVtE4Un1qDe",
+      "code": "import {Form} from 'alinea'\n\nconst invalid: Record<string, string> = {\n  nl: 'Vul een geldig rekeningnummer in',\n  fr: 'Indiquez un numéro de compte valide'\n}\n\nexport const Iban = Form.input('IBAN', {\n  validate(value, settings, {locale}) {\n    if (isIban(value)) return\n    return invalid[locale?.slice(0, 2) ?? ''] ?? 'Use a valid account number'\n  }\n})",
+      "fileName": "schema/Iban.ts",
+      "language": "tsx",
+      "compact": false
     },
     {
       "_type": "heading",

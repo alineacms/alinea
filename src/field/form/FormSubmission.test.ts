@@ -111,6 +111,25 @@ test('a custom input can give a message by its code', () => {
   expect(!short.ok && short.codes).toEqual({})
 })
 
+test('validate gets the locale of the form', () => {
+  const Iban = Form.input('IBAN', {
+    validate: (value, settings, {locale}) =>
+      value.startsWith('BE')
+        ? undefined
+        : locale === 'nl'
+          ? 'Ongeldig'
+          : 'Invalid'
+  })
+  const field = Field.form('Inputs', {inputs: {iban: Iban}})
+  const row = {_id: 'a', _index: 'a0', _type: 'iban', label: 'A', key: 'a'}
+  const dutch = validateSubmission(field, [row], data({a: 'NL'}), {
+    locale: 'nl'
+  })
+  expect(!dutch.ok && dutch.errors).toEqual({a: 'Ongeldig'})
+  const other = validateSubmission(field, [row], data({a: 'NL'}))
+  expect(!other.ok && other.errors).toEqual({a: 'Invalid'})
+})
+
 test('unknown options are rejected', () => {
   const result = validateSubmission(
     inputs,

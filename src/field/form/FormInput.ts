@@ -24,6 +24,12 @@ export type FormAttributes = Record<
 /** The FormData entries of an input */
 export type FormRaw = Array<FormDataEntryValue>
 
+/** What `validate` knows of the form an answer was sent with */
+export interface FormValidateContext {
+  /** The locale of the form, eg. `nl`, null when its root is not translated */
+  locale: string | null
+}
+
 export interface InputConfig<
   Fields extends FieldsDefinition,
   Settings extends FieldsDefinition,
@@ -68,11 +74,13 @@ export interface InputConfig<
   /**
    * Checked on the server after required and conditions. A text is shown as
    * is, a message by its code is shown in the language of the form, eg.
-   * `{code: 'tooLong', max: 20}`.
+   * `{code: 'tooLong', max: 20}`. Return a text in the language of
+   * `context.locale` for messages of your own.
    */
   validate?(
     value: Value,
-    settings: StoredRow<Fields & Settings>
+    settings: StoredRow<Fields & Settings>,
+    context: FormValidateContext
   ): string | FormMessage | undefined
 }
 

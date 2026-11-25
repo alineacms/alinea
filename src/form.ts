@@ -30,6 +30,7 @@ export type {
   FormAttributes,
   FormControl,
   FormRaw,
+  FormValidateContext,
   ContentConfig,
   Input,
   InputConfig
