@@ -53,3 +53,35 @@ test('a compressed answer of the app is passed on decoded', async () => {
     app.stop(true)
   }
 })
+
+test('requests are only forwarded to the app with the api key', async () => {
+  let reached = 0
+  const app = Bun.serve({
+    port: 0,
+    fetch(request) {
+      if (request.headers.get('x-alinea-dev-key') === 'key') reached++
+      return Response.json([])
+    }
+  })
+  const send = (on: typeof cms, host: string) =>
+    forwardMutation(
+      new Request('http://localhost:4500/api?action=mutate', {
+        method: 'POST',
+        headers: {'x-forwarded-host': host},
+        body: '[]'
+      }),
+      on,
+      'key'
+    )
+  try {
+    expect(await send(cms, 'attacker.example')).toBeUndefined()
+    const configured = createCMS({
+      ...cms.config,
+      baseUrl: {development: `http://localhost:${app.port}`}
+    })
+    expect((await send(configured, 'attacker.example'))?.status).toBe(200)
+    expect(reached).toBe(1)
+  } finally {
+    app.stop(true)
+  }
+})

@@ -233,7 +233,7 @@ async function forwardToApp(
   cms: CMS,
   apiKey: string
 ): Promise<Response | undefined> {
-  const origin = forwardedRequestOrigin(request)
+  const origin = appOrigin(request, cms)
   if (!origin) return
   const source = new URL(request.url)
   const target = forwardedHandlerUrl(
@@ -292,6 +292,27 @@ const hopByHopHeaders = [
 function firstHeaderValue(value: string | null): string | undefined {
   return value?.split(',')[0]?.trim() || undefined
 }
+
+/**
+ * Where the app is that a request came through. The forwarded host is not
+ * trusted: requests are sent on with the api key, also those of visitors
+ * that upload a file to a form.
+ */
+function appOrigin(request: Request, cms: CMS): string | undefined {
+  const forwarded = forwardedRequestOrigin(request)
+  if (!forwarded) return
+  const configured =
+    URL.parse(Config.handlerUrl(cms.config))?.origin ??
+    URL.parse(Config.baseUrl(cms.config, 'development') ?? '')?.origin
+  if (configured) return configured
+  // Without a baseUrl the app is taken to run on this machine
+  const {hostname} = new URL(forwarded)
+  return loopback.has(hostname) || hostname.endsWith('.localhost')
+    ? forwarded
+    : undefined
+}
+
+const loopback = new Set(['localhost', '127.0.0.1', '[::1]'])
 
 function forwardedRequestOrigin(request: Request): string | undefined {
   const host = firstHeaderValue(request.headers.get('x-forwarded-host'))
