@@ -107,7 +107,8 @@ export class SubmissionStore implements SubmissionsApi {
   #db: Promise<Database>
 
   constructor({db}: SubmissionStoreOptions) {
-    this.#db = Promise.resolve(db).then(prepare)
+    // Returning the lazy migration from then() would start it right away
+    this.#db = PLazy.from(() => Promise.resolve(db).then(prepare))
   }
 
   async storeSubmission({

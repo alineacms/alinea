@@ -137,3 +137,15 @@ test('the mails that went out are noted on a submission', async () => {
   const [stored] = (await store.listSubmissions('form')).submissions
   expect(stored.notified).toEqual(['Helpdesk'])
 })
+
+test('the store migrates on first use', async () => {
+  let migrated = 0
+  const db = driver['bun:sqlite'](new BunSqlite(':memory:'))
+  const migrate = db.migrate.bind(db)
+  db.migrate = (...tables) => (migrated++, migrate(...tables))
+  const store = new SubmissionStore({db})
+  await Promise.resolve()
+  expect(migrated).toBe(0)
+  await store.listSubmissions('form', {})
+  expect(migrated).toBe(1)
+})
