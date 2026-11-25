@@ -185,6 +185,26 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(home.getByRole('textbox', {name: 'URL suffix'})).toBeVisible()
 })
 
+test('suggests the anchors of the linked entry', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Page Home'}).click()
+  const settings = page.getByRole('dialog', {name: 'Home'})
+  const anchor = settings.getByRole('combobox', {name: 'Anchor'})
+  await expect(anchor).toBeEnabled()
+  await anchor.fill('rich')
+  await page.getByRole('option', {name: '#rich-text'}).click()
+  await expect(anchor).toHaveValue('rich-text')
+  await expect(relatedLink.getByText('#rich-text')).toBeVisible()
+
+  // Anchors the entry does not have yet can be typed
+  await anchor.fill('later')
+  await settings.getByRole('textbox', {name: 'Label'}).focus()
+  await expect(anchor).toHaveValue('later')
+  await expect(relatedLink.getByText('#later')).toBeVisible()
+})
+
 test('expands a folded link row when its settings open', async ({
   mount,
   page
