@@ -211,14 +211,13 @@ export function Form({
   const failed = result && !result.ok ? result : undefined
   const shown = errors ?? failed?.errors
   // Errors are about the answers that were sent, so an answer that changes
-  // since loses its error
-  const [edited, setEdited] = useState({
-    errors: shown,
-    names: new Set<string>()
-  })
-  const changed = edited.errors === shown ? edited.names : new Set<string>()
+  // since loses its error. Edits count from the last result, as a result
+  // with only a message has no errors to tell it apart.
+  const sent = errors ?? result
+  const [edited, setEdited] = useState({sent, names: new Set<string>()})
+  const changed = edited.sent === sent ? edited.names : new Set<string>()
   function edit(name: string) {
-    setEdited({errors: shown, names: new Set(changed).add(name)})
+    setEdited({sent, names: new Set(changed).add(name)})
   }
   const element = useRef<HTMLFormElement>(null)
   // The submit button is disabled while sending, which takes the focus away,

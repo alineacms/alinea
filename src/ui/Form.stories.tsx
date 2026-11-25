@@ -74,6 +74,7 @@ async function send(data: FormData): Promise<FormResult> {
   if (!device) return {ok: false, errors: {device: 'Fill in this field'}}
   if (device === 'Toaster')
     return {ok: false, errors: {device: 'We do not repair toasters'}}
+  if (device === 'Kettle') return {ok: false, message: 'We are closed today'}
   return {ok: true, confirmation: `We will look at your ${device}.`}
 }
 

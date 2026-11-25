@@ -28,6 +28,10 @@ test('shows the errors of the action and keeps the answers', async ({
   await mount(<Submit />)
   await page.getByRole('radio', {name: 'IT'}).check()
   const device = page.getByRole('textbox', {name: 'Device *'})
+  // A message for the whole form shows, though answers were filled in
+  await device.fill('Kettle')
+  await page.getByRole('button', {name: 'Send'}).click()
+  await expect(page.getByRole('alert')).toHaveText('We are closed today')
   await device.fill('Toaster')
   await page.getByRole('button', {name: 'Send'}).click()
   await expect(page.getByRole('alert')).toHaveText('We do not repair toasters')
