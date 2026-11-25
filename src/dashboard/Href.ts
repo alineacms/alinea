@@ -15,6 +15,8 @@ export interface DashboardLocation {
    * for entries with both
    */
   view?: EntryDefaultView
+  /** Id of a submission of the form of the entry, to open it */
+  submission?: string
 }
 
 /** @internal */
@@ -33,10 +35,16 @@ export const nav = {
     return `/edit?${params}`
   },
   /** The editor of an entry by id, its workspace and root are looked up */
-  link(entryId: string, locale?: string | null, view?: EntryDefaultView) {
+  link(
+    entryId: string,
+    locale?: string | null,
+    view?: EntryDefaultView,
+    submission?: string
+  ) {
     const params = new URLSearchParams({id: entryId})
     if (locale) params.set('locale', locale)
     if (view) params.set('view', view)
+    if (submission) params.set('submission', submission)
     return `/edit?${params}`
   },
   entry(
@@ -46,7 +54,8 @@ export const nav = {
     locale?: string | null,
     view?: EntryDefaultView,
     sort?: string,
-    tab?: string
+    tab?: string,
+    submission?: string
   ) {
     const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
     const path = `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
@@ -54,6 +63,7 @@ export const nav = {
     if (view) params.set('view', view)
     if (sort) params.set('sort', sort)
     if (tab) params.set('tab', tab)
+    if (submission) params.set('submission', submission)
     const search = params.toString()
     return search ? `${path}?${search}` : path
   }
@@ -67,11 +77,21 @@ export const nav = {
  * @example
  * <a href={href({entryId: post.id})}>{post.title}</a>
  * const url = `${baseUrl}/admin${href({entryId: post.id})}`
+ * const answers = href({entryId: form.id, submission: submission.id})
  */
 export function href(location: DashboardLocation): string {
-  const {workspace, root, entryId, view} = location
+  const {workspace, root, entryId, view, submission} = location
   const locale = location.locale ?? undefined
   if (entryId && !workspace && !root)
-    return `#${nav.link(entryId, locale, view)}`
-  return `#${nav.entry(workspace, root, entryId, locale, view)}`
+    return `#${nav.link(entryId, locale, view, submission)}`
+  return `#${nav.entry(
+    workspace,
+    root,
+    entryId,
+    locale,
+    view,
+    undefined,
+    undefined,
+    submission
+  )}`
 }

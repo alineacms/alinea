@@ -93,6 +93,7 @@ export function parseSubmissionQuery(body: unknown): SubmissionQuery {
   const status = text(body.status)
   const choice = isRecord(body.choice) ? body.choice : undefined
   return {
+    id: text(body.id),
     status:
       status === 'open' ||
       status === 'new' ||
@@ -235,7 +236,12 @@ export async function submitForm(
       {
         locale,
         link: dashboard
-          ? dashboard.href + href({entryId: request.entryId, locale})
+          ? dashboard.href +
+            href({
+              entryId: request.entryId,
+              locale,
+              submission: submission.id
+            })
           : undefined,
         entries: site
           ? await entryUrls(graph, data.mails, site, locale)

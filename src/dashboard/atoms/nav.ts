@@ -37,6 +37,8 @@ export interface DashboardRoute {
   sort?: string
   /** The tab an overview shows, eg. `active` */
   tab?: string
+  /** A submission of the form of the entry, shown in its sheet */
+  submission?: string
   /** Replace the current history entry instead of adding one */
   replace?: boolean
 }
@@ -87,12 +89,14 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
   const url = params.get('url')
   const id = params.get('id')
   const view = params.get('view')
+  const submission = params.get('submission') ?? undefined
   if (action === 'edit' && id)
     return {
       page: 'edit',
       entry: id,
       locale: params.get('locale') ?? undefined,
-      view: view === 'edit' || view === 'overview' ? view : undefined
+      view: view === 'edit' || view === 'overview' ? view : undefined,
+      submission
     }
   if (action === 'edit' && url)
     return {
@@ -117,7 +121,8 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
         ? view
         : undefined,
     sort: page === 'entry' && sort ? sort : undefined,
-    tab: page === 'entry' && tab ? tab : undefined
+    tab: page === 'entry' && tab ? tab : undefined,
+    submission: page === 'entry' ? submission : undefined
   }
 }
 
@@ -129,7 +134,8 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
       page: 'edit',
       entry: update.entry,
       locale: update.locale,
-      view: update.view
+      view: update.view,
+      submission: update.submission
     }
   if (update.page === 'edit')
     return update.url
@@ -148,14 +154,15 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
     locale: update.locale,
     view: update.view,
     sort: update.sort,
-    tab: update.tab
+    tab: update.tab,
+    submission: update.submission
   }
 }
 
 /** @internal */
 export function hashFromRoute(route: ResolvedDashboardRoute): string {
   if (route.page === 'edit' && route.entry)
-    return `#${nav.link(route.entry, route.locale, route.view)}`
+    return `#${nav.link(route.entry, route.locale, route.view, route.submission)}`
   if (route.page === 'edit')
     return `#${nav.edit(route.url ?? '/', route.workspace, route.root)}`
   return route.page === 'splash'
@@ -169,7 +176,8 @@ export function hashFromRoute(route: ResolvedDashboardRoute): string {
           route.locale,
           route.view,
           route.sort,
-          route.tab
+          route.tab,
+          route.submission
         )}`
 }
 
@@ -302,7 +310,8 @@ function navigate(
     })
   }
   const guard = get(routeGuardAtom)
-  if (guard && get(guard)) {
+  // Opening a submission stays on the entry, its edits are not left behind
+  if (guard && get(guard) && !sameEntry(previous, route)) {
     if (request.browser) {
       ignoredBrowserHash = hashFromRoute(previous)
       set(
@@ -320,6 +329,12 @@ function navigate(
     return
   }
   commit()
+}
+
+function sameEntry(a: ResolvedDashboardRoute, b: ResolvedDashboardRoute) {
+  const entry = (route: ResolvedDashboardRoute) =>
+    hashFromRoute({...route, submission: undefined})
+  return entry(a) === entry(b)
 }
 
 /**
@@ -350,7 +365,8 @@ async function linkedRoute(
       root: found.root,
       entry: route.entry,
       locale: route.locale ?? found.locale ?? undefined,
-      view: route.view
+      view: route.view,
+      submission: route.submission
     }
   }
   const query = {
@@ -441,6 +457,8 @@ export interface Page {
   entry: string | undefined
   locale: string | null
   view: EntryDefaultView | undefined
+  /** The submission of the form of the entry to show, see `DashboardRoute` */
+  submission?: string
 }
 
 export const pageAtom = atom(get => resolvePage(get, get(routeAtom)))
@@ -491,7 +509,8 @@ function resolvePage(get: Getter, route: ResolvedDashboardRoute): Page {
     requestedRoot: route.root,
     entry: route.entry,
     locale,
-    view: route.view
+    view: route.view,
+    submission: route.submission
   }
 }
 
@@ -565,3 +584,27 @@ export function page(
 ) {
   return render
 }
+
+/**
+ * The submission of the form of the open entry that its sheet shows, kept in
+ * the url so a link opens it
+ */
+export const openSubmissionAtom = atom(
+  get => get(pageAtom).submission,
+  (get, set, submission: string | undefined) => {
+    const page = get(pageAtom)
+    if (page.type !== 'entry' || page.submission === submission) return
+    const {sort, tab} = get(routeAtom)
+    set(routeAtom, {
+      workspace: page.workspace,
+      root: page.root,
+      entry: page.entry,
+      locale: page.locale ?? undefined,
+      view: page.view,
+      sort,
+      tab,
+      submission,
+      replace: true
+    })
+  }
+)

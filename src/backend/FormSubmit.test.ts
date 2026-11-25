@@ -510,7 +510,7 @@ test('a mail links to the submission and attaches its files', async () => {
       }
     ]
   }
-  const {entryId, submit, handle} = await setup({
+  const {entryId, store, submit, handle} = await setup({
     form: ServiceForm,
     set: {
       title: 'Request',
@@ -570,12 +570,13 @@ test('a mail links to the submission and attaches its files', async () => {
   })
   expect(result.body.ok).toBe(true)
   const [desk, plain] = sent
-  const link = `http://localhost/admin#/edit?id=${entryId}`
+  const [{id}] = (await store.listSubmissions(entryId)).submissions
+  const link = `http://localhost/admin#/edit?id=${entryId}&submission=${id}`
   expect(desk.text).toBe(
     'Name: Ann\nEmail: ann@example.com\nShot: shot.png\nOther: other.png ' +
       link
   )
-  expect(desk.content).toContain(`<a href="${link}"`)
+  expect(desk.content).toContain(`<a href="${link.replace('&', '&amp;')}"`)
   expect(desk.content).not.toContain('<a href="http://localhost/api')
   expect(desk.attachments).toEqual([
     {

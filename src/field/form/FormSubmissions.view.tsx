@@ -52,9 +52,19 @@ import {
   useOpenBlockSheetId
 } from '#/dashboard/app/BlockSheet.js'
 import {clientAtom, configAtom} from '#/dashboard/atoms/core.js'
+import {openSubmissionAtom} from '#/dashboard/atoms/nav.js'
+import {
+  submissionAtom,
+  submissionsVersion
+} from '#/dashboard/atoms/submissions.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {atomWithPending, dispense} from '#/dashboard/atoms/utils.js'
-import {useEditor, useEntry, useLocale} from '#/dashboard/hooks.js'
+import {
+  useEditor,
+  useEntry,
+  useLocale,
+  useOptionalDashboardContext
+} from '#/dashboard/hooks.js'
 import {useOtherVersions} from '#/dashboard/app/useMissingLanguages.js'
 import {
   IcOutlineTableRows,
@@ -73,7 +83,7 @@ import {
   useSetAtom,
   useStore
 } from 'jotai'
-import {useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   type FormAnswer,
   type FormColumn,
@@ -95,9 +105,6 @@ import {fillForm} from './FormShare.js'
 import css from './FormSubmissions.module.css'
 
 const styles = styler(css)
-
-/** Bumped after a change, so the submissions of the entry load again */
-const version = dispense((entryId: string) => atom(0))
 
 type StatusFilter = NonNullable<SubmissionQuery['status']>
 
@@ -128,6 +135,13 @@ const filterAtom = dispense((entryId: string) =>
   })
 )
 
+/** A linked submission, which can be outside the pages shown */
+const linkedAtom = dispense((entryId: string, id: string) =>
+  atomWithPending(submissionAtom(entryId, id))
+)
+
+const notLinked = atom([false, null] as const)
+
 /** How many pages of submissions are shown, more load on scrolling */
 const shownPages = dispense((entryId: string) => atom(1))
 
@@ -153,7 +167,7 @@ const pageAtom = dispense((key: string) =>
 const submissionsAtom = dispense((entryId: string) =>
   atomWithPending(
     atom(async get => {
-      const changes = get(version(entryId))
+      const changes = get(submissionsVersion(entryId))
       const query = submissionQuery(get(filterAtom(entryId)))
       const pages = await Promise.all(
         Array.from({length: get(shownPages(entryId))}, (_, page) =>
@@ -270,12 +284,25 @@ function FormSubmissions({entryId, definition, locales}: FormSubmissionsProps) {
   // The last one opened stays mounted while its sheet animates out
   const [shown, setShown] = useState<string>()
   if (selected && selected !== shown) setShown(selected)
-  const [exporting, setExporting] = useState(false)
   const openSheet = useOpenBlockSheet()
   const closeSheet = useCloseBlockSheet()
+  const requested = useOptionalDashboardContext()?.page.submission
+  const setRequested = useSetAtom(openSubmissionAtom)
+  const [, linked] = useAtomValueRawSync(
+    requested ? linkedAtom(entryId, requested) : notLinked
+  )
+  // The url follows the open sheet, and a link opens the sheet it names
+  const last = useRef(selected)
+  useEffect(() => {
+    const previous = last.current
+    last.current = selected
+    if (selected !== previous) setRequested(selected)
+    else if (requested && requested !== selected) openSheet(sheetId(requested))
+  }, [selected, requested, openSheet, setRequested])
+  const [exporting, setExporting] = useState(false)
   const visible = inputs.slice(0, columns)
-  const current = submissions.find(
-    submission => submission.id === (selected ?? shown)
+  const current = [...submissions, linked].find(
+    submission => submission && submission.id === (selected ?? shown)
   )
   const filtered =
     filter.search !== '' ||
@@ -540,7 +567,7 @@ function SubmissionSheet({
   onClose
 }: SubmissionSheetProps) {
   const store = useStore()
-  const reload = useSetAtom(version(entryId))
+  const reload = useSetAtom(submissionsVersion(entryId))
   const definition = submission.definition as FormDefinition
   const groups = answerGroups(definition, submission.values, submission.locale)
 

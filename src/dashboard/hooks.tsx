@@ -137,6 +137,11 @@ export function useDashboardContext(): DashboardContextValue {
   return value
 }
 
+/** The dashboard context, null outside of a dashboard, eg. in a story */
+export function useOptionalDashboardContext(): DashboardContextValue | null {
+  return useContext(dashboardContext)
+}
+
 export interface EntryScopeProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms

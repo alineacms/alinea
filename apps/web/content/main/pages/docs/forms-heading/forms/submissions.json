@@ -506,7 +506,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. `{{all answers}}` writes the label and the answer of every input that was answered, in the order of the form: a line each in the text of the mail, a table in its html. Files show by their name. `{{submission link}}` opens the form in the dashboard, for mails to editors. For recipients without access to the dashboard, check Attach uploaded files to send the files of the submission with the mail. A key the form doesn't have fills in nothing, the dashboard shows it as an error."
+          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. `{{all answers}}` writes the label and the answer of every input that was answered, in the order of the form: a line each in the text of the mail, a table in its html. Files show by their name. `{{submission link}}` opens the submission in the Submissions tab of the form in the dashboard, for mails to editors. For recipients without access to the dashboard, check Attach uploaded files to send the files of the submission with the mail. A key the form doesn't have fills in nothing, the dashboard shows it as an error."
         }
       ]
     },

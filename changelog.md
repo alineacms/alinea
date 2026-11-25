@@ -31,8 +31,9 @@
   A site with its own design wraps `content`, the body as an html fragment,
   eg. `mailer: mail => resend.emails.send({from, ...mail, html:
   brand(mail.content)})`. Bodies written as plain text read as paragraphs.
-- Form mails can link to the form in the dashboard with `{{submission link}}`
-  and attach the uploaded files with Attach uploaded files, passed to the
+- Form mails can link to the submission in the dashboard with
+  `{{submission link}}`, which opens it in the Submissions tab of the form,
+  also `href({entryId, submission})`, and attach the uploaded files with Attach uploaded files, passed to the
   `mailer` as `attachments` with their content as base64. A checked check
   and the text of the link are in the language of the form, `checked` and
   `viewSubmission` of `forms.messages`.

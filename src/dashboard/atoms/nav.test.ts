@@ -7,7 +7,14 @@ import {
   DashboardTestPage
 } from '#test/DashboardFixture.js'
 import {Config} from '#/index.js'
-import {pageAtom, routeAtom} from './nav.js'
+import {atom} from 'jotai'
+import {
+  hashFromRoute,
+  openSubmissionAtom,
+  pageAtom,
+  routeAtom,
+  routeGuardAtom
+} from './nav.js'
 import {preloadUserPolicyAtom} from './user.js'
 
 function dashboardStore(workspaces: 1 | 2) {
@@ -241,4 +248,23 @@ test('follows an edit link from the address bar', async () => {
   store.set(routeAtom, {browser: true, route: {...current}})
   await lookup
   expect(store.get(pageAtom)).toMatchObject({entry: 'hero', locale: 'nl'})
+})
+
+test('a link to a submission opens it on its entry', async () => {
+  const {store} = await linkedStore()
+  await store.set(routeAtom, {page: 'edit', entry: 'hero', submission: 's1'})
+  expect(store.get(pageAtom)).toMatchObject({entry: 'hero', submission: 's1'})
+  expect(store.get(openSubmissionAtom)).toBe('s1')
+  expect(hashFromRoute(store.get(routeAtom))).toBe(
+    '#/entry/main/pages:nl/hero?submission=s1'
+  )
+  // Unsaved edits do not keep another submission from opening, but they do
+  // keep the entry open
+  store.set(routeGuardAtom, atom(true))
+  store.set(openSubmissionAtom, 's2')
+  expect(store.get(pageAtom).submission).toBe('s2')
+  store.set(openSubmissionAtom, undefined)
+  expect(store.get(pageAtom).submission).toBeUndefined()
+  store.set(routeAtom, {page: 'users'})
+  expect(store.get(pageAtom).type).toBe('entry')
 })

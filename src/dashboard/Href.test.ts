@@ -15,3 +15,10 @@ test('links entries by id or by location', () => {
   )
   test.is(href({workspace: 'main', root: 'pages'}), '#/entry/main/pages')
 })
+
+test('links a submission of a form', () => {
+  test.is(
+    href({entryId: 'contact', locale: 'nl', submission: 's1'}),
+    '#/edit?id=contact&locale=nl&submission=s1'
+  )
+})

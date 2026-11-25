@@ -37,6 +37,7 @@ import {
 } from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import {submissionAtom} from '#/dashboard/atoms/submissions.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {keptEditsAtom, openEditsAtom} from '#/dashboard/atoms/version.js'
 import {styler} from '@alinea/styler'
@@ -102,6 +103,8 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
+    // A link to a submission opens its sheet with it
+    if (page.submission) await get(submissionAtom(entry.id, page.submission))
     const richTextImages = await get(localeData.richTextImages)
     const parentNeedsTranslation = await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)

@@ -139,6 +139,7 @@ export class SubmissionStore implements SubmissionsApi {
     const db = await this.#db
     const where = and(
       eq(SubmissionTable.entryId, entryId),
+      query.id ? eq(SubmissionTable.id, query.id) : undefined,
       statusCondition(query.status ?? 'all'),
       query.locale ? eq(SubmissionTable.locale, query.locale) : undefined,
       query.from !== undefined

@@ -143,6 +143,8 @@ export interface StoredSubmission extends Submission {
 
 /** Which submissions of a form to list */
 export interface SubmissionQuery {
+  /** Only the submission with this id */
+  id?: string
   /** Open is new and read, all includes archived ones */
   status?: 'open' | SubmissionStatus | 'all'
   /** Text the answers contain */

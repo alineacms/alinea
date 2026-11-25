@@ -618,7 +618,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`href(location)` from `alinea`: the href of the same locations, for a link that also opens in a new tab: `<a href={href({entryId: post.id})}>`. It is a plain function, so it also works in table rows, in the `help` of a field and on the server, where you prefix the dashboard's url: `${baseUrl}/admin${href({entryId})}`."
+                  "text": "`href(location)` from `alinea`: the href of the same locations, for a link that also opens in a new tab: `<a href={href({entryId: post.id})}>`. It is a plain function, so it also works in table rows, in the `help` of a field and on the server, where you prefix the dashboard's url: `${baseUrl}/admin${href({entryId})}`. `href({entryId, submission})` opens a submission of a form entry."
                 }
               ]
             }

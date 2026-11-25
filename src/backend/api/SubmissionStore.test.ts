@@ -57,6 +57,7 @@ test('submissions are found by status, time, choice and text', async () => {
   )
   const ids = async (query: object) =>
     (await store.listSubmissions('form', query)).submissions.map(s => s.id)
+  expect(await ids({id: 'Bo'})).toEqual(['Bo'])
   expect(await ids({status: 'open'})).toEqual(['Ann'])
   expect(await ids({status: 'archived'})).toEqual(['Bo'])
   expect(await ids({from: 150})).toEqual(['Bo'])
