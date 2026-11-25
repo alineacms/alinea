@@ -17,6 +17,15 @@ test('a locale falls back to its language, then english', () => {
   )
 })
 
+test('a file whose content does not match its name says so plainly', () => {
+  expect(translate('nl')({code: 'fileMismatch', name: 'a.pdf'})).toBe(
+    'De inhoud van a.pdf past niet bij het bestandstype'
+  )
+  expect(translate('en')({code: 'tooOften'})).toBe(
+    'You sent this form too often, try again later'
+  )
+})
+
 test('texts are shown as is', () => {
   expect(translate('nl')('Choose 1 to 5')).toBe('Choose 1 to 5')
 })

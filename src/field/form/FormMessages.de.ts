@@ -22,14 +22,14 @@ export const de: FormMessages = {
   fileTooLarge: ({max}) => `Wählen Sie eine Datei von höchstens ${max} MB`,
   fileType: ({accept}) => `Wählen Sie eine Datei vom Typ ${accept}`,
   fileMismatch: ({name}) =>
-    `${name} ist nicht die Art Datei, die ihr Name angibt`,
+    `Der Inhalt von ${name} passt nicht zu seinem Dateityp`,
   tooFewItems: ({min}) => `Fügen Sie mindestens ${items(min)} hinzu`,
   tooManyItems: ({max}) => `Fügen Sie höchstens ${items(max)} hinzu`,
   alreadySent: 'Diese Antwort wurde bereits gesendet',
   closed: 'Dieses Formular nimmt keine Antworten mehr an',
   busy: 'Dieses Formular nimmt gerade keine Antworten an, versuchen Sie es später erneut',
   tooOften:
-    'Sie haben dieses Formular oft gesendet, versuchen Sie es später erneut',
+    'Sie haben dieses Formular zu oft gesendet, versuchen Sie es später erneut',
   uploadAgain: 'Laden Sie die Datei erneut hoch',
   notVerified: 'Ihre Antworten konnten nicht überprüft werden',
   uploadFailed: 'Die Datei konnte nicht hochgeladen werden',

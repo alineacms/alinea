@@ -162,7 +162,7 @@ test('files are checked before and while they are uploaded', async () => {
   if (!ticket.ok) throw new Error(ticket.message)
   expect(await upload(ticket.url, script)).toEqual({
     status: 415,
-    error: 'error.png is not the kind of file its name says'
+    error: 'The content of error.png does not match its file type'
   })
   expect(await upload(`${ticket.url}x`, png)).toEqual({
     status: 401,

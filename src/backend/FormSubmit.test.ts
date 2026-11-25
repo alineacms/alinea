@@ -270,7 +270,7 @@ test('a visitor the site names is limited, and so is the form', async () => {
   expect((await submit(answers, 'test', 'session-a')).body).toEqual({ok: true})
   expect((await submit(answers, 'test', 'session-a')).body).toEqual({
     ok: false,
-    message: 'You sent this form often, try again later'
+    message: 'You sent this form too often, try again later'
   })
   // Another visitor may still send it, until the form took its share
   expect((await submit(answers, 'test', 'session-b')).body).toEqual({ok: true})
