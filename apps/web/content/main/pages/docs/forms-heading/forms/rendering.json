@@ -185,7 +185,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LGaWzvsw6S6vekZXG9qqxP6r4D",
-      "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <p className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  choiceControl: <input className={styles.choiceControl} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
+      "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <div className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  choiceControl: <input className={styles.choiceControl} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
       "fileName": "FormView.tsx",
       "language": "tsx",
       "compact": false
@@ -257,7 +257,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`help`: the help text of an input, or the description of a section."
+                  "text": "`help`: the help text of an input, or the description of a section. It is rich text, rendered in a `<div>`."
                 }
               ]
             }
@@ -547,7 +547,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`input`: the input from the definition: its `label`, `key`, `required`, `help`, `width`, `attributes`, `settings`, `choices` and `initialValue`."
+                  "text": "`input`: the input from the definition: its `label`, `key`, `required`, `help`, `width`, `attributes`, `settings`, `choices` and `initialValue`. The `help` is rich text, render it with `RichText` from `alinea/ui`. The text next to a check is rich text in `settings.text`, show its `label` when there is none."
                 }
               ]
             }

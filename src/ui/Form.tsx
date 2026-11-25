@@ -468,7 +468,12 @@ function FormSection({
     return part(views.section, 'fieldset', {'data-section': section.type}, [
       part(views.legend, 'legend', {key: 'legend'}, section.label),
       section.help &&
-        part(views.help, 'p', {key: 'help', 'data-help': ''}, section.help),
+        part(
+          views.help,
+          'div',
+          {key: 'help', 'data-help': ''},
+          <RichText doc={section.help} />
+        ),
       ...section.inputs.map(input => (
         <FormItemView
           key={input.id}
@@ -493,7 +498,12 @@ function FormSection({
     [
       part(views.legend, 'legend', {key: 'legend'}, section.label),
       section.help &&
-        part(views.help, 'p', {key: 'help', 'data-help': ''}, section.help),
+        part(
+          views.help,
+          'div',
+          {key: 'help', 'data-help': ''},
+          <RichText doc={section.help} />
+        ),
       ...items.map((item, index) =>
         part(
           views.item,
@@ -705,7 +715,13 @@ export function FormInput({
     [input.label, input.required && <span key="required"> *</span>]
   )
   const help =
-    helpId && part(views.help, 'p', {key: 'help', id: helpId}, input.help)
+    input.help &&
+    part(
+      views.help,
+      'div',
+      {key: 'help', id: helpId},
+      <RichText doc={input.help} />
+    )
   const message =
     errorId &&
     part(views.error, 'p', {key: 'error', id: errorId, role: 'alert'}, error)
@@ -730,7 +746,12 @@ export function FormInput({
         ' ',
         // One element for the text, so the choice lays out as control and text
         <span key="text">
-          {input.label}
+          {Array.isArray(input.settings.text) ? (
+            // Paragraphs are not allowed in a label
+            <RichText doc={input.settings.text} p={<span />} />
+          ) : (
+            input.label
+          )}
           {input.required && <span> *</span>}
         </span>
       ]),

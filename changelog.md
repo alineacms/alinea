@@ -8,6 +8,12 @@
   requests. Add `export const PUT = handler` next to `GET` and `POST` in the
   route of `createHandler`, eg. `app/(alinea)/api/cms/route.ts`: routes made
   before only export those two and refuse the uploads.
+- The help texts of form inputs and the descriptions of sections are rich
+  text, so they can include links. In a form definition `help` is a `TextDoc`,
+  render it with `RichText`. Help saved as plain text reads as one paragraph.
+- A check has a rich text shown next to its checkbox, eg. with a link to your
+  terms, in `settings.text` of the definition. Its label still names the
+  answer in submissions and mails, and shows when there is no text.
 
 ### New
 

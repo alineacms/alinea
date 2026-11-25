@@ -53,6 +53,27 @@
       "_index": "a4",
       "_type": "check",
       "label": "I agree to the privacy policy",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {"_type": "text", "text": "I agree to the "},
+            {
+              "_type": "text",
+              "text": "privacy policy",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "contact-privacy-link",
+                  "_link": "url",
+                  "href": "https://example.com/privacy",
+                  "target": "_blank"
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "required": true,
       "width": "full"
     },

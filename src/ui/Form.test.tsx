@@ -20,7 +20,12 @@ const definition: FormDefinition = [
         id: 'name',
         type: 'text',
         label: 'Name',
-        help: 'As on your id',
+        help: [
+          {
+            _type: 'paragraph',
+            content: [{_type: 'text', text: 'As on your id'}]
+          }
+        ],
         control: 'input',
         key: 'name',
         required: true,
@@ -208,6 +213,55 @@ test('text between inputs renders as rich text', () => {
   const link = screen.getByRole('link', {name: 'us'})
   expect(link.getAttribute('href')).toBe('mailto:help@example.com')
   expect(link.closest('[data-content]')?.className).toBe('note')
+})
+
+function linked(text: string, href: string) {
+  return [
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'I agree to the '},
+        {
+          _type: 'text',
+          text,
+          marks: [{_type: 'link', _id: 'l', _link: 'url', href}]
+        }
+      ]
+    }
+  ]
+}
+
+test('help and the text of a check render as rich text', () => {
+  const check = {
+    type: 'check',
+    control: 'check',
+    required: true,
+    width: 'full',
+    attributes: {}
+  } as const
+  render(
+    <Form
+      definition={[
+        {
+          ...check,
+          id: 'terms',
+          key: 'terms',
+          label: 'Terms',
+          settings: {text: linked('terms', '/terms')},
+          help: linked('rules', '/rules')
+        },
+        {...check, id: 'news', key: 'news', label: 'Newsletter', settings: {}}
+      ]}
+    />
+  )
+  const terms = screen.getByRole('checkbox', {name: 'I agree to the terms *'})
+  expect(terms.getAttribute('aria-describedby')).toBe('form-terms-help')
+  expect(screen.getByRole('link', {name: 'terms'}).getAttribute('href')).toBe(
+    '/terms'
+  )
+  const help = screen.getByRole('link', {name: 'rules'})
+  expect(help.closest('#form-terms-help')).not.toBeNull()
+  expect(screen.getByRole('checkbox', {name: 'Newsletter *'})).toBeDefined()
 })
 
 test('content renders with the view of its type', () => {

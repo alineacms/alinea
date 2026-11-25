@@ -6,6 +6,8 @@ import {atom} from 'jotai'
 /** Reconciles a complete ProseMirror document while retaining block nodes. */
 export function documentUpdateAtom(reactive: ReactiveNode<TextDoc>) {
   return atom(null, (get, set, nodes: TextDoc) => {
+    // A plain text, stored before the field was rich text
+    if (!Array.isArray(get(reactive.nodes))) return set(reactive.value, nodes)
     nodes.forEach((node, index) => {
       const structure = get(reactive.nodes)
       if (!Array.isArray(structure)) return

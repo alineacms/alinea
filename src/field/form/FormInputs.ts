@@ -222,6 +222,12 @@ export const select = input('Select', {
 export const check = input('Check', {
   icon: IcRoundCheckBox,
   control: 'check',
+  fields: {
+    text: richText('Text next to the checkbox', {
+      help: 'Shown to visitors, can include links, eg. to your terms. Without it they see the label.'
+    })
+  },
+  strings: ['text'],
   settings: {
     initialValue: checkField('Checked', {description: 'Checked by default'})
   },

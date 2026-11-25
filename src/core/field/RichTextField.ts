@@ -24,7 +24,9 @@ import {
   Mark,
   Node,
   type ElementNode,
-  type TextDoc
+  type TextDoc,
+  isEmptyDoc,
+  textDoc
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
@@ -101,7 +103,7 @@ export class RichTextField<
         return richTextSearchableText(schema, value)
       },
       isEmpty(value) {
-        return !Array.isArray(value) || isEmptyDoc(value)
+        return isEmptyDoc(textDoc(value))
       },
       nestedErrors(value, context) {
         const doc = Array.isArray(value) ? value : []
@@ -137,7 +139,7 @@ export class RichTextField<
         return localizeRichTextLinks(schema, value, context)
       },
       async queryValue(value, loader) {
-        const doc = Array.isArray(value) ? value : []
+        const doc = textDoc(value) as TextDoc<Blocks>
         const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
         for (const row of doc) {
           if (!schema || !Node.isBlock(row)) continue
@@ -158,25 +160,6 @@ export class RichTextField<
       }
     })
   }
-}
-
-// Elements which only wrap text, a document of these without text is empty
-const textContainers = new Set([
-  'paragraph',
-  'heading',
-  'blockquote',
-  'bulletList',
-  'orderedList',
-  'listItem'
-])
-
-function isEmptyDoc(doc: TextDoc<unknown>): boolean {
-  return doc.every(node => {
-    if (Node.isText(node)) return !node.text?.trim()
-    if (!Node.isElement(node) || !textContainers.has(node[Node.type]))
-      return false
-    return isEmptyDoc(node.content ?? [])
-  })
 }
 
 function normalizeRichTextAnchors<Blocks>(
@@ -495,6 +478,7 @@ async function applyLinkMarks(
     ...links.values(),
     ...Array.from(images.values(), entryId => ({entryId}))
   ]
+  if (targets.length === 0) return
   const resolved = await loader.resolveTargets(linkInfoFields, targets)
   let index = 0
   for (const [mark] of links) {

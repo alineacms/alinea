@@ -113,6 +113,16 @@
   margin: 0;
 }
 
+/* Help is rich text, rendered by <Form> without classes of its own */
+.FormViewHelp p {
+  margin: 0;
+}
+
+.FormViewHelp a,
+.FormViewChoice a {
+  color: var(--alinea-accent);
+}
+
 .FormViewError {
   color: #c62828;
   font-size: 13px;

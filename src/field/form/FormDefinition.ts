@@ -1,4 +1,5 @@
 import type {ListRow} from '#/core/ListRow.js'
+import {type TextDoc, isEmptyDoc, textDoc} from '#/core/TextDoc.js'
 import {isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {FieldValidationError} from '#/core/Validation.js'
@@ -20,7 +21,8 @@ interface FormItemBase<Type extends string> {
   /** The name of the input in the `inputs` of the form field */
   type: Type
   label: string
-  help?: string
+  /** Rich text shown with the item, eg. below an input */
+  help?: TextDoc
   /** Shown while these rules hold, always shown without them */
   showWhen?: FormConditionData
 }
@@ -36,7 +38,10 @@ export interface FormInputData<
   attributes: Record<string, string | number | boolean>
   choices?: Array<FormChoice>
   initialValue?: unknown
-  /** The other settings of the input */
+  /**
+   * The other settings of the input, eg. the `text` a check shows next to its
+   * box as rich text, which replaces its label when it is set
+   */
   settings: Record<string, unknown>
   /** Disabled while these rules hold, never disabled without them */
   disableWhen?: FormConditionData
@@ -160,8 +165,9 @@ export function formDefinition(
       type,
       label: text(row.label)
     }
-    const help = text(row.help)
-    if (help) base.help = help
+    // Help was plain text before it was rich text
+    const help = textDoc(row.help)
+    if (!isEmptyDoc(help)) base.help = help
     const showWhen = conditionData(
       row.showWhen,
       self.index,
@@ -362,8 +368,7 @@ export function settingsOf(input: Input, row: Record<string, unknown>) {
 function filled(settings: Record<string, unknown>) {
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(settings))
-    if (value !== undefined && value !== null && value !== '')
-      result[key] = value
+    if (value === false || !isEmpty(value)) result[key] = value
   return result
 }
 
@@ -380,7 +385,9 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+// Rich text without text, eg. the text of a check, is empty as well
 function isEmpty(value: unknown): boolean {
+  if (Array.isArray(value)) return isEmptyDoc(value)
   return (
     value === undefined || value === null || value === '' || value === false
   )

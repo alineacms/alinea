@@ -10,6 +10,7 @@ import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {check} from '#/field/check.js'
 import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
+import {richText} from '#/field/richtext.js'
 import {select} from '#/field/select.js'
 import {tab} from '#/field/tabs.js'
 import {text} from '#/field/text.js'
@@ -133,12 +134,20 @@ function createRowType(input: Input): Type {
     tabs: {
       input: tab('Input', {
         fields: {
-          label: languageText(text('Label', {required: true})),
+          label: languageText(
+            text('Label', {
+              required: true,
+              help:
+                input.control === 'check'
+                  ? 'Used as the column in submissions and in mails. Visitors see the text next to the checkbox.'
+                  : undefined
+            })
+          ),
           key: path('Key', {
             from: 'label',
             help: 'Used in exports and in the data sent to your site'
           }),
-          help: languageText(text('Help text')),
+          help: languageText(richText('Help text')),
           required: check('Required', {description: 'Must be filled in'}),
           ...(canBeUnique(input) && {
             unique: check('Unique', {
@@ -242,7 +251,7 @@ function sectionType(
       input: tab('Section', {
         fields: {
           label: languageText(text('Title', {required: true})),
-          help: languageText(text('Description', {multiline: true})),
+          help: languageText(richText('Description')),
           repeat,
           key: track.options(
             path('Key', {

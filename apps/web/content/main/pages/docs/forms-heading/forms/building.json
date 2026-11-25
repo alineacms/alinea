@@ -211,7 +211,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`check`: a single checkbox, for example to accept terms. Setting: checked by default. The answer is `true` when it is checked."
+                  "text": "`check`: a single checkbox, for example to accept terms. Its label names the answer in submissions and mails, visitors see the text next to the checkbox instead: rich text that can link to your terms. Without that text they see the label. Setting: checked by default. The answer is `true` when it is checked."
                 }
               ]
             }
@@ -380,7 +380,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": ": shown under the label."
+                  "text": ": shown under the label, as rich text that can include links."
                 }
               ]
             }
