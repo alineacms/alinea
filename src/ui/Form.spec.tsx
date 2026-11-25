@@ -33,6 +33,7 @@ test('shows the errors of the action and keeps the answers', async ({
   await expect(page.getByRole('alert')).toHaveText('We do not repair toasters')
   await expect(device).toHaveValue('Toaster')
   await expect(device).toHaveAttribute('aria-invalid', 'true')
+  await expect(device).toBeFocused()
   await device.fill('Laptop')
   await page.getByRole('button', {name: 'Send'}).click()
   await expect(page.getByRole('status')).toHaveText(

@@ -28,6 +28,7 @@ import {
   createElement,
   startTransition,
   useActionState,
+  useEffect,
   useMemo,
   useRef,
   useState
@@ -193,6 +194,15 @@ export function Form({
     },
     undefined
   )
+  const element = useRef<HTMLFormElement>(null)
+  // The submit button is disabled while sending, which takes the focus away,
+  // so it goes to the first answer that did not pass
+  useEffect(() => {
+    if (!result || result.ok) return
+    element.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled)')
+      ?.focus()
+  }, [result])
   function change(event: FormEvent<HTMLFormElement>) {
     onChange?.(event)
     setValues(readValues(definition, new FormData(event.currentTarget), items))
@@ -261,6 +271,7 @@ export function Form({
     'form',
     {
       ...props,
+      ref: element,
       onChange: change,
       onSubmit: submit,
       'aria-busy': pending
