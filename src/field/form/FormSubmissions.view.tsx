@@ -768,7 +768,7 @@ function SubmissionFiles({entryId, input, files}: SubmissionFilesProps) {
               {file.name}
             </Text>
             <Text size="sm" color="muted">
-              {input} · {formatSize(file.size)} · private
+              {input} · {formatSize(file.size)}
             </Text>
           </div>
           <Button
