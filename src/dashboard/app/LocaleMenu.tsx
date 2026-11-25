@@ -59,7 +59,7 @@ export function localeDisplay(locale: string): LocaleDisplay {
   return {code, name, textValue: `${code} ${name}`}
 }
 
-function LocaleLabel({locale}: LocaleLabelProps) {
+export function LocaleLabel({locale}: LocaleLabelProps) {
   const display = localeDisplay(locale)
   if (!display.code)
     return <span className={styles.LocaleMenu.label()}>{display.name}</span>

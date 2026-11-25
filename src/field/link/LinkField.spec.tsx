@@ -242,6 +242,7 @@ test('shows what a link points to in its settings sheet', async ({
   await expect(
     home.getByRole('link', {name: `${origin}/home?s=search`})
   ).toHaveAttribute('href', `${origin}/home?s=search`)
+  await expect(relatedLink.getByText('?s=search')).toBeVisible()
   // A half typed suffix is no url yet
   await suffix.fill('//')
   await expect(home.getByRole('link', {name: origin})).toHaveCount(0)
@@ -273,8 +274,9 @@ test('shows what a link points to in its settings sheet', async ({
   await expect(
     details.getByText('A mountain path through a valley', {exact: true})
   ).toBeVisible()
-  await expect(details.getByText('Media', {exact: true})).toBeVisible()
+  await expect(details.getByText('Location')).toHaveCount(0)
   await expect(details.getByText('Extension')).toHaveCount(0)
+  await expect(image.getByRole('button', {name: 'Edit image'})).toBeVisible()
 })
 
 test('shows read-only link rows without opening their settings', async ({

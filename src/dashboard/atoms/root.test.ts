@@ -24,7 +24,7 @@ import {
   Product
 } from '#test/overview.js'
 import {eventsAtom} from './core.js'
-import {RootAtoms, rootAtoms} from './root.js'
+import {locatedItem, RootAtoms, rootAtoms} from './root.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
 class CountingDB extends LocalDB {
@@ -257,6 +257,23 @@ test('selected entry ancestors load without expanding unrelated branches', async
     {id: parent._id, children: [{id: child._id, children: []}]}
   ])
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
+})
+
+test('a selected entry stays located when its parent is collapsed', async () => {
+  const {child, parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const root = rootAtoms('main', 'pages')
+  const tree = root.createTree(null, atom(new Set<Key>([child._id])))
+  await store.get(tree.ready)
+  store.set(tree.collapsedKeys, {
+    selectedId: child._id,
+    keys: new Set([parent._id])
+  })
+
+  const view = await store.get(tree.ready)
+  expect(view.entries.has(child._id)).toBe(false)
+  expect(locatedItem(view)?.id).toBe(child._id)
+  expect(locatedItem(view)?.parents).toEqual([parent._id])
 })
 
 test('the sidebar tree reveals the folder of a selected media file as its location', async () => {

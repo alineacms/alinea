@@ -79,6 +79,8 @@ export interface TreeSnapshot {
 
 export interface TreeView {
   entries: Map<string, RootTreeItem>
+  /** The selected entry or its location, even inside a collapsed parent */
+  located?: RootTreeItem
   snapshot: TreeSnapshot
 }
 
@@ -280,8 +282,12 @@ export class TreeAtoms {
         children: expandedKeys.has(id) ? nested(id) : []
       }))
     }
+    const located =
+      selected &&
+      (entries.get(selected.id) ?? rootTreeItem(selected, undefined))
     return {
       entries,
+      located,
       snapshot: {expandedKeys, items: nested(null), selectedKeys, locationKey}
     }
   })
@@ -653,12 +659,8 @@ export function treeAcceptsDrop(
 }
 
 /** The selected entry, or the location of a selected entry that is not listed */
-export function locatedItem({
-  entries,
-  snapshot
-}: TreeView): RootTreeItem | undefined {
-  const id = snapshot.locationKey ?? [...snapshot.selectedKeys][0]
-  return id ? entries.get(id) : undefined
+export function locatedItem({located}: TreeView): RootTreeItem | undefined {
+  return located
 }
 
 /**

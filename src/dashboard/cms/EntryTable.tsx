@@ -66,7 +66,8 @@ import {
   Suspense,
   startTransition,
   use,
-  useMemo
+  useMemo,
+  useRef
 } from 'react'
 import css from './EntryTable.module.css'
 
@@ -258,7 +259,12 @@ function useEntryTable(props: EntryTableProps): EntryTableState {
       })),
     sorts: [overview.sort, ...overview.columns.map(c => c.sortBy)]
   })
-  const atoms = useMemo(() => {
+  // Kept in a ref rather than memoized: when the key changes in a transition,
+  // eg. switching the locale, the content suspends and the render is thrown
+  // away, so a memo would make new atoms and load new rows on every retry
+  // and the transition would never finish
+  const cache = useRef<{key: string; atoms: EntryTableAtoms}>(undefined)
+  if (cache.current?.key !== key) {
     const requested = atom<OverviewSort | undefined>(undefined)
     const ready = atom(get =>
       loadEntryTableRows(
@@ -267,14 +273,15 @@ function useEntryTable(props: EntryTableProps): EntryTableState {
         overview
       )
     )
-    return {
+    const atoms = {
       requested,
       ready,
       rows: unwrap(ready, previous => previous),
       initial: store.get(ready)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, key])
+    cache.current = {key, atoms}
+  }
+  const {atoms} = cache.current
   return {config, locale, types, configured, overview, atoms}
 }
 
