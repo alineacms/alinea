@@ -38,6 +38,7 @@ import {
 import type {
   FormFileRef,
   Submission,
+  SubmissionPage,
   SubmissionQuery,
   SubmissionStatus
 } from '#/core/Connection.js'
@@ -77,6 +78,7 @@ import {
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
 import {
+  type Atom,
   atom,
   useAtomValueRaw,
   useAtomValueRawSync,
@@ -147,9 +149,16 @@ const shownPages = dispense((entryId: string) => atom(1))
 
 const pageSize = 50
 
-/** A page of submissions, by the entry, the query and the page */
-const pageAtom = dispense((key: string) =>
-  atom(async get => {
+const pages = new Map<string, Atom<Promise<SubmissionPage>>>()
+
+/**
+ * A page of submissions, by the entry, the query, the page and the version.
+ * Each search and change asks for new ones, only the latest are kept.
+ */
+function pageAtom(key: string): Atom<Promise<SubmissionPage>> {
+  const known = pages.get(key)
+  if (known) return known
+  const result = atom(async get => {
     const {entryId, query, page} = JSON.parse(key) as {
       entryId: string
       query: SubmissionQuery
@@ -161,7 +170,10 @@ const pageAtom = dispense((key: string) =>
       limit: pageSize
     })
   })
-)
+  pages.set(key, result)
+  if (pages.size > 100) pages.delete(pages.keys().next().value!)
+  return result
+}
 
 /** The submissions shown in the table, the pages loaded so far */
 const submissionsAtom = dispense((entryId: string) =>
