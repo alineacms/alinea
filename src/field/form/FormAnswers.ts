@@ -105,19 +105,21 @@ export function itemsOf(value: unknown): Array<Record<string, unknown>> {
 
 /**
  * The answer to a column as text. The items of a repeatable section are
- * numbered, with the answers of each item after it.
+ * numbered, with the answers of each item after it. A checked check reads as
+ * `checked`.
  */
 export function columnText(
   column: FormColumn,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  checked = 'Yes'
 ): string {
   if (column.control !== 'section')
-    return answerText(column, values[column.key])
+    return answerText(column, values[column.key], checked)
   const items = itemsOf(column.key ? values[column.key] : undefined)
   return items
     .map((item, index) => {
       const answers = inputsOf(column.inputs)
-        .map(input => answerText(input, item[input.key]))
+        .map(input => answerText(input, item[input.key], checked))
         .filter(Boolean)
         .join(', ')
       return items.length > 1 ? `${index + 1}. ${answers}` : answers
@@ -131,10 +133,14 @@ export function columnKey(column: FormColumn): string {
   return column.control === 'section' ? (column.key ?? column.id) : column.key
 }
 
-/** An answer as text: the labels of choices, Yes for a checked check */
-export function answerText(input: FormInputData, value: unknown): string {
+/** An answer as text: the labels of choices, `checked` for a checked check */
+export function answerText(
+  input: FormInputData,
+  value: unknown,
+  checked = 'Yes'
+): string {
   if (value === undefined || value === null || value === '') return ''
-  if (input.control === 'check') return value ? 'Yes' : ''
+  if (input.control === 'check') return value ? checked : ''
   const values = Array.isArray(value) ? value : [value]
   return values
     .map(value => {

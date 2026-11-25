@@ -31,5 +31,7 @@ export const nl: FormMessages = {
   tooOften: 'Je hebt dit formulier vaak verzonden, probeer het later opnieuw',
   uploadAgain: 'Upload het bestand opnieuw',
   notVerified: 'Je antwoorden konden niet worden gecontroleerd',
-  uploadFailed: 'Het bestand kon niet worden geüpload'
+  uploadFailed: 'Het bestand kon niet worden geüpload',
+  checked: 'Ja',
+  viewSubmission: 'Bekijk de inzending'
 }

@@ -31,5 +31,7 @@ export const fr: FormMessages = {
   tooOften: 'Vous avez souvent envoyé ce formulaire, réessayez plus tard',
   uploadAgain: 'Envoyez à nouveau le fichier',
   notVerified: "Vos réponses n'ont pas pu être vérifiées",
-  uploadFailed: "Le fichier n'a pas pu être envoyé"
+  uploadFailed: "Le fichier n'a pas pu être envoyé",
+  checked: 'Oui',
+  viewSubmission: 'Voir la réponse'
 }

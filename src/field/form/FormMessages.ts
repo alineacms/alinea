@@ -2,7 +2,10 @@ import {de} from './FormMessages.de.js'
 import {fr} from './FormMessages.fr.js'
 import {nl} from './FormMessages.nl.js'
 
-/** What each message visitors see takes, by its code */
+/**
+ * What each message takes, by its code: those visitors see, and the texts
+ * mails put in for a checked check and `{{submission link}}`
+ */
 export interface FormMessageParams {
   required: object
   requiredChoice: object
@@ -32,6 +35,10 @@ export interface FormMessageParams {
   uploadAgain: object
   notVerified: object
   uploadFailed: object
+  /** A checked check in mails */
+  checked: object
+  /** The text of `{{submission link}}` in the html of mails */
+  viewSubmission: object
 }
 
 export type FormMessageCode = keyof FormMessageParams
@@ -82,7 +89,9 @@ export const en: FormMessages = {
   tooOften: 'You sent this form often, try again later',
   uploadAgain: 'Upload the file again',
   notVerified: 'Your answers could not be verified',
-  uploadFailed: 'The file could not be uploaded'
+  uploadFailed: 'The file could not be uploaded',
+  checked: 'Yes',
+  viewSubmission: 'View the submission'
 }
 
 const packs: FormLocaleMessages = {en, nl, fr, de}

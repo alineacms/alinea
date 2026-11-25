@@ -12,6 +12,7 @@ import {columnKey, columnText, formColumns} from './FormAnswers.js'
 import {holds, withLocale} from './FormConditions.js'
 import {formDefinition, inputKey} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
+import {type FormLocaleMessages, translate} from './FormMessages.js'
 import {
   answersTable,
   docHtml,
@@ -44,6 +45,8 @@ export interface FormMailOptions {
   link?: string
   /** The urls of the entries the bodies link to, by id */
   entries?: Record<string, string>
+  /** Texts that replace those of alinea, see `forms.messages` */
+  messages?: FormLocaleMessages
 }
 
 /**
@@ -51,23 +54,26 @@ export interface FormMailOptions {
  * filled in for their `{{key}}` and every answer for `{{all answers}}`. The
  * key of a repeatable section fills in all of its items. A mail with a rule
  * that no longer works is not sent, rather than sent to everyone. Rules on
- * the language test `locale`. The body is rich text, sent as text and html.
+ * the language test `locale`, the texts mails add are in its language. The
+ * body is rich text, sent as text and html.
  */
 export function formMails(
   inputs: Record<string, Input>,
   rows: unknown,
   mails: unknown,
   values: Record<string, unknown>,
-  {locale, link, entries = {}}: FormMailOptions = {}
+  {locale, link, entries = {}, messages}: FormMailOptions = {}
 ): Array<FormMailOut> {
   if (!Array.isArray(mails)) return []
+  const message = translate(locale, messages)
+  const checked = message({code: 'checked'})
   const order = readingOrder(inputs, rows)
   const byId = new Map(order.map(entry => [entry.row._id, entry]))
   const columns = formColumns(formDefinition(inputs, rows, order))
   const answers = columns
     .map((column): [string, string] => [
       column.label,
-      columnText(column, values)
+      columnText(column, values, checked)
     ])
     .filter(([, answer]) => answer)
   const all = answers.map(([label, answer]) => `${label}: ${answer}`)
@@ -75,12 +81,12 @@ export function formMails(
     if (key === allAnswers) return all.join('\n')
     if (key === submissionLink) return link ?? ''
     const column = columns.find(column => columnKey(column) === key)
-    return column ? columnText(column, values) : ''
+    return column ? columnText(column, values, checked) : ''
   }
   const answerHtml = (key: string) => {
     if (key === allAnswers) return all.map(textHtml).join('<br>')
     if (key === submissionLink && link)
-      return linkHtml(link, 'View the submission')
+      return linkHtml(link, message({code: 'viewSubmission'}))
     return textHtml(answer(key))
   }
   const href = (mark: Mark) =>

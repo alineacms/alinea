@@ -33,7 +33,9 @@
   brand(mail.content)})`. Bodies written as plain text read as paragraphs.
 - Form mails can link to the form in the dashboard with `{{submission link}}`
   and attach the uploaded files with Attach uploaded files, passed to the
-  `mailer` as `attachments` with their content as base64.
+  `mailer` as `attachments` with their content as base64. A checked check
+  and the text of the link are in the language of the form, `checked` and
+  `viewSubmission` of `forms.messages`.
 
 ### New
 

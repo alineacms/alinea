@@ -32,5 +32,7 @@ export const de: FormMessages = {
     'Sie haben dieses Formular oft gesendet, versuchen Sie es später erneut',
   uploadAgain: 'Laden Sie die Datei erneut hoch',
   notVerified: 'Ihre Antworten konnten nicht überprüft werden',
-  uploadFailed: 'Die Datei konnte nicht hochgeladen werden'
+  uploadFailed: 'Die Datei konnte nicht hochgeladen werden',
+  checked: 'Ja',
+  viewSubmission: 'Einsendung ansehen'
 }

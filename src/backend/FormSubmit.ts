@@ -236,7 +236,8 @@ export async function submitForm(
           : undefined,
         entries: site
           ? await entryUrls(graph, data.mails, site, locale)
-          : undefined
+          : undefined,
+        messages: forms.messages
       }
     )
     const attachments = mails.some(out => out.attach)

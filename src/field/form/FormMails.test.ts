@@ -306,6 +306,28 @@ test('submission link links to the submission in the dashboard', () => {
   expect(without.mail.text).toBe('')
 })
 
+test('mails add their texts in the language of the form', () => {
+  const link = 'https://example.com/admin#/edit?id=form'
+  const terms = {_id: 'terms', _index: 'a3', _type: 'check', label: 'Terms'}
+  const body = [
+    paragraph(text('{{all answers}}')),
+    paragraph(text('{{submission link}}'))
+  ]
+  const answers = {...values, terms: true}
+  const send = (locale: string, options = {}) =>
+    formMails(inputs, [...rows, terms], [richMail(body)], answers, {
+      locale,
+      link,
+      ...options
+    })[0].mail
+  const dutch = send('nl-BE')
+  expect(dutch.text).toContain('Terms: Ja')
+  expect(dutch.content).toContain('>Bekijk de inzending</a>')
+  expect(send('en').text).toContain('Terms: Yes')
+  const own = send('nl', {messages: {nl: {checked: 'Akkoord'}}})
+  expect(own.text).toContain('Terms: Akkoord')
+})
+
 test('a mail can attach the uploaded files', () => {
   const [out] = formMails(inputs, rows, [{...mails[1], attach: true}], values)
   expect(out.attach).toBe(true)
