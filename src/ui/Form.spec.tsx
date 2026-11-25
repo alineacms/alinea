@@ -34,7 +34,10 @@ test('shows the errors of the action and keeps the answers', async ({
   await expect(device).toHaveValue('Toaster')
   await expect(device).toHaveAttribute('aria-invalid', 'true')
   await expect(device).toBeFocused()
+  // A changed answer loses the error of the answer that was sent
   await device.fill('Laptop')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(device).not.toHaveAttribute('aria-invalid')
   await page.getByRole('button', {name: 'Send'}).click()
   await expect(page.getByRole('status')).toHaveText(
     'We will look at your Laptop.'

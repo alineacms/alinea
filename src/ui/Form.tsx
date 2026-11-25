@@ -194,6 +194,18 @@ export function Form({
     },
     undefined
   )
+  const failed = result && !result.ok ? result : undefined
+  const shown = errors ?? failed?.errors
+  // Errors are about the answers that were sent, so an answer that changes
+  // since loses its error
+  const [edited, setEdited] = useState({
+    errors: shown,
+    names: new Set<string>()
+  })
+  const changed = edited.errors === shown ? edited.names : new Set<string>()
+  function edit(name: string) {
+    setEdited({errors: shown, names: new Set(changed).add(name)})
+  }
   const element = useRef<HTMLFormElement>(null)
   // The submit button is disabled while sending, which takes the focus away,
   // so it goes to the first answer that did not pass
@@ -205,6 +217,8 @@ export function Form({
   }, [result])
   function change(event: FormEvent<HTMLFormElement>) {
     onChange?.(event)
+    const {name} = event.target as {name?: unknown}
+    if (typeof name === 'string' && name) edit(name)
     setValues(readValues(definition, new FormData(event.currentTarget), items))
   }
 
@@ -216,6 +230,7 @@ export function Form({
       const item = nextItem.current++
       const key = section.key!
       const added = initialValues(section.inputs, {})
+      edit(key)
       setItems(current => ({
         ...current,
         [key]: [...(current[key] ?? []), item]
@@ -228,6 +243,7 @@ export function Form({
     remove(section, item) {
       const key = section.key!
       const index = (items[key] ?? []).indexOf(item)
+      edit(key)
       setItems(current => ({
         ...current,
         [key]: (current[key] ?? []).filter(other => other !== item)
@@ -257,11 +273,12 @@ export function Form({
       {role: 'status'},
       result.confirmation || labels.confirmation
     )
-  const failed = result && !result.ok ? result : undefined
   const context = {
     views,
     labels,
-    errors: errors ?? failed?.errors ?? {},
+    errors: Object.fromEntries(
+      Object.entries(shown ?? {}).filter(([name]) => !changed.has(name))
+    ),
     state,
     repeat,
     scope: topScope
@@ -300,6 +317,7 @@ export function Form({
         <FormItemView key={item.id} item={item} {...context} />
       )),
       failed?.message &&
+        changed.size === 0 &&
         part(views.error, 'p', {key: 'message', role: 'alert'}, failed.message),
       part(
         views.submit,
@@ -441,7 +459,7 @@ function FormItemView({
 
 /**
  * Content between the inputs: the view of its type, or for content without
- * one its `body` field as rich text, eg. the Text input
+ * one its `body` field as rich text, eg. the Text block
  */
 function FormContent({content, views}: FormContentViewProps) {
   const Custom = (views as Record<string, unknown>)[content.type]
