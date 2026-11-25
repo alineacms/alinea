@@ -5,7 +5,7 @@ import {createDashboardStore} from '#test/DashboardFixture.js'
 import {act, cleanup, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
 import {Provider} from 'jotai'
-import {useEffect, useState} from 'react'
+import {startTransition, useEffect, useState} from 'react'
 import {eventsAtom} from '../atoms/core.js'
 import {shaAtom} from '../atoms/graph.js'
 import {userPolicyReadyAtom} from '../atoms/user.js'
@@ -27,16 +27,17 @@ const config = Config.create({
   }
 })
 
-/** A database with a product whose queries resolve after the given delay */
+/** A database with products whose queries resolve after the given delay */
 async function delayedDb(delay: number) {
   const db = new LocalDB(config)
   await db.sync()
-  await db.create({
-    type: Product,
-    workspace: 'main',
-    root: 'products',
-    set: {title: 'Chair'}
-  })
+  for (const title of ['Chair', 'Lamp'])
+    await db.create({
+      type: Product,
+      workspace: 'main',
+      root: 'products',
+      set: {title}
+    })
   // Rows load in a later task, like they do from the worker, so the content
   // suspends and is retried from scratch
   const find = db.find.bind(db)
@@ -121,4 +122,34 @@ test('the table keeps its rows when rendered with new options', async () => {
   })
   expect(await screen.findByText('Chair')).toBeDefined()
   expect(finds.count).toBe(1)
+})
+
+test('the table shows new rows when its query changes in a transition', async () => {
+  const {store, finds} = await delayedDb(10)
+  let show = (title: string) => {}
+  function SwitchingTable() {
+    const [title, setTitle] = useState('Chair')
+    show = setTitle
+    return (
+      <EntryTable
+        aria-label="Products"
+        workspace="main"
+        root="products"
+        filter={{title: {is: title}}}
+      />
+    )
+  }
+  await act(async () => {
+    render(
+      <Provider store={store}>
+        <SwitchingTable />
+      </Provider>
+    )
+  })
+  expect(await screen.findByText('Chair')).toBeDefined()
+  // The transition keeps showing the table while the new rows load, so the
+  // retries must wait for those rows instead of loading them again
+  await act(async () => startTransition(() => show('Lamp')))
+  expect(await screen.findByText('Lamp')).toBeDefined()
+  expect(finds.count).toBe(2)
 })
