@@ -32,7 +32,7 @@ import {formColumns} from './FormAnswers.js'
 import {formDefinition} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
 import type {FormCondition} from './FormConditions.js'
-import {mailProblem} from './FormMails.js'
+import {answerKeys, mailProblem, mailTextProblem} from './FormMails.js'
 import {readingOrder} from './FormRules.js'
 import {languageText, shareRows} from './FormShare.js'
 
@@ -79,6 +79,7 @@ export interface FormMailRow extends ListRow {
   name: string
   to: 'address' | 'input' | null
   address: string
+  cc: string
   /** The id of the email input whose answer it is sent to */
   input: string | null
   replyTo: string | null
@@ -129,6 +130,9 @@ function mailList(inputsField: FormField, shared?: boolean): FormMailList {
               required: get(to) !== 'input'
             })
           ),
+          cc: text('CC', {
+            help: 'Also sent to these addresses, separated with commas'
+          }),
           input: track.options(select('Input', {options: {}}), get => ({
             options: emailInputs(get),
             hidden: get(to) !== 'input',
@@ -154,7 +158,7 @@ function mailList(inputsField: FormField, shared?: boolean): FormMailList {
             text('Body', {
               required: true,
               multiline: true,
-              help: 'Insert answers with {{key}}, eg. {{name}}'
+              help: 'Insert an answer with {{key}}, eg. {{name}}, or all of them with {{all answers}}'
             })
           )
         }
@@ -188,12 +192,15 @@ function mailList(inputsField: FormField, shared?: boolean): FormMailList {
       }
     ),
     get => {
-      const order = readingOrder(inputs, get(inputsField))
+      const rows = get(inputsField)
+      const order = readingOrder(inputs, rows)
       const byId = new Map(order.map(entry => [entry.row._id, entry]))
+      const keys = answerKeys(inputs, rows, order)
       return {
         validate: (mails: Array<FormMailRow>) => {
           for (const mail of mails) {
-            const problem = mailProblem(mail, byId)
+            const problem =
+              mailProblem(mail, byId) ?? mailTextProblem(mail, keys)
             if (problem) return problem
           }
           return undefined

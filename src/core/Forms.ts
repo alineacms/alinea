@@ -12,6 +12,7 @@ import type {
 /** A notification mail of a form, for the mailer of the site */
 export interface FormMail {
   to: Array<string>
+  cc?: Array<string>
   /** The address of the visitor, when the mail sets an input for it */
   replyTo?: string
   subject: string

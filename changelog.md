@@ -9,6 +9,13 @@
   route of `createHandler`, eg. `app/(alinea)/api/cms/route.ts`: routes made
   before only export those two and refuse the uploads.
 
+### New
+
+- Form mails have a CC field, passed to the `mailer` as `cc`, and their body
+  can insert every answer with `{{all answers}}`. The dashboard shows an error
+  for a `{{key}}` the form does not have, in the subject or body of any
+  language.
+
 ## [2.0.0] - 2026-11-17
 
 ### New

@@ -1,7 +1,7 @@
 import {Field as CoreField} from '#/core/Field.js'
 import {Field, Form} from '#/index.js'
 import {expect, test} from 'bun:test'
-import {formMails} from './FormMails.js'
+import {answerKeys, formMails, mailTextProblem} from './FormMails.js'
 
 const inputs = CoreField.options(
   Field.form('Inputs', {inputs: Form.defaults})
@@ -129,4 +129,41 @@ test('a mail can be sent for one language only', () => {
   expect(names('NL')).toEqual(['Dutch desk'])
   expect(names('en')).toEqual([])
   expect(names()).toEqual([])
+})
+
+test('a mail is copied to its cc addresses', () => {
+  const [mail] = formMails(
+    inputs,
+    rows,
+    [{...mails[1], cc: 'boss@example.com; desk@example.com'}],
+    values
+  )
+  expect(mail.mail.cc).toEqual(['boss@example.com', 'desk@example.com'])
+  expect(formMails(inputs, rows, [mails[1]], values)[0].mail.cc).toBeUndefined()
+})
+
+test('all answers fills in every answer with its label', () => {
+  const answers = {...rows[0], _id: 'answers', _index: 'a3', label: 'Answers'}
+  const [mail] = formMails(
+    inputs,
+    [...rows, answers],
+    [{...mails[1], body: '{{all answers}}\n{{answers}}'}],
+    {...values, answers: 'Mine'}
+  )
+  expect(mail.mail.text).toBe(
+    'Name: Ann\nEmail: ann@example.com\nService: IT\nAnswers: Mine\nMine'
+  )
+})
+
+test('a key the form does not have is a problem, but the mail is sent', () => {
+  const keys = answerKeys(inputs, rows)
+  const typo = {...mails[1], subject: 'From {{nmae}}', body: '{{all answers}}'}
+  expect(mailTextProblem(mails[1], keys)).toBeUndefined()
+  expect(mailTextProblem(typo, keys)).toBe(
+    'Confirmation: Subject uses {{nmae}}, which is not a key of this form'
+  )
+  expect(mailTextProblem(mails[0], keys, 'nl')).toBe(
+    'IT helpdesk: Body in NL uses {{unknown}}, which is not a key of this form'
+  )
+  expect(formMails(inputs, rows, [typo], values)[0].mail.subject).toBe('From ')
 })

@@ -413,6 +413,30 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "CC",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": more addresses that get a copy, separated with commas."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "Reply to",
                   "marks": [
                     {
@@ -464,14 +488,14 @@
         },
         {
           "_type": "text",
-          "text": ": the subject and the body, as plain text. Insert answers with the key of their input between double braces:"
+          "text": ": the subject and the body, as plain text. Insert answers with the key of their input between double braces, or every answer with `{{all answers}}`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3Le7VIZhsVHQUwgmCH7f8p1NRSx",
-      "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}",
+      "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}\n\n{{all answers}}",
       "fileName": "Body",
       "language": "text",
       "compact": false
@@ -482,7 +506,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. A key the form doesn't have fills in nothing."
+          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. `{{all answers}}` writes a line with the label and the answer for every input that was answered, in the order of the form. A key the form doesn't have fills in nothing, the dashboard shows it as an error."
         }
       ]
     },
@@ -503,7 +527,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The handler sends mails with the `mailer` you pass in its `forms` options. It receives the recipients as `to`, the `replyTo` address when the mail sets one, the `subject` and the `text`, so you add the sender. For example with Resend:"
+          "text": "The handler sends mails with the `mailer` you pass in its `forms` options. It receives the recipients as `to`, the addresses that get a copy as `cc`, the `replyTo` address when the mail sets one, the `subject` and the `text`, so you add the sender. For example with Resend:"
         }
       ]
     },
