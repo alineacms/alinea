@@ -31,6 +31,8 @@ function rebaseValue(
   }
   if (isArray(checkpoint) && isArray(edited)) {
     const savedItems = isArray(saved) ? saved : []
+    if (hasIds(checkpoint) && hasIds(edited) && hasIds(savedItems))
+      return rebaseRows(checkpoint, edited, savedItems)
     const result = []
     let changed = false
     const length = Math.max(checkpoint.length, edited.length, savedItems.length)
@@ -68,6 +70,59 @@ function rebaseValue(
     return changed ? result : USE_SAVED
   }
   return edited
+}
+
+type Row = Record<string, unknown> & {_id: string}
+
+function hasIds(list: Array<unknown>): list is Array<Row> {
+  return list.every(row => isRecord(row) && typeof row._id === 'string')
+}
+
+/**
+ * Rows of a list are matched by id, so the edits of a row stay with it when
+ * the saved value added, removed or moved rows, eg. when another language
+ * saved a form it shares
+ */
+function rebaseRows(
+  checkpoint: Array<Row>,
+  edited: Array<Row>,
+  saved: Array<Row>
+): unknown {
+  const byId = (rows: Array<Row>) => new Map(rows.map(row => [row._id, row]))
+  const before = byId(checkpoint)
+  const after = byId(edited)
+  const current = byId(saved)
+  let changed = false
+  const result = Array<unknown>()
+  for (const row of saved) {
+    const old = before.get(row._id)
+    if (!old) {
+      result.push(row)
+      continue
+    }
+    const mine = after.get(row._id)
+    const value = mine ? rebaseValue(old, mine, row) : undefined
+    if (value === USE_SAVED) {
+      result.push(row)
+      continue
+    }
+    changed = true
+    if (value !== undefined) result.push(value)
+  }
+  for (const row of edited)
+    if (!before.has(row._id) && !current.has(row._id)) {
+      changed = true
+      result.push(row)
+    }
+  if (!changed) return USE_SAVED
+  // Rows the editor added or moved go where their order key puts them
+  const index = (row: unknown) => (isRecord(row) ? row._index : undefined)
+  if (result.every(row => typeof index(row) === 'string'))
+    result.sort((a, b) => {
+      const [x, y] = [index(a) as string, index(b) as string]
+      return x < y ? -1 : x > y ? 1 : 0
+    })
+  return result
 }
 
 /**
