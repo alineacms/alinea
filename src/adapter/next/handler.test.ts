@@ -223,7 +223,7 @@ test('the app answers forms during development, with its own storage', async () 
       body: 'file'
     })
     expect(upload.status).toBe(401)
-    expect(await upload.text()).toBe('Upload the file again')
+    expect(await upload.json()).toEqual({error: 'Upload the file again'})
   } finally {
     nextMocks.devHandlerUrl = undefined
   }
