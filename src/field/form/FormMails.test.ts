@@ -107,3 +107,26 @@ test('answers can not add lines to the headers of a mail', () => {
   expect(helpdesk.mail.replyTo).toBeUndefined()
   expect(rest).toEqual([])
 })
+
+test('a mail can be sent for one language only', () => {
+  const dutch = {
+    _id: 'dutch',
+    _index: 'a3',
+    _type: 'mail',
+    name: 'Dutch desk',
+    to: 'address',
+    address: 'nl@example.com',
+    sendWhen: {
+      match: 'all',
+      rules: [{id: 'r', input: '@locale', op: 'is', value: ['nl']}]
+    },
+    subject: 'Nieuw',
+    body: ''
+  }
+  const names = (locale?: string) =>
+    formMails(inputs, rows, [dutch], values, locale).map(out => out.name)
+  expect(names('nl')).toEqual(['Dutch desk'])
+  expect(names('NL')).toEqual(['Dutch desk'])
+  expect(names('en')).toEqual([])
+  expect(names()).toEqual([])
+})

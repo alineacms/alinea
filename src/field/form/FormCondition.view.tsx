@@ -13,10 +13,16 @@ import {
 } from '#/components.js'
 import type {ScalarField} from '#/core/field/ScalarField.js'
 import {createId} from '#/core/Id.js'
-import {useEditor, useField, useFieldOptions} from '#/dashboard/hooks.js'
+import {localeDisplay} from '#/dashboard/app/LocaleMenu.js'
+import {
+  useEditor,
+  useField,
+  useFieldOptions,
+  useOptionalEntryAtoms
+} from '#/dashboard/hooks.js'
 import {IcRoundAdd, IcRoundDelete} from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw} from 'jotai'
+import {atom, useAtomValueRaw} from 'jotai'
 import {useMemo} from 'react'
 import {choices} from './FormChoices.js'
 import css from './FormCondition.module.css'
@@ -24,6 +30,8 @@ import {
   type FormCondition,
   type FormOperator,
   type FormRule,
+  localeInput,
+  localeOperators,
   needsValue,
   operators
 } from './FormConditions.js'
@@ -34,13 +42,16 @@ import {type FormEntry, entryLabel, ruleProblem} from './FormRules.js'
 
 const styles = styler(css)
 
+const noLocales = atom(Array<string>())
+
 export interface FormConditionViewProps {
   field: ScalarField<FormCondition | null, FormConditionOptions>
 }
 
 /**
  * Edits when an input is shown or disabled, from the inputs above it, or
- * when a mail is sent, from every input of the form
+ * when a mail is sent, from every input of the form. In an i18n root rules
+ * can also test the language the form is filled in.
  */
 export function FormConditionView({field}: FormConditionViewProps) {
   const [value, setValue] = useField(field)
@@ -48,6 +59,8 @@ export function FormConditionView({field}: FormConditionViewProps) {
   const editor = useEditor()
   const id = useAtomValueRaw(editor.node.field('_id')) as string
   const order = useFormOrder()
+  const context = useOptionalEntryAtoms()
+  const locales = useAtomValueRaw(context?.entry.rootLocales ?? noLocales)
   const byId = useMemo(
     () => new Map(order.map(entry => [entry.row._id, entry])),
     [order]
@@ -87,15 +100,18 @@ export function FormConditionView({field}: FormConditionViewProps) {
     setValue({...condition, ...next})
   }
 
-  function ruleFor(target: FormEntry): FormRule {
-    const [op] = Object.keys(operators[Input.kind(target.input)])
-    return {id: createId(), input: target.row._id, op: op as FormOperator}
+  // The input a new rule starts with, the language without inputs
+  const initial =
+    above.at(-1)?.row._id ?? (locales.length > 0 ? localeInput : undefined)
+
+  function ruleFor(input: string): FormRule {
+    if (input === localeInput) return {id: createId(), input, op: 'is'}
+    const [op] = Object.keys(operators[Input.kind(byId.get(input)!.input)])
+    return {id: createId(), input, op: op as FormOperator}
   }
 
   function start() {
-    const target = above.at(-1)
-    if (!target) return
-    setValue({match: 'all', rules: [ruleFor(target)]})
+    if (initial) setValue({match: 'all', rules: [ruleFor(initial)]})
   }
 
   return (
@@ -117,7 +133,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
           <ToggleGroupItem value="never">
             {always ? 'Always' : 'Never'}
           </ToggleGroupItem>
-          <ToggleGroupItem value="when" disabled={above.length === 0}>
+          <ToggleGroupItem value="when" disabled={!initial}>
             When…
           </ToggleGroupItem>
         </ToggleGroup>
@@ -148,6 +164,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
               index={index}
               rule={rule}
               above={above}
+              locales={locales}
               byId={byId}
               position={position}
               within={within}
@@ -181,9 +198,8 @@ export function FormConditionView({field}: FormConditionViewProps) {
               icon={IcRoundAdd}
               className={styles.FormCondition.add()}
               onClick={() => {
-                const target = above.at(-1)
-                if (target)
-                  update({rules: [...condition.rules, ruleFor(target)]})
+                if (initial)
+                  update({rules: [...condition.rules, ruleFor(initial)]})
               }}
             >
               Add rule
@@ -192,9 +208,11 @@ export function FormConditionView({field}: FormConditionViewProps) {
         </div>
       )}
       <Text size="sm" color="muted">
-        {above.length === 0
+        {!initial
           ? `Rules use the inputs above this ${subject}, there are none yet.`
-          : `Rules can use the inputs above this ${subject}.`}
+          : locales.length > 0
+            ? `Rules can use the language and the inputs above this ${subject}.`
+            : `Rules can use the inputs above this ${subject}.`}
       </Text>
     </div>
   )
@@ -204,6 +222,8 @@ interface FormRuleEditorProps {
   index: number
   rule: FormRule
   above: Array<FormEntry>
+  /** The locales a rule on the language can choose from */
+  locales: ReadonlyArray<string>
   byId: Map<string, FormEntry>
   /** The position of the input in reading order, see `ruleProblem` */
   position: number
@@ -211,7 +231,8 @@ interface FormRuleEditorProps {
   within?: string
   readOnly: boolean
   onChange: (rule: FormRule) => void
-  onTarget: (target: FormEntry) => void
+  /** Points the rule at another input, by the id of its row */
+  onTarget: (input: string) => void
   onRemove: () => void
 }
 
@@ -219,6 +240,7 @@ function FormRuleEditor({
   index,
   rule,
   above,
+  locales,
   byId,
   position,
   within,
@@ -228,8 +250,10 @@ function FormRuleEditor({
   onRemove
 }: FormRuleEditorProps) {
   const name = `rule ${index + 1}`
+  const isLocale = rule.input === localeInput
   const target = byId.get(rule.input)
   const kind = target ? Input.kind(target.input) : undefined
+  const ops = isLocale ? localeOperators : kind && operators[kind]
   const problem = ruleProblem(rule, position, byId, within)
   return (
     <div
@@ -241,19 +265,22 @@ function FormRuleEditor({
         size="sm"
         readOnly={readOnly}
         placeholder="Removed input"
-        value={target ? rule.input : null}
+        value={target || isLocale ? rule.input : null}
         onValueChange={next => {
-          const entry = next === null ? undefined : byId.get(String(next))
-          if (entry && entry.row._id !== rule.input) onTarget(entry)
+          if (next !== null && String(next) !== rule.input)
+            onTarget(String(next))
         }}
       >
+        {(locales.length > 0 || isLocale) && (
+          <SelectItem value={localeInput}>Language</SelectItem>
+        )}
         {above.map(entry => (
           <SelectItem key={entry.row._id} value={entry.row._id}>
             {entryLabel(entry)}
           </SelectItem>
         ))}
       </Select>
-      {kind && (
+      {ops && (
         <Select
           aria-label={`Operator of ${name}`}
           size="sm"
@@ -266,12 +293,28 @@ function FormRuleEditor({
             onChange(next)
           }}
         >
-          {Object.entries(operators[kind]).map(([op, label]) => (
+          {Object.entries(ops).map(([op, label]) => (
             <SelectItem key={op} value={op}>
               {label}
             </SelectItem>
           ))}
         </Select>
+      )}
+      {isLocale && (
+        <MultipleSelect
+          aria-label={`Value of ${name}`}
+          className={styles.FormRuleEditor.value()}
+          readOnly={readOnly}
+          placeholder="Choose languages"
+          value={Array.isArray(rule.value) ? rule.value : []}
+          onValueChange={value => onChange({...rule, value: value.map(String)})}
+        >
+          {locales.map(locale => (
+            <MultipleSelectItem key={locale} value={locale}>
+              {localeDisplay(locale).name}
+            </MultipleSelectItem>
+          ))}
+        </MultipleSelect>
       )}
       {target && kind && needsValue(rule.op) && (
         <FormRuleValue

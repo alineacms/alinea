@@ -52,9 +52,10 @@ export function formColumns(definition: FormDefinition): Array<FormColumn> {
 /** The answers of a submission grouped by the sections of its form */
 export function answerGroups(
   definition: FormDefinition,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  locale?: string | null
 ): Array<FormAnswerGroup> {
-  const {hidden} = formState(definition, values)
+  const {hidden} = formState(definition, values, locale)
   const answer =
     (values: Record<string, unknown>, suffix: string) =>
     (input: FormInputData): FormAnswer => {

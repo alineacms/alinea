@@ -479,7 +479,11 @@ function AnswerText({column, submission}: AnswerTextProps) {
   const own = sentColumn(column, submission)
   const hidden =
     own !== undefined &&
-    formState(sentDefinition(submission), submission.values).hidden.has(own.id)
+    formState(
+      sentDefinition(submission),
+      submission.values,
+      submission.locale
+    ).hidden.has(own.id)
   if (own && !hidden) return null
   return (
     <Text color="muted" className={styles.FormSubmissions.missing()}>
@@ -524,7 +528,7 @@ function SubmissionSheet({
   const store = useStore()
   const reload = useSetAtom(version(entryId))
   const definition = submission.definition as FormDefinition
-  const groups = answerGroups(definition, submission.values)
+  const groups = answerGroups(definition, submission.values, submission.locale)
 
   async function update(status: SubmissionStatus) {
     await store.get(clientAtom).updateSubmission(entryId, submission.id, status)

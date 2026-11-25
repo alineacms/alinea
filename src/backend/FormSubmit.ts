@@ -156,7 +156,7 @@ export async function submitForm(
     posted
   )
   if (!files.ok) return {ok: false, errors: files.errors}
-  const result = validateSubmission(field, rows, files.data)
+  const result = validateSubmission(field, rows, files.data, entry.locale)
   if (!result.ok) return {ok: false, errors: result.errors}
   const repeated = await repeatedAnswers(
     store,
@@ -195,7 +195,13 @@ export async function submitForm(
   if (type && isFormType(type)) {
     submission.notified = await sendMails(
       forms.mailer,
-      formMails(Field.options(field).inputs, rows, data.mails, result.values)
+      formMails(
+        Field.options(field).inputs,
+        rows,
+        data.mails,
+        result.values,
+        entry.locale
+      )
     )
     if (submission.notified.length > 0)
       await store.notifiedSubmission(

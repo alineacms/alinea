@@ -925,6 +925,16 @@
       "content": [
         {
           "_type": "text",
+          "text": "In a translated root rules can also use Language: whether the language of the form is any or none of the languages you pick, for example to show an input or send a mail only to Dutch visitors. `<Form>` tests it against its `locale` prop, the server against the language the answers were sent in."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
           "text": "`<Form>` applies the rules while visitors fill in the form, and the server applies them again to the answers it receives. A rule that no longer works, because the input it uses was removed or moved below it, or an option it uses was removed, shows as an error on its row. Deleting an input that rules use asks whether to remove those rules as well."
         }
       ]

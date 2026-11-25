@@ -123,3 +123,40 @@ test('broken rules are validation errors', async () => {
   const [, device] = await definition(broken)
   expect(device.showWhen).toBeUndefined()
 })
+
+test('rules on the language reach the site and test its locale', async () => {
+  const notice = {
+    _id: 'notice',
+    _index: 'a3',
+    _type: 'text',
+    label: 'Notice',
+    showWhen: {
+      match: 'all',
+      rules: [{id: 'r4', input: '@locale', op: 'is', value: ['nl', 'en-US']}]
+    }
+  }
+  const form = await definition([...rows, notice])
+  expect(form.at(-1)?.showWhen?.rules).toEqual([
+    {input: '@locale', op: 'is', value: ['nl', 'en-us']}
+  ])
+  const hidden = (locale?: string) => formState(form, {}, locale).hidden
+  expect(hidden('nl').has('notice')).toBe(false)
+  expect(hidden('en-US').has('notice')).toBe(false)
+  expect(hidden('de').has('notice')).toBe(true)
+  expect(hidden().has('notice')).toBe(true)
+  expect(validateEntry(Request, {inputs: [...rows, notice]})).toEqual([])
+})
+
+test('a rule on the language without languages is an error', () => {
+  const notice = {
+    _id: 'notice',
+    _index: 'a3',
+    _type: 'text',
+    label: 'Notice',
+    showWhen: {match: 'all', rules: [{id: 'r4', input: '@locale', op: 'is'}]}
+  }
+  const errors = validateEntry(Request, {inputs: [...rows, notice]})
+  expect(errors.map(error => error.message)).toEqual([
+    'Its rule on Language has no languages'
+  ])
+})

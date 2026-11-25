@@ -135,6 +135,7 @@ export default async function Example(props: PageProps) {
     return (
       <FormView
         title={title}
+        locale={page.locale}
         definition={content.inputs as FormDefinition}
         action={submitForm.bind(null, page.id)}
         upload={prepareUpload.bind(null, page.id)}

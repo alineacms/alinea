@@ -25,6 +25,11 @@ const main = Config.workspace('Main', {
   roots: {forms: Config.root('Forms')}
 })
 
+const intl = Config.workspace('Main', {
+  source: 'content',
+  roots: {forms: Config.root('Forms', {i18n: {locales: ['en', 'nl']}})}
+})
+
 const rows = [
   {_id: 'name', _index: 'a0', _type: 'text', label: 'Name', required: true},
   {_id: 'mail', _index: 'a1', _type: 'email', label: 'Email', required: true}
@@ -34,16 +39,22 @@ interface SetupOptions {
   form?: typeof Contact | typeof ServiceForm
   set?: Record<string, unknown>
   forms?: FormsOptions
+  /** Places the form in a root with languages, in this one */
+  locale?: string
 }
 
 async function setup({
   form = Contact,
   set = {title: 'Contact', inputs: rows},
-  forms
+  forms,
+  locale
 }: SetupOptions = {}) {
-  const cms = createCMS({schema: {Contact, ServiceForm}, workspaces: {main}})
+  const cms = createCMS({
+    schema: {Contact, ServiceForm},
+    workspaces: {main: locale ? intl : main}
+  })
   const db = new LocalDB(cms.config)
-  await db.create({type: form, set: set as never})
+  await db.create({type: form, locale, set: set as never})
   const entryId = (await db.first({select: Entry.id, type: form}))!
   const store = new SubmissionStore({
     db: driver['bun:sqlite'](new BunSqlite(':memory:'))
@@ -73,7 +84,12 @@ async function setup({
           'content-type': 'application/json',
           authorization: `Bearer ${key}`
         },
-        body: JSON.stringify({entryId, visitor, data: Object.entries(data)})
+        body: JSON.stringify({
+          entryId,
+          locale,
+          visitor,
+          data: Object.entries(data)
+        })
       }),
       context
     )
@@ -379,4 +395,54 @@ test('submissions are listed by the language they were sent in', async () => {
 test('keep and most submissions are the same in every language', () => {
   for (const key of ['keep', 'limit'])
     expect(CoreField.options(Type.field(ServiceForm, key)!).shared).toBe(true)
+})
+
+test('rules on the language follow the language of the form', async () => {
+  const sent = Array<string>()
+  const dutch = {
+    match: 'all',
+    rules: [{id: 'r', input: '@locale', op: 'is', value: ['nl']}]
+  }
+  const setupIn = (locale: string) =>
+    setup({
+      form: ServiceForm,
+      locale,
+      set: {
+        title: 'Request',
+        inputs: [
+          ...rows,
+          {
+            _id: 'vat',
+            _index: 'a2',
+            _type: 'text',
+            label: 'VAT',
+            required: true,
+            showWhen: dutch
+          }
+        ],
+        mails: [
+          {
+            _id: 'nl',
+            _index: 'a0',
+            _type: 'mail',
+            name: 'Dutch desk',
+            to: 'address',
+            address: 'nl@example.com',
+            sendWhen: dutch,
+            subject: 'Nieuw',
+            body: ''
+          }
+        ]
+      },
+      forms: {mailer: mail => void sent.push(mail.to[0])}
+    })
+  const answers = {name: 'Ann', email: 'ann@example.com'}
+  const nl = await setupIn('nl')
+  expect((await nl.submit(answers)).body.errors).toEqual({
+    vat: 'Fill in this field'
+  })
+  expect((await nl.submit({...answers, vat: 'BE1'})).body.ok).toBe(true)
+  const en = await setupIn('en')
+  expect((await en.submit(answers)).body.ok).toBe(true)
+  expect(sent).toEqual(['nl@example.com'])
 })

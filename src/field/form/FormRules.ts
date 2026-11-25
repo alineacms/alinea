@@ -6,6 +6,8 @@ import {
   type FormConditionData,
   type FormRule,
   type FormRuleData,
+  localeInput,
+  localeOperators,
   needsValue,
   operators
 } from './FormConditions.js'
@@ -86,7 +88,8 @@ export function storedCondition(value: unknown): FormCondition | undefined {
  * this position in reading order use the entries before it, rules outside
  * the form such as those of a mail use every entry (`Infinity`). Inputs of a
  * repeatable section have an answer per item, only rules within the same
- * section (`within`, its id) can use them.
+ * section (`within`, its id) can use them. Rules on the language
+ * (`localeInput`) work anywhere.
  */
 export function ruleProblem(
   rule: FormRule,
@@ -94,6 +97,13 @@ export function ruleProblem(
   byId: Map<string, FormEntry>,
   within?: string
 ): string | undefined {
+  if (rule.input === localeInput) {
+    if (!(rule.op in localeOperators))
+      return 'Its rule on Language no longer fits Language'
+    if (!Array.isArray(rule.value) || rule.value.length === 0)
+      return 'Its rule on Language has no languages'
+    return undefined
+  }
   const target = byId.get(rule.input)
   if (
     !target ||
@@ -134,6 +144,14 @@ export function conditionData(
   if (!condition) return undefined
   const rules = condition.rules.flatMap((rule): Array<FormRuleData> => {
     if (ruleProblem(rule, index, byId, within)) return []
+    if (rule.input === localeInput)
+      return [
+        {
+          input: localeInput,
+          op: rule.op,
+          value: (rule.value as Array<string>).map(code => code.toLowerCase())
+        }
+      ]
     const target = byId.get(rule.input)!
     const data: FormRuleData = {input: key(target.row), op: rule.op}
     if (!needsValue(rule.op)) return [data]
@@ -263,9 +281,16 @@ export function describeCondition(
       ? `${rules.length} rules match`
       : `any of ${rules.length} rules matches`
   const [rule] = rules
+  const single = Array.isArray(rule.value) && rule.value.length === 1
+  if (rule.input === localeInput) {
+    const codes = Array.isArray(rule.value) ? rule.value : []
+    const op = (single && singleOperators[rule.op]) || localeOperators[rule.op]
+    return ['Language', op, codes.map(code => code.toUpperCase()).join(' or ')]
+      .filter(Boolean)
+      .join(' ')
+  }
   const target = byId.get(rule.input)
   if (!target) return 'a removed input matches'
-  const single = Array.isArray(rule.value) && rule.value.length === 1
   const op =
     (single && singleOperators[rule.op]) ||
     operators[Input.kind(target.input)][rule.op] ||

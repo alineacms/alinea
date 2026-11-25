@@ -128,6 +128,21 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`locale`: the language of the form entry, for example `entry.locale`, which rules on the language test."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`labels`: the texts `<Form>` adds itself, for sites in another language: `submit` (`Send`), `confirmation` (`Thank you, your answers were sent.`, when editors set no message), `add` (`Add another`, for a repeatable section without a text of its own) and `remove` (`Remove`). For example `labels={{submit: 'Verzenden'}}`."
                 }
               ]

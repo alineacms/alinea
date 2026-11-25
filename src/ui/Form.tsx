@@ -134,6 +134,8 @@ export interface FormProps extends Omit<
    * hidden input on the page of a product
    */
   values?: Record<string, string>
+  /** The language of the form entry, which rules on the language test */
+  locale?: string | null
   /** Errors by the key of the input, when the form is sent another way */
   errors?: FormErrors
   /**
@@ -150,6 +152,7 @@ export interface FormProps extends Omit<
 export function Form({
   definition: defined,
   values: prefilled,
+  locale,
   views = {},
   action,
   upload,
@@ -175,8 +178,8 @@ export function Form({
   )
   const [values, setValues] = useState(() => initialValues(definition, items))
   const state = useMemo(
-    () => formState(definition, values),
-    [definition, values]
+    () => formState(definition, values, locale),
+    [definition, values, locale]
   )
   const [result, send, pending] = useActionState(
     async (_: FormResult | undefined, posted: FormData) => {

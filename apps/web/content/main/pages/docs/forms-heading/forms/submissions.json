@@ -445,7 +445,7 @@
         },
         {
           "_type": "text",
-          "text": ": always, or only when the rules hold, for example when the service a visitor chose is IT. Rules of mails can use every input of the form, except those in repeatable sections."
+          "text": ": always, or only when the rules hold, for example when the service a visitor chose is IT or when the form is filled in in Dutch. Rules of mails can use the language and every input of the form, except those in repeatable sections."
         }
       ]
     },

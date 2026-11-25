@@ -764,6 +764,8 @@ export class EntryAtoms {
     get(this.data).parents.some(parent => parent.status === 'draft')
   )
   fieldI18n = atom(get => get(this.#settings).fieldI18n)
+  /** The locales of the root of the entry, none outside an i18n root */
+  rootLocales = atom(get => get(this.#settings).locales)
   preview = atom(get => get(this.#settings).preview)
   translationSourceLocales = atom(get => {
     const data = get(this.data)

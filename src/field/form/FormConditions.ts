@@ -28,7 +28,7 @@ export type FormRuleValue = string | number | Array<string>
 /** A rule as it is stored, pointing at the row of an input and its options */
 export interface FormRule {
   id: string
-  /** The id of the row of the input */
+  /** The id of the row of the input, or `@locale` for the language */
   input: string
   op: FormOperator
   /** Ids of options for choices, a number, date or text for the others */
@@ -42,6 +42,7 @@ export interface FormCondition {
 
 /** A rule as the site gets it, pointing at the key of an input */
 export interface FormRuleData {
+  /** The key of the input, or `@locale` for the language */
   input: string
   op: FormOperator
   /** Values of options for choices */
@@ -94,6 +95,26 @@ export const operators: Record<
   file: {filled: 'has a file', empty: 'has no file'}
 }
 
+/**
+ * What a rule points at to test the language of the form instead of an
+ * input, rows have generated ids so this one can not clash with them
+ */
+export const localeInput = '@locale'
+
+/** The operators of a rule on the language, its value lists locales */
+export const localeOperators: Partial<Record<FormOperator, string>> = {
+  is: 'is any of',
+  isNot: 'is none of'
+}
+
+/** The answers with the language, as rules on the language test it */
+export function withLocale(
+  values: Record<string, unknown>,
+  locale?: string | null
+): Record<string, unknown> {
+  return locale ? {...values, [localeInput]: locale.toLowerCase()} : values
+}
+
 /** Operators that compare with a value */
 export function needsValue(op: FormOperator): boolean {
   return !['checked', 'unchecked', 'filled', 'empty'].includes(op)
@@ -128,11 +149,12 @@ export interface FormState {
  * answer a rule needs. A hidden or disabled input counts as empty. The
  * answers of a repeatable section are a list of items, the rules of its
  * inputs see the answers above the section and those above them in their
- * own item.
+ * own item. Rules on the language test `locale`.
  */
 export function formState(
   items: Array<ConditionalItem>,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  locale?: string | null
 ): FormState {
   const state: FormState = {
     hidden: new Set(),
@@ -174,7 +196,7 @@ export function formState(
       if (item.key && !off && !disabled) answers[item.key] = values[item.key]
     }
   }
-  visit(items, false, values, {}, '')
+  visit(items, false, values, withLocale({}, locale), '')
   return state
 }
 

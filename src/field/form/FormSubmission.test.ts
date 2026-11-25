@@ -96,6 +96,25 @@ test('unknown options are rejected', () => {
   })
 })
 
+test('rules on the language test the locale of the form', () => {
+  const vat = {
+    _id: 'vat',
+    _index: 'a6',
+    _type: 'text',
+    label: 'VAT',
+    required: true,
+    showWhen: {
+      match: 'all',
+      rules: [{id: 'r', input: '@locale', op: 'isNot', value: ['en']}]
+    }
+  }
+  const answers = data({name: 'Ann', email: 'a@b.be', terms: 'on'})
+  const dutch = validateSubmission(inputs, [...rows, vat], answers, 'nl')
+  expect(!dutch.ok && dutch.errors).toEqual({vat: 'Fill in this field'})
+  const english = validateSubmission(inputs, [...rows, vat], answers, 'en')
+  expect(english.ok).toBe(true)
+})
+
 test('bots fill in the honeypot or send at once', () => {
   const now = 10_000
   expect(isSpam(data({[formSpam.honeypot]: 'spam'}), now)).toBe(true)

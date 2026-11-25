@@ -40,12 +40,14 @@ export type FormValidation =
 /**
  * Checks the answers sent for a form: hidden and disabled inputs are left
  * out, the others must be filled in when they are required and pass the
- * validate of their input.
+ * validate of their input. Rules on the language test `locale`, the
+ * language of the form entry.
  */
 export function validateSubmission(
   field: FormField,
   rows: unknown,
-  data: FormData
+  data: FormData,
+  locale?: string | null
 ): FormValidation {
   const {inputs} = Field.options(field)
   const order = readingOrder(inputs, rows)
@@ -73,7 +75,7 @@ export function validateSubmission(
         read(item.inputs, key => itemName(item.key, index, key))
       )
   }
-  const state = formState(definition, parsed)
+  const state = formState(definition, parsed, locale)
   const check = new Checker(byId, state)
   const values: FormValues = {}
   for (const item of definition) {

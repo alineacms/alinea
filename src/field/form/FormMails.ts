@@ -1,7 +1,7 @@
 import type {FormMail} from '#/core/Forms.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {columnKey, columnText, formColumns} from './FormAnswers.js'
-import {holds} from './FormConditions.js'
+import {holds, withLocale} from './FormConditions.js'
 import {formDefinition, inputKey} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
 import {
@@ -22,13 +22,14 @@ export interface FormMailOut {
  * The mails of a form whose rules hold for the answers, with the answers
  * filled in for their `{{key}}`. The key of a repeatable section fills in
  * all of its items. A mail with a rule that no longer works is not sent,
- * rather than sent to everyone.
+ * rather than sent to everyone. Rules on the language test `locale`.
  */
 export function formMails(
   inputs: Record<string, Input>,
   rows: unknown,
   mails: unknown,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  locale?: string | null
 ): Array<FormMailOut> {
   if (!Array.isArray(mails)) return []
   const order = readingOrder(inputs, rows)
@@ -50,7 +51,7 @@ export function formMails(
   return mails.filter(isRecord).flatMap((mail): Array<FormMailOut> => {
     if (mailProblem(mail, byId)) return []
     const condition = conditionData(mail.sendWhen, Infinity, byId, inputKey)
-    if (!holds(condition, values, true)) return []
+    if (!holds(condition, withLocale(values, locale), true)) return []
     const to =
       mail.to === 'input'
         ? [answerOf(mail.input)].filter(Boolean)
