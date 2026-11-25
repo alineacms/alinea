@@ -71,6 +71,8 @@
   + :global(.ProseMirror-gapcursor:last-child) {
   position: relative;
   height: 1.5em;
+  /* The space a block keeps above the line that follows it */
+  margin-top: 16px;
 }
 
 .RichTextFieldView

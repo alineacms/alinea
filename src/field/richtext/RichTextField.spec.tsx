@@ -1498,6 +1498,20 @@ test('leaves the value alone when clicking below a trailing block', async ({
   await expect(page.getByTestId('dirty')).toHaveText('false')
 })
 
+test('leaves no room below a trailing block once blurred', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  const height = (await editor.boundingBox())?.height
+  await clickBelowTrailingBlock(page)
+  await editor.evaluate(element => (element as HTMLElement).blur())
+  await expect
+    .poll(async () => (await editor.boundingBox())?.height)
+    .toBe(height)
+})
+
 test('ignores clicks below a trailing block when read only', async ({
   mount,
   page
