@@ -148,7 +148,9 @@ export namespace Input {
   export function parse(input: Input, raw: FormRaw, settings: object): unknown {
     if (input.parse) return input.parse(raw, settings as any)
     const [first] = raw
-    const text = typeof first === 'string' ? first.trim() : ''
+    // Browsers send the line breaks of a textarea as \r\n
+    const text =
+      typeof first === 'string' ? first.replace(/\r\n?/g, '\n').trim() : ''
     return text || undefined
   }
 }

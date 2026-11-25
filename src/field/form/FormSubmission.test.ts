@@ -130,6 +130,17 @@ test('validate gets the locale of the form', () => {
   expect(!other.ok && other.errors).toEqual({a: 'Invalid'})
 })
 
+test('line breaks of text answers are normalized', () => {
+  const field = Field.form('Inputs', {inputs: Form.defaults})
+  const row = {_id: 'a', _index: 'a0', _type: 'textarea', label: 'A', key: 'a'}
+  const result = validateSubmission(
+    field,
+    [row],
+    data({a: 'one\r\ntwo\rthree'})
+  )
+  expect(result.ok && result.values).toEqual({a: 'one\ntwo\nthree'})
+})
+
 test('unknown options are rejected', () => {
   const result = validateSubmission(
     inputs,
