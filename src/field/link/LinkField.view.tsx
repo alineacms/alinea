@@ -104,6 +104,7 @@ import type {
   RefObject
 } from 'react'
 import {useId, useMemo, useRef, useState} from 'react'
+import {isImage} from '#/core/media/IsImage.js'
 import {LinkDetails} from './LinkDetails.js'
 import css from './LinkField.module.css'
 import {openableUrl, suffixedUrl} from './LinkUrl.js'
@@ -860,8 +861,11 @@ interface EntryAnchorBadgeProps {
 
 function EntryAnchorBadge({node, value}: EntryAnchorBadgeProps) {
   const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
-  if (value[Reference.type] !== 'entry' || !anchor) return null
-  return <Badge size="sm">#{anchor}</Badge>
+  const suffix = useAtomValueRaw(node.field('_suffix')) as string | undefined
+  if (value[Reference.type] !== 'entry') return null
+  const text = `${suffix?.trim() ?? ''}${anchor ? `#${anchor}` : ''}`
+  if (!text) return null
+  return <Badge size="sm">{text}</Badge>
 }
 
 interface LinkMetaLabelProps {
@@ -1166,6 +1170,25 @@ function EntryLinkRowActions({
   const linkLocale =
     type === 'entry' ? (locale ?? scope?.localeData.requestedLocale) : undefined
   const href = `#${nav.entry(entry.workspace, entry.root, entry.id, linkLocale)}`
+  if (entry.file) {
+    const label = isImage(entry.file.extension ?? '')
+      ? 'Edit image'
+      : 'Edit file'
+    return (
+      <Button
+        aria-label={label}
+        variant="ghost"
+        size="sm"
+        icon={IcRoundEdit}
+        onClick={() => {
+          closeActions()
+          window.location.hash = href
+        }}
+      >
+        {label}
+      </Button>
+    )
+  }
   return (
     <Button
       aria-label="Open link"
