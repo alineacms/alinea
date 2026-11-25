@@ -47,6 +47,11 @@ export interface FormRuleData {
   op: FormOperator
   /** Values of options for choices */
   value?: FormRuleValue
+  /**
+   * For a rule on the language, the language the form was queried in, which
+   * it tests unless another is given
+   */
+  locale?: string
 }
 
 export interface FormConditionData {
@@ -207,7 +212,8 @@ export function holds(
   otherwise: boolean
 ): boolean {
   if (!condition || condition.rules.length === 0) return otherwise
-  const test = (rule: FormRuleData) => matches(rule, answers[rule.input])
+  const test = (rule: FormRuleData) =>
+    matches(rule, answers[rule.input] ?? rule.locale)
   return condition.match === 'any'
     ? condition.rules.some(test)
     : condition.rules.every(test)

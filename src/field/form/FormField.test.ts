@@ -1,3 +1,4 @@
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Field as CoreField} from '#/core/Field.js'
 import {formatFieldPath, validateEntry} from '#/core/Validation.js'
 import {Config, Field, Form} from '#/index.js'
@@ -65,11 +66,9 @@ test('inputs are the row types of the field', () => {
 })
 
 test('the definition names inputs by their key', async () => {
-  const definition = await CoreField.queryValue(
-    inputs,
-    structuredClone(rows),
-    undefined!
-  )
+  const definition = await CoreField.queryValue(inputs, structuredClone(rows), {
+    locale: null
+  } as LinkResolver)
   expect(definition).toEqual([
     {
       id: 'about',

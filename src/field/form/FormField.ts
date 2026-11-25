@@ -21,7 +21,8 @@ import {
   type FormRow,
   fixedKeys,
   formDefinition,
-  formErrors
+  formErrors,
+  inLocale
 } from './FormDefinition.js'
 import type {FormCondition} from './FormConditions.js'
 import {readingOrder, ruleErrors} from './FormRules.js'
@@ -100,7 +101,11 @@ export function form<Inputs extends Record<string, Input>>(
       const rows = options.shared
         ? fillForm(inputs, value, await loader.translations(field))
         : value
-      return formDefinition(inputs, rows) as FormDefinition<any>
+      // The site renders it in this language without having to say so
+      return inLocale(
+        formDefinition(inputs, rows),
+        loader.locale
+      ) as FormDefinition<any>
     }
   })
   return field

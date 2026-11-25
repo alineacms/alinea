@@ -1,3 +1,4 @@
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Field as CoreField} from '#/core/Field.js'
 import {formatFieldPath, validateEntry} from '#/core/Validation.js'
 import {Config, Field, Form} from '#/index.js'
@@ -49,11 +50,11 @@ const rows = [
   }
 ]
 
-async function definition(rows: unknown) {
+async function definition(rows: unknown, locale: string | null = null) {
   return (await CoreField.queryValue(
     inputs,
     structuredClone(rows) as any,
-    undefined!
+    {locale} as LinkResolver
   )) as FormDefinition
 }
 
@@ -145,6 +146,10 @@ test('rules on the language reach the site and test its locale', async () => {
   expect(hidden('de').has('notice')).toBe(true)
   expect(hidden().has('notice')).toBe(true)
   expect(validateEntry(Request, {inputs: [...rows, notice]})).toEqual([])
+  // Queried in a language, the rule tests it unless told another
+  const dutch = await definition([...rows, notice], 'nl')
+  expect(formState(dutch, {}).hidden.has('notice')).toBe(false)
+  expect(formState(dutch, {}, 'de').hidden.has('notice')).toBe(true)
 })
 
 test('a rule on the language without languages is an error', () => {

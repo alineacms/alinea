@@ -4,7 +4,7 @@ import {isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {FieldValidationError} from '#/core/Validation.js'
 import {type FormChoice, choices} from './FormChoices.js'
-import type {FormConditionData} from './FormConditions.js'
+import {type FormConditionData, localeInput} from './FormConditions.js'
 import type {FormControl, Input} from './FormInput.js'
 import {conditionData, readingOrder} from './FormRules.js'
 
@@ -136,6 +136,37 @@ export function inputsOf<Type extends string>(
   items: Array<FormItem<Type>>
 ): Array<FormInputData<Type>> {
   return items.filter(isFormInput)
+}
+
+/**
+ * The definition with its rules on the language set to test this one, the
+ * language the form was queried in
+ */
+export function inLocale<Item extends FormItem>(
+  items: Array<Item>,
+  locale: string | null
+): Array<Item> {
+  if (!locale) return items
+  const stamp = (condition?: FormConditionData) =>
+    condition && {
+      ...condition,
+      rules: condition.rules.map(rule =>
+        rule.input === localeInput
+          ? {...rule, locale: locale.toLowerCase()}
+          : rule
+      )
+    }
+  return items.map(item => {
+    const result: FormItem = {...item}
+    if (item.showWhen) result.showWhen = stamp(item.showWhen)
+    if (result.control === 'section')
+      result.inputs = inLocale(result.inputs, locale)
+    else if (result.control !== 'content') {
+      if (result.disableWhen) result.disableWhen = stamp(result.disableWhen)
+      if (result.requireWhen) result.requireWhen = stamp(result.requireWhen)
+    }
+    return result as Item
+  })
 }
 
 /** A form as the site and the server see it, serialisable */
