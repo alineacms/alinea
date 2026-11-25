@@ -226,3 +226,33 @@ test('a shared form follows the fallback of its root', async () => {
   )
   expect(await flemish('nl-BE')).toEqual(['Naam', 'Kot', 'E-mail'])
 })
+
+interface SharedRow {
+  label: string
+  placeholder?: string
+  inputs: Array<SharedRow>
+}
+
+test('an input moved into a section keeps its texts in other languages', () => {
+  const name = {_id: 'name', _index: 'a0', _type: 'text', key: 'name'}
+  const section = {_id: 's', _index: 'a1', _type: 'section', key: 's'}
+  const moved = [
+    {...section, label: 'Sectie', inputs: [{...name, label: 'Naam'}]}
+  ]
+  const english = [
+    {...name, label: 'Name', placeholder: 'Your name'},
+    {...section, label: 'Section', inputs: []}
+  ]
+  const [shared] = shareForm(Form.defaults, moved, english) as Array<SharedRow>
+  expect(shared.label).toBe('Section')
+  expect(shared.inputs[0].label).toBe('Name')
+  expect(shared.inputs[0].placeholder).toBe('Your name')
+  const untranslated = [{...section, inputs: [{...name, label: ''}]}]
+  const [filled] = fillForm(Form.defaults, untranslated, [
+    english
+  ]) as Array<SharedRow>
+  expect(filled.inputs[0].label).toBe('Name')
+  // And out of it again
+  const [back] = shareForm(Form.defaults, english, moved) as Array<SharedRow>
+  expect(back.label).toBe('Naam')
+})

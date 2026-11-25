@@ -85,18 +85,42 @@ export function shareForm(
   source: unknown,
   target: unknown
 ): unknown {
+  return shareInputs(inputs, source, allRows(inputs, target))
+}
+
+/**
+ * The rows of a form and those of its sections: an input that moved into
+ * or out of a section in one language keeps its texts in the others
+ */
+function allRows(inputs: Record<string, Input>, value: unknown): Array<Row> {
+  return rowsOf(value).flatMap(row =>
+    inputs[row._type as string]?.control === 'section'
+      ? [row, ...allRows(inputs, row.inputs)]
+      : [row]
+  )
+}
+
+function textsOf(inputs: Record<string, Input>) {
+  return (row: Row) => {
+    const input = inputs[row._type as string]
+    return input && textKeys(input)
+  }
+}
+
+function shareInputs(
+  inputs: Record<string, Input>,
+  source: unknown,
+  target: Array<Row>
+): unknown {
   return shareRows(
     source,
     target,
-    row => {
-      const input = inputs[row._type as string]
-      return input && textKeys(input)
-    },
+    textsOf(inputs),
     (row, key, value, theirs) => {
       const input = inputs[row._type as string]
       // The inputs of a section are shared like those of the form
       if (input?.control === 'section' && key === 'inputs')
-        return shareForm(inputs, value, theirs)
+        return shareInputs(inputs, value, target)
       if (key === 'options')
         return shareRows(
           value,
@@ -173,27 +197,31 @@ export function fillForm(
   rows: unknown,
   others: Array<unknown>
 ): unknown {
-  return fillRows(
+  return fillInputs(
+    inputs,
     rows,
-    others,
-    row => {
-      const input = inputs[row._type as string]
-      return input && textKeys(input)
-    },
-    (row, key, value, theirs) => {
-      const input = inputs[row._type as string]
-      if (input?.control === 'section' && key === 'inputs')
-        return fillForm(inputs, value, theirs)
-      if (key === 'options')
-        return fillRows(
-          value,
-          theirs,
-          option => (option._type === 'option' ? optionTexts : undefined),
-          (_, __, nestedValue) => nestedValue
-        )
-      return value
-    }
+    others.map(other => allRows(inputs, other))
   )
+}
+
+function fillInputs(
+  inputs: Record<string, Input>,
+  rows: unknown,
+  others: Array<Array<Row>>
+): unknown {
+  return fillRows(rows, others, textsOf(inputs), (row, key, value, theirs) => {
+    const input = inputs[row._type as string]
+    if (input?.control === 'section' && key === 'inputs')
+      return fillInputs(inputs, value, others)
+    if (key === 'options')
+      return fillRows(
+        value,
+        theirs,
+        option => (option._type === 'option' ? optionTexts : undefined),
+        (_, __, nestedValue) => nestedValue
+      )
+    return value
+  })
 }
 
 /** The mails of a shared form with an empty subject or body filled in */
