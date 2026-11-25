@@ -488,14 +488,14 @@
         },
         {
           "_type": "text",
-          "text": ": the subject and the body, as plain text. Insert answers with the key of their input between double braces, or every answer with `{{all answers}}`:"
+          "text": ": the subject and the body. The body is rich text, with headings, lists and links. Insert answers with the key of their input between double braces, every answer with `{{all answers}}` and a link to the submission in the dashboard with `{{submission link}}`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3Le7VIZhsVHQUwgmCH7f8p1NRSx",
-      "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}\n\n{{all answers}}",
+      "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}\n\n{{all answers}}\n\n{{submission link}}",
       "fileName": "Body",
       "language": "text",
       "compact": false
@@ -506,7 +506,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. `{{all answers}}` writes a line with the label and the answer for every input that was answered, in the order of the form. A key the form doesn't have fills in nothing, the dashboard shows it as an error."
+          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. `{{all answers}}` writes the label and the answer of every input that was answered, in the order of the form: a line each in the text of the mail, a table in its html. Files show by their name. `{{submission link}}` opens the form in the dashboard, for mails to editors. For recipients without access to the dashboard, check Attach uploaded files to send the files of the submission with the mail. A key the form doesn't have fills in nothing, the dashboard shows it as an error."
         }
       ]
     },
@@ -527,7 +527,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The handler sends mails with the `mailer` you pass in its `forms` options. It receives the recipients as `to`, the addresses that get a copy as `cc`, the `replyTo` address when the mail sets one, the `subject` and the `text`, so you add the sender. For example with Resend:"
+          "text": "The handler sends mails with the `mailer` you pass in its `forms` options. It receives the recipients as `to`, the addresses that get a copy as `cc`, the `replyTo` address when the mail sets one, the `subject`, the body as `text` and as `html`, and the `attachments` of a mail that attaches files, so you add the sender. For example with Resend:"
         }
       ]
     },
@@ -538,6 +538,34 @@
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `html` is a complete mail in a plain layout: a centered column in the system font. To send mails in the design of your site, wrap `content` instead, the body as an html fragment with inline styles, in a layout of your own:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Mb5VJQQpiTszncYlpjMoojgZU6",
+      "code": "mailer: mail =>\n  resend.emails.send({\n    from: 'My site <forms@example.com>',\n    ...mail,\n    html: brand(mail.content)\n  })",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Attachments have a `filename`, a `contentType` and their `content` as base64, with `encoding: 'base64'`, which Resend and Nodemailer take as they are. A file that can't be read is logged and left out, the mail is sent without it."
+        }
+      ]
     },
     {
       "_type": "paragraph",

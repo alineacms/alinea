@@ -10,7 +10,7 @@
   before only export those two and refuse the uploads.
 - The help texts of form inputs and the descriptions of sections are rich
   text, so they can include links. In a form definition `help` is a `TextDoc`,
-  render it with `RichText`. Help saved as plain text reads as one paragraph.
+  render it with `RichText`. Help saved as plain text reads as paragraphs.
 - A check has a rich text shown next to its checkbox, eg. with a link to your
   terms, in `settings.text` of the definition. Its label still names the
   answer in submissions and mails, and shows when there is no text.
@@ -21,6 +21,14 @@
   can insert every answer with `{{all answers}}`. The dashboard shows an error
   for a `{{key}}` the form does not have, in the subject or body of any
   language.
+- The body of form mails is rich text and is sent as `html` next to `text`:
+  `{{all answers}}` is a table of labels and answers and answers are escaped.
+  A site with its own design wraps `content`, the body as an html fragment,
+  eg. `mailer: mail => resend.emails.send({from, ...mail, html:
+  brand(mail.content)})`. Bodies written as plain text read as paragraphs.
+- Form mails can link to the form in the dashboard with `{{submission link}}`
+  and attach the uploaded files with Attach uploaded files, passed to the
+  `mailer` as `attachments` with their content as base64.
 
 ### New
 

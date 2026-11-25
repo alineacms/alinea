@@ -7,6 +7,7 @@ import type {EntryDefaultView} from '#/core/Type.js'
 import {ReactNode} from 'react'
 import {workspaceAtom, workspacesAtom} from './config.js'
 import {configAtom, graphAtom} from './core.js'
+import {graphReadyAtom} from './graph.js'
 import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 import {nav} from '../Href.js'
@@ -329,6 +330,8 @@ async function linkedRoute(
   route: ResolvedDashboardRoute
 ): Promise<ResolvedDashboardRoute> {
   const {url = '/', workspace, root} = route
+  // A link opened in a new tab is looked up before the content synced
+  await get(graphReadyAtom)
   const graph = get(graphAtom)
   if (route.entry) {
     const found = await graph.first({

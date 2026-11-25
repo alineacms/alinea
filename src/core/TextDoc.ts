@@ -113,13 +113,27 @@ export namespace BlockNode {
 }
 
 /**
- * A stored rich text value as a document. A plain text reads as one
- * paragraph, so a text field that became rich text keeps its value.
+ * A stored rich text value as a document. A plain text reads as paragraphs,
+ * split at empty lines, so a text field that became rich text keeps its
+ * value.
  */
 export function textDoc(value: unknown): TextDoc {
   if (Array.isArray(value)) return value
   if (typeof value !== 'string' || !value) return []
-  return [{_type: 'paragraph', content: [{_type: 'text', text: value}]}]
+  return value
+    .split(/(?:\r?\n){2,}/)
+    .filter(Boolean)
+    .map(paragraph => ({
+      _type: 'paragraph',
+      content: paragraph
+        .split(/\r?\n/)
+        .flatMap(
+          (line, index): Array<Node> => [
+            ...(index > 0 ? [{_type: 'hardBreak'}] : []),
+            ...(line ? [{_type: 'text' as const, text: line}] : [])
+          ]
+        )
+    }))
 }
 
 // Elements which only wrap text, a document of these without text is empty

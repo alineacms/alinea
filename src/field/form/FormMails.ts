@@ -1,9 +1,26 @@
 import type {FormMail} from '#/core/Forms.js'
+import {
+  type ElementNode,
+  LinkMark,
+  type Mark,
+  type Node,
+  type TextNode,
+  textDoc
+} from '#/core/TextDoc.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {columnKey, columnText, formColumns} from './FormAnswers.js'
 import {holds, withLocale} from './FormConditions.js'
 import {formDefinition, inputKey} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
+import {
+  answersTable,
+  docHtml,
+  docText,
+  linkHtml,
+  mailDocument,
+  safeHref,
+  textHtml
+} from './FormMailHtml.js'
 import {
   conditionData,
   type FormEntry,
@@ -16,6 +33,17 @@ import {
 export interface FormMailOut {
   name: string
   mail: FormMail
+  /** Sent with the files of the submission, by Attach uploaded files */
+  attach?: true
+}
+
+export interface FormMailOptions {
+  /** The locale of the form, which rules on the language test */
+  locale?: string | null
+  /** Where editors find the submission, for `{{submission link}}` */
+  link?: string
+  /** The urls of the entries the bodies link to, by id */
+  entries?: Record<string, string>
 }
 
 /**
@@ -23,29 +51,45 @@ export interface FormMailOut {
  * filled in for their `{{key}}` and every answer for `{{all answers}}`. The
  * key of a repeatable section fills in all of its items. A mail with a rule
  * that no longer works is not sent, rather than sent to everyone. Rules on
- * the language test `locale`.
+ * the language test `locale`. The body is rich text, sent as text and html.
  */
 export function formMails(
   inputs: Record<string, Input>,
   rows: unknown,
   mails: unknown,
   values: Record<string, unknown>,
-  locale?: string | null
+  {locale, link, entries = {}}: FormMailOptions = {}
 ): Array<FormMailOut> {
   if (!Array.isArray(mails)) return []
   const order = readingOrder(inputs, rows)
   const byId = new Map(order.map(entry => [entry.row._id, entry]))
   const columns = formColumns(formDefinition(inputs, rows, order))
-  const all = columns
-    .map(column => [column.label, columnText(column, values)])
+  const answers = columns
+    .map((column): [string, string] => [
+      column.label,
+      columnText(column, values)
+    ])
     .filter(([, answer]) => answer)
-    .map(([label, answer]) => `${label}: ${answer}`)
-    .join('\n')
+  const all = answers.map(([label, answer]) => `${label}: ${answer}`)
   const answer = (key: string) => {
-    if (key === allAnswers) return all
+    if (key === allAnswers) return all.join('\n')
+    if (key === submissionLink) return link ?? ''
     const column = columns.find(column => columnKey(column) === key)
     return column ? columnText(column, values) : ''
   }
+  const answerHtml = (key: string) => {
+    if (key === allAnswers) return all.map(textHtml).join('<br>')
+    if (key === submissionLink && link)
+      return linkHtml(link, 'View the submission')
+    return textHtml(answer(key))
+  }
+  const href = (mark: Mark) =>
+    safeHref(
+      mark[LinkMark.link] === 'entry'
+        ? entries[mark[LinkMark.entry] ?? '']
+        : mark.href
+    )
+  const blocks = {[allAnswers]: answersTable(answers)}
   const answerOf = (id: unknown) => {
     const entry = typeof id === 'string' ? byId.get(id) : undefined
     // An input of a repeatable section has an answer per item
@@ -64,10 +108,14 @@ export function formMails(
         ? [answerOf(mail.input)].filter(Boolean)
         : addresses(mail.address)
     if (to.length === 0) return []
-    const fill = (template: unknown) =>
-      text(template).replace(placeholder, (_, key) => answer(key))
+    const fill = (template: string) =>
+      template.replace(placeholder, (_, key) => answer(key))
     const replyTo = answerOf(mail.replyTo)
     const cc = addresses(mail.cc)
+    // A line break in a header could add headers of its own
+    const subject = fill(text(mail.subject)).replace(/[\r\n]+/g, ' ')
+    const body = textDoc(mail.body)
+    const content = docHtml(body, {fill: answerHtml, href}, blocks)
     return [
       {
         name: text(mail.name) || 'Mail',
@@ -75,13 +123,32 @@ export function formMails(
           to: to as Array<string>,
           ...(cc.length > 0 && {cc}),
           ...(replyTo && {replyTo}),
-          // A line break in a header could add headers of its own
-          subject: fill(mail.subject).replace(/[\r\n]+/g, ' '),
-          text: fill(mail.body)
-        }
+          subject,
+          text: fill(docText(body, href)),
+          content,
+          html: mailDocument(subject, content, locale)
+        },
+        ...(mail.attach === true && {attach: true as const})
       }
     ]
   })
+}
+
+/** The ids of the entries the bodies of mails link to */
+export function linkedEntries(mails: unknown): Array<string> {
+  const ids = new Set<string>()
+  const visit = (nodes: Array<Node>) => {
+    for (const node of nodes) {
+      for (const mark of (node as TextNode).marks ?? [])
+        if (mark[LinkMark.link] === 'entry' && mark[LinkMark.entry])
+          ids.add(mark[LinkMark.entry])
+      const content = (node as ElementNode).content
+      if (Array.isArray(content)) visit(content)
+    }
+  }
+  if (Array.isArray(mails))
+    for (const mail of mails.filter(isRecord)) visit(textDoc(mail.body))
+  return [...ids]
 }
 
 /** The keys a form has answers for, which mails can insert with `{{key}}` */
@@ -108,12 +175,12 @@ export function mailTextProblem(
   const row = mail as Record<string, unknown>
   const name = text(row.name) || 'A mail'
   const where = language ? ` in ${language.toUpperCase()}` : ''
-  for (const [field, label] of [
-    ['subject', 'Subject'],
-    ['body', 'Body']
+  for (const [label, value] of [
+    ['Subject', text(row.subject)],
+    ['Body', docText(textDoc(row.body))]
   ]) {
-    for (const [, key] of text(row[field]).matchAll(placeholder))
-      if (key !== allAnswers && !keys.has(key))
+    for (const [, key] of value.matchAll(placeholder))
+      if (key !== allAnswers && key !== submissionLink && !keys.has(key))
         return `${name}: ${label}${where} uses {{${key}}}, which is not a key of this form`
   }
   return undefined
@@ -143,9 +210,10 @@ export function mailProblem(
   return undefined
 }
 
-// Keys are slugs, so the space keeps it apart from the key of an input
+// Keys are slugs, so the space keeps these apart from the key of an input
 const allAnswers = 'all answers'
-const placeholder = /\{\{\s*([\w-]+|all answers)\s*\}\}/g
+const submissionLink = 'submission link'
+const placeholder = /\{\{\s*([\w-]+|all answers|submission link)\s*\}\}/g
 
 function addresses(value: unknown): Array<string> {
   return text(value)

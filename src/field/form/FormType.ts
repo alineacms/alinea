@@ -16,9 +16,11 @@ import {
   IcRoundRule,
   IcRoundSend
 } from '#/dashboard/icons.js'
+import {check} from '#/field/check.js'
 import {entry} from '#/field/link/EntryLink.js'
 import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
+import {richText} from '#/field/richtext.js'
 import {select} from '#/field/select.js'
 import {tab, tabs} from '#/field/tabs.js'
 import {text} from '#/field/text.js'
@@ -26,6 +28,7 @@ import {type FormField, condition, form} from './FormField.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import type {ListRow} from '#/core/ListRow.js'
 import type {Schema} from '#/core/Schema.js'
+import type {TextDoc} from '#/core/TextDoc.js'
 import {ListField} from '#/core/field/ListField.js'
 import type {FieldGetter} from '#/core/Tracker.js'
 import {formColumns} from './FormAnswers.js'
@@ -85,7 +88,10 @@ export interface FormMailRow extends ListRow {
   replyTo: string | null
   sendWhen: FormCondition | null
   subject: string
-  body: string
+  /** Rich text, or the plain text of a mail made before it was */
+  body: TextDoc | string
+  /** Sent with the files of the submission */
+  attach: boolean
 }
 
 export type FormMailList = ListField<
@@ -155,12 +161,15 @@ function mailList(inputsField: FormField, shared?: boolean): FormMailList {
         fields: {
           subject: languageText(text('Subject', {required: true})),
           body: languageText(
-            text('Body', {
+            richText('Body', {
               required: true,
-              multiline: true,
-              help: 'Insert an answer with {{key}}, eg. {{name}}, or all of them with {{all answers}}'
+              help: 'Insert an answer with {{key}}, eg. {{name}}, every answer with {{all answers}} and a link to the submission with {{submission link}}'
             })
-          )
+          ),
+          attach: check('Attach uploaded files', {
+            description: 'Send the files of the submission with the mail',
+            help: 'For recipients without access to the dashboard'
+          })
         }
       })
     }

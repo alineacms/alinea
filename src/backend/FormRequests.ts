@@ -113,7 +113,11 @@ export async function handleFormRequest(
   if (action === HandleAction.Submit && request.method === 'POST') {
     const submit = parseSubmitRequest(await request.json())
     return Response.json(
-      await submitForm(config, graph, api, submit, {forms, secret})
+      await submitForm(config, graph, api, submit, {
+        forms,
+        secret,
+        handlerUrl
+      })
     )
   }
 

@@ -1,6 +1,7 @@
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {
   FormFileKey,
+  FormFileRef,
   FormStatus,
   Submission,
   SubmissionQuery,
@@ -9,12 +10,19 @@ import type {
 } from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import {Field} from '#/core/Field.js'
-import type {FormLimits, FormMailer, FormsOptions} from '#/core/Forms.js'
+import type {
+  FormLimits,
+  FormMailAttachment,
+  FormMailer,
+  FormsOptions
+} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {Type} from '#/core/Type.js'
+import {encode} from '#/core/util/BufferToBase64.js'
 import {entries, isRecord, keys} from '#/core/util/Objects.js'
+import {href} from '#/dashboard/Href.js'
 import {
   answerText,
   formColumns,
@@ -27,7 +35,11 @@ import {
   formDefinition
 } from '#/field/form/FormDefinition.js'
 import {FormField} from '#/field/form/FormField.js'
-import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
+import {
+  type FormMailOut,
+  formMails,
+  linkedEntries
+} from '#/field/form/FormMails.js'
 import {
   type FormMessage,
   type FormProblems,
@@ -130,7 +142,11 @@ export async function submitForm(
   graph: Graph,
   api: SubmissionsApi,
   request: SubmitRequest,
-  {forms = {}, secret}: {forms?: FormsOptions; secret: string}
+  {
+    forms = {},
+    secret,
+    handlerUrl
+  }: {forms?: FormsOptions; secret: string; handlerUrl?: URL}
 ): Promise<FormResult> {
   const {entry, type, data, key, field, rows, inputs} = await loadForm(
     config,
@@ -196,22 +212,42 @@ export async function submitForm(
     expiresAt: keep === null ? null : now + keep
   })
   // Files of inputs the rules hid stay behind and are cleaned up later
+  const submitted = submittedFiles(result.values)
   await store.attachFormFiles(
     request.entryId,
     submission.id,
-    submittedFiles(result.values)
+    submitted.map(file => file.id)
   )
   // Mails go out once the answers are kept, so none is sent for answers
   // that were lost
   if (type && isFormType(type)) {
+    // The dashboard is served by the site, at its admin path
+    const site = Config.baseUrl(config) ?? handlerUrl
+    const dashboard = site && new URL(Config.adminPath(config), site)
+    const mails = formMails(
+      Field.options(field).inputs,
+      rows,
+      data.mails,
+      result.values,
+      {
+        locale,
+        link: dashboard
+          ? dashboard.href + href({entryId: request.entryId, locale})
+          : undefined,
+        entries: site
+          ? await entryUrls(graph, data.mails, site, locale)
+          : undefined
+      }
+    )
+    const attachments = mails.some(out => out.attach)
+      ? await readFiles(store, forms, request.entryId, submitted)
+      : []
     submission.notified = await sendMails(
       forms.mailer,
-      formMails(
-        Field.options(field).inputs,
-        rows,
-        data.mails,
-        result.values,
-        entry.locale
+      mails.map(out =>
+        out.attach && attachments.length > 0
+          ? {...out, mail: {...out.mail, attachments}}
+          : out
       )
     )
     if (submission.notified.length > 0)
@@ -411,12 +447,67 @@ export async function purgeSubmissions(
   await removeFiles(forms, await store.purgeSubmissions(now))
 }
 
-/** The ids of the files in the answers, also in items of repeated sections */
-function submittedFiles(value: unknown): Array<string> {
+/** The files in the answers, also in items of repeated sections */
+function submittedFiles(value: unknown): Array<FormFileRef> {
   if (Array.isArray(value)) return value.flatMap(submittedFiles)
   if (!isRecord(value)) return []
-  if (typeof value.id === 'string' && 'size' in value) return [value.id]
+  if (typeof value.id === 'string' && 'size' in value)
+    return [value as unknown as FormFileRef]
   return Object.values(value).flatMap(submittedFiles)
+}
+
+/**
+ * The files of a submission to attach to mails. A file that can not be read
+ * is left out, the mail is sent without it.
+ */
+async function readFiles(
+  store: Required<SubmissionsApi>,
+  forms: FormsOptions,
+  entryId: string,
+  files: Array<FormFileRef>
+): Promise<Array<FormMailAttachment>> {
+  const read = await Promise.all(
+    files.map(async (ref): Promise<Array<FormMailAttachment>> => {
+      try {
+        const file = await store.readFormFile(entryId, ref.id)
+        const content =
+          file && (file.content ?? (await forms.files?.read(fileKey(file))))
+        if (!content) throw new Error('The file is missing')
+        return [
+          {
+            filename: ref.name,
+            content: await encode(content, ''),
+            encoding: 'base64',
+            ...(ref.type && {contentType: ref.type})
+          }
+        ]
+      } catch (error) {
+        console.error(`Alinea could not attach "${ref.name}" to a mail`, error)
+        return []
+      }
+    })
+  )
+  return read.flat()
+}
+
+/** The urls of the entries the bodies of mails link to, by id */
+async function entryUrls(
+  graph: Graph,
+  mails: unknown,
+  site: string | URL,
+  locale: string | null
+): Promise<Record<string, string>> {
+  const ids = linkedEntries(mails)
+  if (ids.length === 0) return {}
+  const linked = await graph.find({
+    id: {in: ids},
+    status: 'published',
+    preferredLocale: locale ?? undefined,
+    select: {id: Entry.id, url: Entry.url}
+  })
+  return Object.fromEntries(
+    linked.map(({id, url}) => [id, new URL(url, site).href])
+  )
 }
 
 /**

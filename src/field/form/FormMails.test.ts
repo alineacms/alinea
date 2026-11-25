@@ -67,7 +67,10 @@ const mails = [
 const values = {name: 'Ann', email: 'ann@example.com', service: 'it'}
 
 test('mails whose rules hold are sent with the answers filled in', () => {
-  expect(formMails(inputs, rows, mails, values)).toEqual([
+  const sent = formMails(inputs, rows, mails, values).map(
+    ({name, mail: {content, html, ...mail}}) => ({name, mail})
+  )
+  expect(sent).toEqual([
     {
       name: 'IT helpdesk',
       mail: {
@@ -124,7 +127,7 @@ test('a mail can be sent for one language only', () => {
     body: ''
   }
   const names = (locale?: string) =>
-    formMails(inputs, rows, [dutch], values, locale).map(out => out.name)
+    formMails(inputs, rows, [dutch], values, {locale}).map(out => out.name)
   expect(names('nl')).toEqual(['Dutch desk'])
   expect(names('NL')).toEqual(['Dutch desk'])
   expect(names('en')).toEqual([])
@@ -166,4 +169,157 @@ test('a key the form does not have is a problem, but the mail is sent', () => {
     'IT helpdesk: Body in NL uses {{unknown}}, which is not a key of this form'
   )
   expect(formMails(inputs, rows, [typo], values)[0].mail.subject).toBe('From ')
+})
+
+const text = (text: string, marks?: Array<object>) => ({
+  _type: 'text',
+  text,
+  ...(marks && {marks})
+})
+const paragraph = (...content: Array<object>) => ({
+  _type: 'paragraph',
+  content
+})
+const richMail = (body: Array<object>) => ({...mails[1], body})
+
+test('a rich text body is sent as text and html', () => {
+  const link = {_type: 'link', _id: 'l', _link: 'url', href: 'https://x.org'}
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [
+      richMail([
+        {_type: 'heading', level: 2, content: [text('Hi {{name}}')]},
+        paragraph(text('See '), text('our site', [link, {_type: 'bold'}])),
+        {
+          _type: 'bulletList',
+          content: [{_type: 'listItem', content: [paragraph(text('One'))]}]
+        }
+      ])
+    ],
+    values
+  )
+  expect(mail.text).toBe('Hi Ann\n\nSee our site (https://x.org)\n\n- One')
+  expect(mail.content).toBe(
+    '<h2 style="margin:0 0 16px;font-size:20px;line-height:1.3">Hi Ann</h2>' +
+      '<p style="margin:0 0 16px">See <a href="https://x.org" ' +
+      'style="color:#2563eb;text-decoration:underline">' +
+      '<strong>our site</strong></a></p>' +
+      '<ul style="margin:0 0 16px;padding:0 0 0 24px">' +
+      '<li style="margin:0 0 4px">One</li></ul>'
+  )
+  expect(mail.content).not.toContain('class=')
+  expect(mail.html).toStartWith('<!doctype html>')
+  expect(mail.html).toContain('<title>We received your request</title>')
+  expect(mail.html).toContain(mail.content)
+})
+
+test('answers are escaped in html', () => {
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [richMail([paragraph(text('From {{name}}'))])],
+    {...values, name: '<b>Ann</b> & "Bo"'}
+  )
+  expect(mail.content).toBe(
+    '<p style="margin:0 0 16px">From ' +
+      '&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;Bo&quot;</p>'
+  )
+  expect(mail.text).toBe('From <b>Ann</b> & "Bo"')
+})
+
+test('all answers is a table in html', () => {
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [richMail([paragraph(text('{{all answers}}'))])],
+    {...values, name: 'A<n>'}
+  )
+  expect(mail.text).toBe('Name: A<n>\nEmail: ann@example.com\nService: IT')
+  expect(mail.content).toStartWith('<table role="presentation"')
+  expect(mail.content).not.toContain('<p')
+  const cells = [...mail.content.matchAll(/<t[hd][^>]*>([^<]*)</g)]
+  expect(cells.map(([, cell]) => cell)).toEqual([
+    'Name',
+    'A&lt;n&gt;',
+    'Email',
+    'ann@example.com',
+    'Service',
+    'IT'
+  ])
+})
+
+test('links only keep safe urls', () => {
+  const mark = (href: string) => ({_type: 'link', _id: href, href})
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [
+      richMail([
+        paragraph(
+          text('a', [mark('javascript:alert(1)')]),
+          text('b', [mark('mailto:x@y.z')])
+        )
+      ])
+    ],
+    values
+  )
+  expect(mail.content).not.toContain('javascript')
+  expect(mail.content).toContain('href="mailto:x@y.z"')
+})
+
+test('links to entries use their url', () => {
+  const entryLink = {_type: 'link', _id: 'e', _link: 'entry', _entry: 'terms'}
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [richMail([paragraph(text('Terms', [entryLink]))])],
+    values,
+    {entries: {terms: 'https://example.com/terms'}}
+  )
+  expect(mail.text).toBe('Terms (https://example.com/terms)')
+  expect(mail.content).toContain('href="https://example.com/terms"')
+})
+
+test('a plain text body reads as paragraphs', () => {
+  const [{mail}] = formMails(
+    inputs,
+    rows,
+    [{...mails[1], body: 'Hi {{name}},\nthanks.\n\nThe team'}],
+    values
+  )
+  expect(mail.text).toBe('Hi Ann,\nthanks.\n\nThe team')
+  expect(mail.content).toBe(
+    '<p style="margin:0 0 16px">Hi Ann,<br>thanks.</p>' +
+      '<p style="margin:0 0 16px">The team</p>'
+  )
+})
+
+test('submission link links to the submission in the dashboard', () => {
+  const link = 'https://example.com/admin#/edit?id=form'
+  const body = [paragraph(text('{{submission link}}'))]
+  const [{mail}] = formMails(inputs, rows, [richMail(body)], values, {link})
+  expect(mail.text).toBe(link)
+  expect(mail.content).toContain(`<a href="${link}"`)
+  expect(mail.content).toContain('>View the submission</a>')
+  const [without] = formMails(inputs, rows, [richMail(body)], values)
+  expect(without.mail.text).toBe('')
+})
+
+test('a mail can attach the uploaded files', () => {
+  const [out] = formMails(inputs, rows, [{...mails[1], attach: true}], values)
+  expect(out.attach).toBe(true)
+  expect(formMails(inputs, rows, [mails[1]], values)[0].attach).toBeUndefined()
+})
+
+test('unknown keys in a rich text body are a problem', () => {
+  const keys = answerKeys(inputs, rows)
+  const known = richMail([
+    paragraph(text('{{name}} {{all answers}} {{submission link}}'))
+  ])
+  expect(mailTextProblem(known, keys)).toBeUndefined()
+  const typo = richMail([paragraph(text('Hi'), text('{{nmae}}'))])
+  expect(mailTextProblem(typo, keys, 'nl')).toBe(
+    'Confirmation: Body in NL uses {{nmae}}, which is not a key of this form'
+  )
 })

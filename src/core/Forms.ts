@@ -17,7 +17,29 @@ export interface FormMail {
   /** The address of the visitor, when the mail sets an input for it */
   replyTo?: string
   subject: string
+  /** The body as plain text */
   text: string
+  /**
+   * The body as an html fragment with inline styles, to put in a layout of
+   * your own, eg. `html: layout(mail.content)`
+   */
+  content: string
+  /** The body as a complete html mail, `content` in a plain layout */
+  html: string
+  /** The files of the submission, for mails set to attach them */
+  attachments?: Array<FormMailAttachment>
+}
+
+/**
+ * A file attached to a mail. Its content is base64, which Resend, Nodemailer
+ * and SendGrid take as it is.
+ */
+export interface FormMailAttachment {
+  filename: string
+  /** The bytes of the file as base64 */
+  content: string
+  encoding: 'base64'
+  contentType?: string
 }
 
 /** Sends a mail, eg. `mail => resend.emails.send({from, ...mail})` */

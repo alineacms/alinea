@@ -245,13 +245,15 @@ test('mails go out through the mailer and are noted on the submission', async ()
   })
   const result = await submit({name: 'Ann', email: 'ann@example.com'})
   expect(result.body).toEqual({ok: true, confirmation: 'Thanks!'})
-  expect(sent).toEqual([
+  expect(sent).toMatchObject([
     {
       to: ['desk@example.com'],
       subject: 'Request from Ann',
-      text: 'Write back to ann@example.com'
+      text: 'Write back to ann@example.com',
+      content: '<p style="margin:0 0 16px">Write back to ann@example.com</p>'
     }
   ])
+  expect(sent[0].html).toContain(sent[0].content)
   // A mail that failed is left out, the answers are stored anyway
   const [stored] = await store
     .listSubmissions(entryId)
@@ -470,4 +472,105 @@ test('rules on the language follow the language of the form', async () => {
   const en = await setupIn('en')
   expect((await en.submit(answers)).body.ok).toBe(true)
   expect(sent).toEqual(['nl@example.com'])
+})
+
+test('a mail links to the submission and attaches its files', async () => {
+  const sent: Array<FormMail> = []
+  const kept = new Map<string, Uint8Array>()
+  const file = (id: string, index: string, label: string) => ({
+    _id: id,
+    _index: index,
+    _type: 'file',
+    label,
+    accept: '.png'
+  })
+  const mail = {
+    _index: 'a0',
+    _type: 'mail',
+    to: 'address',
+    address: 'desk@example.com',
+    subject: 'Request',
+    body: [
+      {
+        _type: 'paragraph',
+        content: [{_type: 'text', text: '{{all answers}} {{submission link}}'}]
+      }
+    ]
+  }
+  const {entryId, submit, handle} = await setup({
+    form: ServiceForm,
+    set: {
+      title: 'Request',
+      inputs: [...rows, file('a', 'a2', 'Shot'), file('b', 'a3', 'Other')],
+      mails: [
+        {...mail, _id: 'desk', name: 'Desk', attach: true},
+        {...mail, _id: 'plain', name: 'Plain'}
+      ]
+    },
+    forms: {
+      mailer: mail => void sent.push(mail),
+      files: {
+        async write(key, content) {
+          kept.set(key, content)
+        },
+        async read(key) {
+          return kept.get(key)
+        },
+        async remove() {}
+      }
+    }
+  })
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  async function upload(input: string, name: string) {
+    const prepared = await handle(
+      new Request('http://localhost/api?action=formUpload', {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          authorization: 'Bearer test'
+        },
+        body: JSON.stringify({
+          entryId,
+          input,
+          name,
+          size: png.length,
+          type: 'image/png'
+        })
+      }),
+      context
+    )
+    const ticket = await prepared.json()
+    await handle(new Request(ticket.url, {method: 'PUT', body: png}), context)
+    return ticket.token as string
+  }
+  const shot = await upload('shot', 'shot.png')
+  const other = await upload('other', 'other.png')
+  // A file that can not be read is left out, the mail is still sent
+  const lost = [...kept.keys()][1]
+  kept.delete(lost)
+  const result = await submit({
+    name: 'Ann',
+    email: 'ann@example.com',
+    shot,
+    other
+  })
+  expect(result.body.ok).toBe(true)
+  const [desk, plain] = sent
+  const link = `http://localhost/admin#/edit?id=${entryId}`
+  expect(desk.text).toBe(
+    'Name: Ann\nEmail: ann@example.com\nShot: shot.png\nOther: other.png ' +
+      link
+  )
+  expect(desk.content).toContain(`<a href="${link}"`)
+  expect(desk.content).not.toContain('<a href="http://localhost/api')
+  expect(desk.attachments).toEqual([
+    {
+      filename: 'shot.png',
+      content: btoa(String.fromCharCode(...png)),
+      encoding: 'base64',
+      contentType: 'image/png'
+    }
+  ])
+  expect(plain.attachments).toBeUndefined()
 })
