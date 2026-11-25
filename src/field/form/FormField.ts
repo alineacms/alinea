@@ -28,6 +28,7 @@ import type {FormCondition} from './FormConditions.js'
 import {readingOrder, ruleErrors} from './FormRules.js'
 import {fillForm, languageText, shareForm} from './FormShare.js'
 import {Input} from './FormInput.js'
+import {markForm} from './FormMark.js'
 
 /** Optional settings to configure a form field */
 export interface FormOptions<Inputs extends Record<string, Input>> extends Omit<
@@ -108,7 +109,7 @@ export function form<Inputs extends Record<string, Input>>(
       ) as FormDefinition<any>
     }
   })
-  return field
+  return markForm(field)
 }
 
 /** The form field of a type and its key, an entry holds one form */

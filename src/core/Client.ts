@@ -282,8 +282,7 @@ export class Client implements LocalConnection {
     return this.#requestJson({
       action: HandleAction.FormStatus,
       entryId: location.entryId,
-      ...(location.locale && {locale: location.locale}),
-      ...(location.field && {field: location.field})
+      ...(location.locale && {locale: location.locale})
     }).then<FormStatus>(this.#failOnHttpError)
   }
 

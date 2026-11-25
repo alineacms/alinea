@@ -110,8 +110,6 @@ export interface FormsOptions {
 export interface FormSubmitOptions {
   /** The locale of the form, when its root is translated */
   locale?: string | null
-  /** The key of the form field, the first one of the entry by default */
-  field?: string
   /**
    * Checks the visitor before the answers are sent, eg. a captcha. The
    * honeypot and the time it took to fill in the form are checked anyway.
@@ -166,7 +164,7 @@ export interface Forms {
    */
   status(
     entryId: string,
-    options?: Pick<FormSubmitOptions, 'locale' | 'field'>
+    options?: Pick<FormSubmitOptions, 'locale'>
   ): Promise<FormStatus>
 }
 
@@ -185,7 +183,6 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
     return (await client()).prepareFormUpload({
       entryId,
       locale: options.locale,
-      field: options.field,
       visitor: options.visitor,
       ...file
     })
@@ -193,11 +190,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
   return {
     prepareUpload,
     async status(entryId, options = {}) {
-      return (await client()).formStatus({
-        entryId,
-        locale: options.locale,
-        field: options.field
-      })
+      return (await client()).formStatus({entryId, locale: options.locale})
     },
     async submit(entryId, data, options = {}) {
       const text = translate(options.locale, options.messages)
@@ -234,7 +227,6 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
       return (await client()).submit({
         entryId,
         locale: options.locale,
-        field: options.field,
         visitor: options.visitor,
         data: entries
       })

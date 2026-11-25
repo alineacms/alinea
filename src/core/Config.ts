@@ -25,6 +25,7 @@ import {RecordField} from './field/RecordField.js'
 import {UnionField} from './field/UnionField.js'
 import {Field} from './Field.js'
 import {JsonField} from '#/field/json/JsonField.js'
+import {isForm} from '#/field/form/FormMark.js'
 import {inheritsLocales, LocalisedField} from '#/field/localiser/Localiser.js'
 
 /** Configuration options */
@@ -320,6 +321,7 @@ export namespace Config {
 
   export function validate(config: Config) {
     Schema.validate(config.schema)
+    validateForms(config)
     validateLocalisedFields(config)
     const all = entries(config.workspaces)
     let sourceDir: string
@@ -408,6 +410,19 @@ export function createConfig<Definition extends Config>(
  * without i18n stores the plain value, which can't be told apart from a value
  * per locale when it is an object itself.
  */
+/** An entry holds one form, its submissions are those of the entry */
+function validateForms(config: Config) {
+  for (const [name, type] of entries(config.schema)) {
+    const forms = entries(Type.fields(type))
+      .filter(([, field]) => isForm(field))
+      .map(([key]) => key)
+    if (forms.length > 1)
+      throw new Error(
+        `Type "${name}" has more than one Field.form (${forms.join(', ')}), an entry holds one form`
+      )
+  }
+}
+
 function validateLocalisedFields(config: Config) {
   const typeNames = Schema.typeNames(config.schema)
   for (const [workspaceName, workspace] of entries(config.workspaces)) {

@@ -122,7 +122,6 @@ export function parseSubmitRequest(body: unknown): SubmitRequest {
   return {
     entryId: body.entryId,
     locale: typeof body.locale === 'string' ? body.locale : null,
-    field: typeof body.field === 'string' ? body.field : undefined,
     visitor: typeof body.visitor === 'string' ? body.visitor : undefined,
     data
   }

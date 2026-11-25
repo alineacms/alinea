@@ -12,15 +12,14 @@ import {
   type FormInputData,
   formDefinition
 } from '#/field/form/FormDefinition.js'
-import {FormField} from '#/field/form/FormField.js'
+import {formOf} from '#/field/form/FormField.js'
 import type {Input} from '#/field/form/FormInput.js'
 import {fillForm, fillMails} from '#/field/form/FormShare.js'
 
-/** Where a form is asked for: its entry, and its field when it has several */
+/** Where a form is asked for: its entry, in a language */
 export interface FormLocation {
   entryId: string
   locale?: string | null
-  field?: string
 }
 
 interface FormVersion {
@@ -35,7 +34,7 @@ interface FormVersion {
 export async function loadForm(
   config: Config,
   graph: Graph,
-  {entryId, locale, field: fieldKey}: FormLocation
+  {entryId, locale}: FormLocation
 ) {
   const versions = await graph.find({
     id: entryId,
@@ -55,15 +54,9 @@ export async function loadForm(
     : defaultVersion(config, versions)
   if (!entry) throw new HttpError(404, 'Form not found')
   const type = config.schema[entry.type]
-  const fields = type ? entries(Type.fields(type)) : []
-  const [key, field] =
-    fields.find(
-      ([key, field]) =>
-        field instanceof FormField &&
-        (fieldKey === undefined || key === fieldKey)
-    ) ?? []
-  if (!key || !(field instanceof FormField))
-    throw new HttpError(400, 'The entry has no form')
+  const form = formOf(type)
+  if (!form) throw new HttpError(400, 'The entry has no form')
+  const {key, field} = form
   const options = Field.options(field)
   const data = options.shared
     ? withFallbacks(config, versions, entry, key, options.inputs)
@@ -130,10 +123,7 @@ function defaultVersion<Version extends FormVersion>(
 
 /** Whether entries of a type hold a form */
 export function hasForm(type: Type | undefined): boolean {
-  if (!type) return false
-  return entries(Type.fields(type)).some(
-    ([, field]) => field instanceof FormField
-  )
+  return formOf(type) !== undefined
 }
 
 /** The file inputs of a form, they are sent as tokens of their uploads */

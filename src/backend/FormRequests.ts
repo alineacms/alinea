@@ -163,8 +163,7 @@ export async function handleFormRequest(
         api,
         {
           entryId: param('entryId'),
-          locale: url.searchParams.get('locale'),
-          field: url.searchParams.get('field') ?? undefined
+          locale: url.searchParams.get('locale')
         },
         forms
       )

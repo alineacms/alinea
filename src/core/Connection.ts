@@ -208,7 +208,6 @@ export interface StoredFormFile extends FormFileRef {
 export interface FormStatusRequest {
   entryId: string
   locale?: string | null
-  field?: string
 }
 
 /** Whether a form takes answers, see `cms.forms.status` */
@@ -222,7 +221,6 @@ export interface FormStatus {
 export interface PrepareUploadRequest {
   entryId: string
   locale?: string | null
-  field?: string
   /** The key of the file input */
   input: string
   name: string
@@ -242,8 +240,6 @@ export interface SubmitRequest {
   /** The id of the entry holding the form */
   entryId: string
   locale?: string | null
-  /** The key of the form field, the first one of the entry by default */
-  field?: string
   /** The FormData the visitor sent, as its entries */
   data: Array<[string, string]>
   /** Who sent it, eg. their IP address, see `FormSubmitOptions.visitor` */

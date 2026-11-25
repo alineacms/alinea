@@ -60,7 +60,6 @@ export function parsePrepareRequest(body: unknown): PrepareUploadRequest {
   return {
     entryId: body.entryId,
     locale: typeof body.locale === 'string' ? body.locale : null,
-    field: typeof body.field === 'string' ? body.field : undefined,
     input: body.input,
     name: body.name,
     size: body.size,
