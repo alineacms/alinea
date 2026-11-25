@@ -792,6 +792,55 @@
       "content": [
         {
           "_type": "text",
+          "text": "Messages in other languages"
+        }
+      ],
+      "_anchor": "messages-in-other-languages"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The errors and messages the handler gives visitors are in the language of the form: the locale of its entry, then the language of that locale (`nl` for `nl-BE`), then English. Alinea has texts in English, Dutch, French and German. Pass `forms.messages` to `createHandler` to replace texts of a locale or add a language. A text is shown as is, a function receives what the message is about, such as `max`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3MawHWe4m8IMQK17dUlvqJTkCLp",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    messages: {\n      nl: {required: 'Graag invullen'},\n      es: {\n        required: 'Rellena este campo',\n        tooLong: ({max}) => `Usa como máximo ${max} caracteres`\n      }\n    }\n  }\n})",
+      "fileName": "route.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The messages are listed by code in `FormMessageParams` from `alinea/form`, such as `required`, `invalidEmail`, `tooLong`, `fileTooLarge` and `tooOften`. Codes a language leaves out fall back to English. Next to its `errors`, a result that did not pass has the `codes` of the errors by the name of their input, so a site can show texts of its own. `Form.validate` takes the same `locale` and `messages` options, and `Form.translate(locale, messages)` turns a message into text."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The texts `<Form>` adds itself, such as the submit button, are set with its `labels` prop."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Added for you"
         }
       ],

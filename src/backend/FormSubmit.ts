@@ -28,9 +28,14 @@ import {
 } from '#/field/form/FormDefinition.js'
 import {FormField} from '#/field/form/FormField.js'
 import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
+import {
+  type FormMessage,
+  type FormProblems,
+  translate,
+  translateErrors
+} from '#/field/form/FormMessages.js'
 import {formPage, isSpam} from '#/field/form/FormSpam.js'
 import {
-  type FormErrors,
   type FormResult,
   type FormValues,
   validateSubmission
@@ -133,6 +138,8 @@ export async function submitForm(
     request
   )
   const store = submissionStore(api)
+  const locale = entry.locale ?? null
+  const text = translate(locale, forms.messages)
   const posted = new FormData()
   for (const [name, value] of request.data) posted.append(name, value)
   if (isSpam(posted)) return {ok: true}
@@ -145,9 +152,9 @@ export async function submitForm(
     visitor,
     'submissions'
   )
-  if (limited) return {ok: false, message: limited}
+  if (limited) return {ok: false, message: text(limited)}
   const full = await fullMessage(store, request.entryId, data)
-  if (full) return {ok: false, message: full}
+  if (full) return {ok: false, message: text(full)}
   const files = await resolveFiles(
     store,
     secret,
@@ -155,20 +162,24 @@ export async function submitForm(
     fileInputs(inputs),
     posted
   )
-  if (!files.ok) return {ok: false, errors: files.errors}
-  const result = validateSubmission(field, rows, files.data, entry.locale)
-  if (!result.ok) return {ok: false, errors: result.errors}
+  if (!files.ok) return {ok: false, ...translateErrors(files.errors, text)}
+  const result = validateSubmission(field, rows, files.data, {
+    locale,
+    messages: forms.messages
+  })
+  if (!result.ok) return {ok: false, errors: result.errors, codes: result.codes}
   const repeated = await repeatedAnswers(
     store,
     request.entryId,
     result.definition,
     result.values
   )
-  if (keys(repeated).length > 0) return {ok: false, errors: repeated}
+  if (keys(repeated).length > 0)
+    return {ok: false, ...translateErrors(repeated, text)}
   const submission: Submission = {
     id: createId(),
     entryId: request.entryId,
-    locale: entry.locale ?? null,
+    locale,
     field: key,
     values: result.values,
     definition: result.definition,
@@ -228,15 +239,13 @@ export async function formStatus(
   config: Config,
   graph: Graph,
   api: SubmissionsApi,
-  location: FormLocation
+  location: FormLocation,
+  forms: FormsOptions = {}
 ): Promise<FormStatus> {
-  const {data} = await loadForm(config, graph, location)
-  const message = await fullMessage(
-    submissionStore(api),
-    location.entryId,
-    data
-  )
-  return message ? {open: false, message} : {open: true}
+  const {entry, data} = await loadForm(config, graph, location)
+  const full = await fullMessage(submissionStore(api), location.entryId, data)
+  if (!full) return {open: true}
+  return {open: false, message: translate(entry.locale, forms.messages)(full)}
 }
 
 /**
@@ -253,7 +262,7 @@ async function fullMessage(
   store: Required<SubmissionsApi>,
   entryId: string,
   data: Record<string, unknown>
-): Promise<string | undefined> {
+): Promise<string | FormMessage | undefined> {
   const limit = limitOf(data)
   if (limit === null) return undefined
   // Archived submissions count, deleted ones free their place
@@ -263,7 +272,7 @@ async function fullMessage(
   })
   if (total < limit) return undefined
   const full = typeof data.full === 'string' ? data.full.trim() : ''
-  return full || 'This form no longer takes answers'
+  return full || {code: 'closed'}
 }
 
 /**
@@ -276,8 +285,8 @@ async function repeatedAnswers(
   entryId: string,
   definition: FormDefinition,
   values: FormValues
-): Promise<FormErrors> {
-  const errors: FormErrors = {}
+): Promise<FormProblems> {
+  const errors: FormProblems = {}
   const unique = formColumns(definition).filter(
     (column): column is FormInputData =>
       column.control !== 'section' && column.unique === true
@@ -295,7 +304,7 @@ async function repeatedAnswers(
       submission =>
         comparable(submission.values[input.key]) === comparable(value)
     )
-    if (same) errors[input.key] = 'This answer was already sent'
+    if (same) errors[input.key] = {code: 'alreadySent'}
   }
   return errors
 }
@@ -334,7 +343,7 @@ export async function overLimit(
   entryId: string,
   visitor: string | null,
   kind: LimitKind
-): Promise<string | undefined> {
+): Promise<FormMessage | undefined> {
   if (forms.limits === false) return undefined
   const limits: FormLimits = forms.limits ?? {}
   const since = Math.floor(Date.now() / 1000) - hour
@@ -343,11 +352,10 @@ export async function overLimit(
     return kind === 'submissions' ? recent.submissions : recent.files
   }
   const perForm = limits[kind] ?? formLimits[kind]
-  if (perForm > 0 && (await count()) >= perForm)
-    return 'This form takes no more answers right now, try again later'
+  if (perForm > 0 && (await count()) >= perForm) return {code: 'busy'}
   const perVisitor = limits.perVisitor?.[kind] ?? visitorLimits[kind]
   if (visitor && perVisitor > 0 && (await count(visitor)) >= perVisitor)
-    return 'You sent this form often, try again later'
+    return {code: 'tooOften'}
   return undefined
 }
 

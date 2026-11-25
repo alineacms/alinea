@@ -22,6 +22,15 @@
   for a `{{key}}` the form does not have, in the subject or body of any
   language.
 
+### New
+
+- The errors and messages forms show visitors are in the language of the form,
+  with texts in English, Dutch, French and German. Replace texts or add a
+  language with `forms.messages` in `createHandler`, eg.
+  `{nl: {tooLong: ({max}) => ...}}`. Results that did not pass have the
+  `codes` of their errors next to the `errors`, `validate` of an input can
+  return a message by its code and `Form.validate` takes a `locale`.
+
 ## [2.0.0] - 2026-11-17
 
 ### New

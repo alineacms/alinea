@@ -153,7 +153,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`validate(value, settings)`: checks an answer on the server and returns a message for the visitor when it doesn't pass. It runs after the required check and the rules, and only for inputs that have an answer."
+                  "text": "`validate(value, settings)`: checks an answer on the server and returns a message for the visitor when it doesn't pass. It runs after the required check and the rules, and only for inputs that have an answer. A text is shown as is. To show a built-in message in the language of the form, return its code, such as `{code: 'tooHigh', max}`, see Rendering on your site."
                 }
               ]
             }

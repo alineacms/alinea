@@ -85,6 +85,32 @@ test('errors are given by key', () => {
   })
 })
 
+test('errors are in the language of the locale', () => {
+  const result = validateSubmission(
+    inputs,
+    rows,
+    data({name: 'Annabel', email: 'a@b.be', terms: 'on'}),
+    {locale: 'fr-BE', messages: {fr: {tooLong: ({max}) => `${max} au plus`}}}
+  )
+  expect(!result.ok && result.errors).toEqual({name: '5 au plus'})
+  expect(!result.ok && result.codes).toEqual({name: 'tooLong'})
+})
+
+test('a custom input can give a message by its code', () => {
+  const Short = Form.input('Short', {
+    validate: value => (value.length > 2 ? {code: 'tooLong', max: 2} : 'Ok?')
+  })
+  const field = Field.form('Inputs', {inputs: {short: Short}})
+  const row = {_id: 'a', _index: 'a0', _type: 'short', label: 'A', key: 'a'}
+  const long = validateSubmission(field, [row], data({a: 'abc'}), {
+    locale: 'nl'
+  })
+  expect(!long.ok && long.errors).toEqual({a: 'Gebruik hoogstens 2 tekens'})
+  const short = validateSubmission(field, [row], data({a: 'ab'}))
+  expect(!short.ok && short.errors).toEqual({a: 'Ok?'})
+  expect(!short.ok && short.codes).toEqual({})
+})
+
 test('unknown options are rejected', () => {
   const result = validateSubmission(
     inputs,
@@ -109,9 +135,13 @@ test('rules on the language test the locale of the form', () => {
     }
   }
   const answers = data({name: 'Ann', email: 'a@b.be', terms: 'on'})
-  const dutch = validateSubmission(inputs, [...rows, vat], answers, 'nl')
-  expect(!dutch.ok && dutch.errors).toEqual({vat: 'Fill in this field'})
-  const english = validateSubmission(inputs, [...rows, vat], answers, 'en')
+  const dutch = validateSubmission(inputs, [...rows, vat], answers, {
+    locale: 'nl'
+  })
+  expect(!dutch.ok && dutch.errors).toEqual({vat: 'Vul dit veld in'})
+  const english = validateSubmission(inputs, [...rows, vat], answers, {
+    locale: 'en'
+  })
   expect(english.ok).toBe(true)
 })
 

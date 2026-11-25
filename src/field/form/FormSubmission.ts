@@ -16,6 +16,14 @@ import {
 } from './FormDefinition.js'
 import type {FormField} from './FormField.js'
 import {Input} from './FormInput.js'
+import {
+  type FormLocaleMessages,
+  type FormMessage,
+  type FormMessageCode,
+  type FormProblems,
+  translate,
+  translateErrors
+} from './FormMessages.js'
 import {type FormEntry, readingOrder} from './FormRules.js'
 
 /**
@@ -35,7 +43,19 @@ export type FormResult = SubmitResult
 
 export type FormValidation =
   | {ok: true; values: FormValues; definition: FormDefinition}
-  | {ok: false; errors: FormErrors}
+  | {
+      ok: false
+      errors: FormErrors
+      /** The codes of the errors alinea gives, eg. `tooLong` */
+      codes: Record<string, FormMessageCode>
+    }
+
+export interface FormValidateOptions {
+  /** The locale of the form, which picks the language of its errors */
+  locale?: string | null
+  /** Texts that replace those of alinea, see `forms.messages` */
+  messages?: FormLocaleMessages
+}
 
 /**
  * Checks the answers sent for a form: hidden and disabled inputs are left
@@ -47,7 +67,7 @@ export function validateSubmission(
   field: FormField,
   rows: unknown,
   data: FormData,
-  locale?: string | null
+  {locale, messages}: FormValidateOptions = {}
 ): FormValidation {
   const {inputs} = Field.options(field)
   const order = readingOrder(inputs, rows)
@@ -89,13 +109,17 @@ export function validateSubmission(
         parsed[item.key] as Array<FormValues>
       )
   }
-  if (keys(check.errors).length > 0) return {ok: false, errors: check.errors}
+  if (keys(check.errors).length > 0)
+    return {
+      ok: false,
+      ...translateErrors(check.errors, translate(locale, messages))
+    }
   return {ok: true, values, definition}
 }
 
 /** Collects the answers that pass and the errors of those that do not */
 class Checker {
-  errors: FormErrors = {}
+  errors: FormProblems = {}
   #byId: Map<string, FormEntry>
   #state: FormState
 
@@ -134,9 +158,9 @@ class Checker {
   ): Array<FormValues> {
     const {key, repeat} = section
     if (parsed.length < repeat.min)
-      this.errors[key] = `Add at least ${itemCount(repeat.min)}`
+      this.errors[key] = {code: 'tooFewItems', min: repeat.min}
     else if (repeat.max !== undefined && parsed.length > repeat.max)
-      this.errors[key] = `Add at most ${itemCount(repeat.max)}`
+      this.errors[key] = {code: 'tooManyItems', max: repeat.max}
     return parsed.map((item, index) =>
       this.inputs(section.inputs, item, itemId('', index), input =>
         itemName(key, index, input)
@@ -156,11 +180,11 @@ function same(key: string): string {
   return key
 }
 
-function itemCount(count: number): string {
-  return `${count} ${count === 1 ? 'item' : 'items'}`
-}
-
-function validate(input: Input, value: unknown, settings: object) {
+function validate(
+  input: Input,
+  value: unknown,
+  settings: object
+): string | FormMessage | undefined {
   try {
     return input.validate?.(value as never, settings as never)
   } catch (error) {
@@ -168,17 +192,17 @@ function validate(input: Input, value: unknown, settings: object) {
   }
 }
 
-function required(input: Input): string {
+function required(input: Input): FormMessage {
   switch (Input.kind(input)) {
     case 'choice':
     case 'choices':
-      return 'Choose an option'
+      return {code: 'requiredChoice'}
     case 'check':
-      return 'Check this to continue'
+      return {code: 'requiredCheck'}
     case 'file':
-      return 'Add a file'
+      return {code: 'requiredFile'}
     default:
-      return 'Fill in this field'
+      return {code: 'required'}
   }
 }
 

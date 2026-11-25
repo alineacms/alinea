@@ -152,6 +152,10 @@ test('errors point at the input in its item', () => {
     errors: {
       'participants.1.name': 'Fill in this field',
       'participants.1.diet': 'Fill in this field'
+    },
+    codes: {
+      'participants.1.name': 'required',
+      'participants.1.diet': 'required'
     }
   })
 })
@@ -160,7 +164,8 @@ test('the number of items is checked', () => {
   const none = validateSubmission(field, rows, data([]))
   expect(none).toEqual({
     ok: false,
-    errors: {participants: 'Add at least 1 item'}
+    errors: {participants: 'Add at least 1 item'},
+    codes: {participants: 'tooFewItems'}
   })
   const many = validateSubmission(
     field,
@@ -174,7 +179,8 @@ test('the number of items is checked', () => {
   )
   expect(many).toEqual({
     ok: false,
-    errors: {participants: 'Add at most 3 items'}
+    errors: {participants: 'Add at most 3 items'},
+    codes: {participants: 'tooManyItems'}
   })
 })
 

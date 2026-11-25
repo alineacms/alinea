@@ -51,10 +51,19 @@ export {
   textarea,
   textContent
 } from '#/field/form/FormInputs.js'
+export {translate} from '#/field/form/FormMessages.js'
+export type {
+  FormLocaleMessages,
+  FormMessage,
+  FormMessageCode,
+  FormMessageParams,
+  FormMessages
+} from '#/field/form/FormMessages.js'
 export {validateSubmission as validate} from '#/field/form/FormSubmission.js'
 export type {
   FormErrors,
   FormResult,
+  FormValidateOptions,
   FormValidation,
   FormValues
 } from '#/field/form/FormSubmission.js'

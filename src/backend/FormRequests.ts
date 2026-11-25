@@ -120,11 +120,17 @@ export async function handleFormRequest(
   // Whether a form takes answers, for the server of the site
   if (action === HandleAction.FormStatus && request.method === 'GET')
     return Response.json(
-      await formStatus(config, graph, api, {
-        entryId: param('entryId'),
-        locale: url.searchParams.get('locale'),
-        field: url.searchParams.get('field') ?? undefined
-      })
+      await formStatus(
+        config,
+        graph,
+        api,
+        {
+          entryId: param('entryId'),
+          locale: url.searchParams.get('locale'),
+          field: url.searchParams.get('field') ?? undefined
+        },
+        forms
+      )
     )
 
   // A ticket to upload a file to a form, for the server of the site

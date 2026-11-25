@@ -25,9 +25,9 @@ const main = Config.workspace('Main', {
   roots: {forms: Config.root('Forms')}
 })
 
-const intl = Config.workspace('Main', {
+const translated = Config.workspace('Main', {
   source: 'content',
-  roots: {forms: Config.root('Forms', {i18n: {locales: ['en', 'nl']}})}
+  roots: {forms: Config.root('Forms', {i18n: {locales: ['en', 'nl', 'nl-BE']}})}
 })
 
 const rows = [
@@ -51,7 +51,7 @@ async function setup({
 }: SetupOptions = {}) {
   const cms = createCMS({
     schema: {Contact, ServiceForm},
-    workspaces: {main: locale ? intl : main}
+    workspaces: {main: locale ? translated : main}
   })
   const db = new LocalDB(cms.config)
   await db.create({type: form, locale, set: set as never})
@@ -124,11 +124,32 @@ test('invalid answers return their errors and are not stored', async () => {
   const result = await submit({email: 'ann'})
   expect(result.body).toEqual({
     ok: false,
-    errors: {name: 'Fill in this field', email: 'Use a valid email address'}
+    errors: {name: 'Fill in this field', email: 'Use a valid email address'},
+    codes: {name: 'required', email: 'invalidEmail'}
   })
   expect(
     await store.listSubmissions(entryId).then(page => page.submissions)
   ).toEqual([])
+})
+
+test('errors are in the language of the form', async () => {
+  const {submit} = await setup({locale: 'nl-BE'})
+  expect((await submit({email: 'ann'})).body).toEqual({
+    ok: false,
+    errors: {name: 'Vul dit veld in', email: 'Gebruik een geldig e-mailadres'},
+    codes: {name: 'required', email: 'invalidEmail'}
+  })
+})
+
+test('forms.messages replaces the texts of a locale', async () => {
+  const {submit} = await setup({
+    locale: 'nl-BE',
+    forms: {messages: {'nl-BE': {required: 'Graag invullen'}}}
+  })
+  expect((await submit({email: 'ann'})).body.errors).toEqual({
+    name: 'Graag invullen',
+    email: 'Gebruik een geldig e-mailadres'
+  })
 })
 
 test('bots are told it worked, nothing is stored', async () => {
@@ -379,7 +400,11 @@ test('a unique input takes each answer once', async () => {
   )
   expect(
     (await submit({name: 'Ann', email: ' ANN@example.com '})).body
-  ).toEqual({ok: false, errors: {email: 'This answer was already sent'}})
+  ).toEqual({
+    ok: false,
+    errors: {email: 'This answer was already sent'},
+    codes: {email: 'alreadySent'}
+  })
   expect(
     (await submit({name: 'Ann', email: 'other@example.com'})).body.ok
   ).toBe(true)
@@ -439,7 +464,7 @@ test('rules on the language follow the language of the form', async () => {
   const answers = {name: 'Ann', email: 'ann@example.com'}
   const nl = await setupIn('nl')
   expect((await nl.submit(answers)).body.errors).toEqual({
-    vat: 'Fill in this field'
+    vat: 'Vul dit veld in'
   })
   expect((await nl.submit({...answers, vat: 'BE1'})).body.ok).toBe(true)
   const en = await setupIn('en')

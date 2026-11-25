@@ -1,6 +1,7 @@
 import type {StoredRow} from '#/core/Infer.js'
 import type {FieldsDefinition} from '#/core/Type.js'
 import type {FormKind} from './FormConditions.js'
+import type {FormMessage} from './FormMessages.js'
 import type {ComponentType} from 'react'
 
 /** The HTML control that renders an input on the site */
@@ -64,11 +65,15 @@ export interface InputConfig<
   ): Value | undefined
   /** HTML constraints of the rendered input, so browsers validate natively */
   attributes?(settings: StoredRow<Fields & Settings>): FormAttributes
-  /** Checked on the server after required and conditions */
+  /**
+   * Checked on the server after required and conditions. A text is shown as
+   * is, a message by its code is shown in the language of the form, eg.
+   * `{code: 'tooLong', max: 20}`.
+   */
   validate?(
     value: Value,
     settings: StoredRow<Fields & Settings>
-  ): string | undefined
+  ): string | FormMessage | undefined
 }
 
 export interface Input<

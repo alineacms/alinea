@@ -1,4 +1,5 @@
 import type {Request, Response} from '@alinea/iso'
+import type {FormMessageCode} from '#/field/form/FormMessages.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
@@ -249,7 +250,14 @@ export type SubmitResult =
       /** The url of the page to go to instead */
       redirect?: string
     }
-  | {ok: false; errors?: Record<string, string>; message?: string}
+  | {
+      ok: false
+      /** What to show on each input, in the language of the form */
+      errors?: Record<string, string>
+      /** The codes of the errors alinea gives, eg. `tooLong` */
+      codes?: Record<string, FormMessageCode>
+      message?: string
+    }
 
 export interface SubmissionsApi {
   storeSubmission?(submission: StoredSubmission): Promise<void>

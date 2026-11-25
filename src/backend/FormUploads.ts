@@ -13,6 +13,7 @@ import {sign, verify} from '#/core/util/JWT.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {type FormInputData, nameKey} from '#/field/form/FormDefinition.js'
 import {contentProblem, isAccepted} from '#/field/form/FormFileTypes.js'
+import {type FormProblems, translate} from '#/field/form/FormMessages.js'
 import {HandleAction} from './HandleAction.js'
 import {fileKey, overLimit, submissionStore, visitorHash} from './FormSubmit.js'
 import {fileInputs, loadForm} from './FormLoad.js'
@@ -83,18 +84,18 @@ export async function prepareUpload(
     handlerUrl
   }: {forms?: FormsOptions; secret: string; handlerUrl: URL}
 ): Promise<PrepareUploadResult> {
-  const {inputs} = await loadForm(config, graph, request)
+  const {entry, inputs} = await loadForm(config, graph, request)
+  const text = translate(entry.locale, forms.messages)
   const input = fileInputs(inputs).find(input => input.key === request.input)
   if (!input) return {ok: false, message: 'This form has no such file input'}
   const accept = String(input.settings.accept ?? '')
   if (!isAccepted(accept, request))
-    return {ok: false, message: `Choose a file of type ${accept}`}
+    return {ok: false, message: text({code: 'fileType', accept})}
   const limit = maxSize(config, input)
-  if (request.size > limit)
-    return {
-      ok: false,
-      message: `Choose a file of at most ${Math.floor(limit / megabyte)} MB`
-    }
+  if (request.size > limit) {
+    const max = Math.floor(limit / megabyte)
+    return {ok: false, message: text({code: 'fileTooLarge', max})}
+  }
   const issuedAt = Math.floor(Date.now() / 1000)
   const visitor = await visitorHash(secret, request.visitor)
   const limited = await overLimit(
@@ -104,7 +105,7 @@ export async function prepareUpload(
     visitor,
     'uploads'
   )
-  if (limited) return {ok: false, message: limited}
+  if (limited) return {ok: false, message: text(limited)}
   const ticket: UploadTicket = {
     purpose: 'form-upload',
     entryId: request.entryId,
@@ -222,7 +223,7 @@ async function readBody(
 
 type ResolvedFiles =
   | {ok: true; data: FormData}
-  | {ok: false; errors: Record<string, string>}
+  | {ok: false; errors: FormProblems}
 
 /**
  * The answers with the tokens of uploaded files replaced by the files they
@@ -237,7 +238,7 @@ export async function resolveFiles(
 ): Promise<ResolvedFiles> {
   const keys = new Set(inputs.map(input => input.key))
   const data = new FormData()
-  const errors: Record<string, string> = {}
+  const errors: FormProblems = {}
   // By the id of the file, with the name it was sent under: the key of its
   // input, or its name in an item of a repeatable section
   const tickets = new Map<string, {ticket: UploadTicket; name: string}>()
@@ -250,14 +251,14 @@ export async function resolveFiles(
     if (typeof value !== 'string' || value === '') continue
     const ticket = await readTicket(value, secret)
     if (!ticket || ticket.entryId !== entryId || ticket.input !== key)
-      errors[name] = 'Upload the file again'
+      errors[name] = {code: 'uploadAgain'}
     else tickets.set(ticket.id, {ticket, name})
   }
   const stored = await api.formFiles(entryId, [...tickets.keys()])
   for (const {ticket, name} of tickets.values()) {
     const file = stored.find(file => file.id === ticket.id)
     if (!file || file.submissionId || file.input !== ticket.input) {
-      errors[name] = 'Upload the file again'
+      errors[name] = {code: 'uploadAgain'}
       continue
     }
     const ref: FormFileRef = {

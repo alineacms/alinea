@@ -47,7 +47,8 @@ test('the rules of an input make it required', () => {
 test('an input its rules require must be answered', () => {
   expect(validateSubmission(inputs, rows, data({contact: 'phone'}))).toEqual({
     ok: false,
-    errors: {phone: expect.any(String)}
+    errors: {phone: expect.any(String)},
+    codes: {phone: 'required'}
   })
   expect(validateSubmission(inputs, rows, data({contact: 'mail'})).ok).toBe(
     true

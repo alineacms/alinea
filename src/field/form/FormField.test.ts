@@ -151,20 +151,21 @@ test('an input needs a label', () => {
 
 test('default inputs validate their values', () => {
   const settings = {placeholder: '', maxLength: 3, initialValue: ''}
-  expect(Form.text.validate?.('abcd', settings)).toBe(
-    'Use at most 3 characters'
-  )
+  expect(Form.text.validate?.('abcd', settings)).toEqual({
+    code: 'tooLong',
+    max: 3
+  })
   expect(Form.email.validate?.('a@b.be', {placeholder: ''})).toBeUndefined()
-  expect(Form.email.validate?.('a@b', {placeholder: ''})).toBe(
-    'Use a valid email address'
-  )
+  expect(Form.email.validate?.('a@b', {placeholder: ''})).toEqual({
+    code: 'invalidEmail'
+  })
   const options = [
     {_id: 'a', _index: 'a0', _type: 'option' as const, label: 'A', value: 'a'}
   ]
   expect(Form.radio.validate?.('a', {options})).toBeUndefined()
-  expect(Form.checkboxes.validate?.(['a', 'b'], {options})).toBe(
-    'Choose a listed option'
-  )
+  expect(Form.checkboxes.validate?.(['a', 'b'], {options})).toEqual({
+    code: 'unknownOption'
+  })
   expect(Form.number.parse?.(['4'], {} as any)).toBe(4)
 })
 

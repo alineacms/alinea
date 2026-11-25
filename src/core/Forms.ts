@@ -1,4 +1,5 @@
 import type {DatabaseDeclaration} from '#/backend/api/CreateBackend.js'
+import {type FormLocaleMessages, translate} from '#/field/form/FormMessages.js'
 import type {
   FormStatus,
   FormStatusRequest,
@@ -75,6 +76,12 @@ export interface FormsOptions {
    * passes to `cms.forms.submit`. Set to false to not limit.
    */
   limits?: FormLimits | false
+  /**
+   * Texts for the messages visitors see, by locale and code, which replace
+   * those of alinea (en, nl, fr and de) or add a language, eg.
+   * `{nl: {tooLong: ({max}) => \`Maximaal ${max} tekens\`}}`
+   */
+  messages?: FormLocaleMessages
 }
 
 export interface FormSubmitOptions {
@@ -164,8 +171,9 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
       })
     },
     async submit(entryId, data, options = {}) {
+      const text = translate(options.locale)
       if (options.verify && !(await options.verify()))
-        return {ok: false, message: 'Your answers could not be verified'}
+        return {ok: false, message: text({code: 'notVerified'})}
       const entries = Array<[string, string]>()
       const errors: Record<string, string> = {}
       for (const [key, value] of data) {
@@ -190,7 +198,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
           body: value
         })
         if (uploaded.ok) entries.push([key, ticket.token])
-        else errors[key] = await uploadError(uploaded)
+        else errors[key] = await uploadError(uploaded, options.locale)
       }
       if (Object.keys(errors).length > 0) return {ok: false, errors}
       return (await client()).submit({
@@ -205,8 +213,11 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
 }
 
 /** What a visitor sees when the handler refused their file */
-export async function uploadError(response: Response): Promise<string> {
-  const fallback = 'The file could not be uploaded'
+export async function uploadError(
+  response: Response,
+  locale?: string | null
+): Promise<string> {
+  const fallback = translate(locale)({code: 'uploadFailed'})
   if (response.status !== 405) return (await response.text()) || fallback
   // Routes made before forms had file inputs only export GET and POST
   console.error(

@@ -139,7 +139,11 @@ test('an uploaded file is stored with the submission', async () => {
       ['name', 'Bo'],
       ['screenshot', ticket.token]
     ])
-  ).toEqual({ok: false, errors: {screenshot: 'Upload the file again'}})
+  ).toEqual({
+    ok: false,
+    errors: {screenshot: 'Upload the file again'},
+    codes: {screenshot: 'uploadAgain'}
+  })
 })
 
 test('files are checked before and while they are uploaded', async () => {
@@ -165,7 +169,8 @@ test('files are checked before and while they are uploaded', async () => {
   })
   expect(await submit([['name', 'Ann']])).toEqual({
     ok: false,
-    errors: {screenshot: 'Add a file'}
+    errors: {screenshot: 'Add a file'},
+    codes: {screenshot: 'requiredFile'}
   })
 })
 

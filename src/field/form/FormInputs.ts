@@ -22,24 +22,31 @@ import {text as textField} from '#/field/text.js'
 import {choices, options} from './FormChoices.js'
 import type {FormFileRef} from '#/core/Connection.js'
 import {isAccepted} from './FormFileTypes.js'
+import type {FormMessage} from './FormMessages.js'
 import {content, input} from './FormInput.js'
 
 const email_ = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const phone = /^\+?[0-9 ()./-]{6,}$/
 
-function tooLong(value: string, maxLength: number | null) {
-  if (maxLength && value.length > maxLength)
-    return `Use at most ${maxLength} characters`
+function tooLong(value: string, max: number | null): FormMessage | undefined {
+  if (max && value.length > max) return {code: 'tooLong', max}
 }
 
-function inRange(value: number, min: number | null, max: number | null) {
-  if (min !== null && value < min) return `Use ${min} or more`
-  if (max !== null && value > max) return `Use ${max} or less`
+function inRange(
+  value: number,
+  min: number | null,
+  max: number | null
+): FormMessage | undefined {
+  if (min !== null && value < min) return {code: 'tooLow', min}
+  if (max !== null && value > max) return {code: 'tooHigh', max}
 }
 
-function unknownChoice(values: Array<string>, options: unknown) {
+function unknownChoice(
+  values: Array<string>,
+  options: unknown
+): FormMessage | undefined {
   const allowed = new Set(choices(options).map(choice => choice.value))
-  if (values.some(value => !allowed.has(value))) return 'Choose a listed option'
+  if (values.some(value => !allowed.has(value))) return {code: 'unknownOption'}
 }
 
 export const text = input('Text', {
@@ -69,8 +76,7 @@ export const email = input('Email', {
     autoComplete: 'email',
     placeholder: settings.placeholder
   }),
-  validate: value =>
-    email_.test(value) ? undefined : 'Use a valid email address'
+  validate: value => (email_.test(value) ? undefined : {code: 'invalidEmail'})
 })
 
 export const tel = input('Phone', {
@@ -84,8 +90,7 @@ export const tel = input('Phone', {
     autoComplete: 'tel',
     placeholder: settings.placeholder
   }),
-  validate: value =>
-    phone.test(value) ? undefined : 'Use a valid phone number'
+  validate: value => (phone.test(value) ? undefined : {code: 'invalidPhone'})
 })
 
 export const number = input('Number', {
@@ -140,11 +145,10 @@ export const date = input('Date', {
     max: settings.max
   }),
   validate: (value, settings) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Use a valid date'
-    if (settings.min && value < settings.min)
-      return `Choose ${settings.min} or later`
-    if (settings.max && value > settings.max)
-      return `Choose ${settings.max} or earlier`
+    const {min, max} = settings
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return {code: 'invalidDate'}
+    if (min && value < min) return {code: 'tooEarly', min}
+    if (max && value > max) return {code: 'tooLate', max}
   }
 })
 
@@ -180,13 +184,12 @@ export const file = input('File', {
     multiple: settings.multiple
   }),
   validate: (files: Array<FormFileRef>, settings) => {
-    if (!settings.multiple && files.length > 1) return 'Add one file'
-    const limit = settings.maxSize ? settings.maxSize * 1024 * 1024 : undefined
+    const {multiple, maxSize, accept = ''} = settings
+    if (!multiple && files.length > 1) return {code: 'oneFile'}
     for (const file of files) {
-      if (limit && file.size > limit)
-        return `Choose files of at most ${settings.maxSize} MB`
-      if (!isAccepted(settings.accept ?? '', file))
-        return `Choose files of type ${settings.accept}`
+      if (maxSize && file.size > maxSize * 1024 * 1024)
+        return {code: 'fileTooLarge', max: maxSize}
+      if (!isAccepted(accept, file)) return {code: 'fileType', accept}
     }
   }
 })
