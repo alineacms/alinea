@@ -128,7 +128,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`locale`: the language of the form entry, for example `entry.locale`, which rules on the language test."
+                  "text": "`locale`: the language rules on the language test. A definition you query carries the language of its entry, pass `locale` only to test another one."
                 }
               ]
             }
@@ -821,7 +821,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The messages are listed by code in `FormMessageParams` from `alinea/form`, such as `required`, `invalidEmail`, `tooLong`, `fileTooLarge` and `tooOften`. Codes a language leaves out fall back to English. Next to its `errors`, a result that did not pass has the `codes` of the errors by the name of their input, so a site can show texts of its own. `Form.validate` takes the same `locale` and `messages` options, and `Form.translate(locale, messages)` turns a message into text."
+          "text": "The messages are listed by code in `FormMessageParams` from `alinea/form`, such as `required`, `invalidEmail`, `tooLong`, `fileTooLarge` and `tooOften`. Codes a language leaves out fall back to English. Next to its `errors`, a result that did not pass has the `codes` of the errors by the name of their input, so a site can show texts of its own. `Form.validate` takes the same `locale` and `messages` options, and `Form.translate(locale, messages)` turns a message into text. `cms.forms.submit` makes a few messages itself, before the answers reach the handler: when `verify` fails or a file could not be uploaded. Pass it the same texts as its `messages` option. `<Form upload>` shows the text of alinea when the browser could not upload a file, the functions of `messages` can't be passed to the browser."
         }
       ]
     },

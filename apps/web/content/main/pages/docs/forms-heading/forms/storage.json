@@ -124,7 +124,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`limits`: how many submissions and files a form takes per hour, overall and per visitor, or `false` to not limit."
+                  "text": "`rateLimit`: how many submissions and files a form takes per hour, overall and per visitor, or `false` to not limit."
                 }
               ]
             }
@@ -135,7 +135,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LdZysffaIRD3DzQshAJjm73na5",
-      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 100, uploads: 200}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests, OPTIONS lets them\n// do so from another address of your site\nexport const PUT = handler\nexport const OPTIONS = handler",
+      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    rateLimit: {submissions: 100, uploads: 200}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests, OPTIONS lets them\n// do so from another address of your site\nexport const PUT = handler\nexport const OPTIONS = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false
@@ -157,7 +157,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Submissions are stored in a database, in three tables that are created the first time they are used: `alinea_submission` for the answers, `alinea_form_version` for each version of a form that answers were sent with, and `alinea_submission_file` for uploaded files. In Postgres, row level security is turned on for them, so they aren't exposed through an API such as the one of Supabase."
+          "text": "Submissions are stored in a database, in four tables that are created the first time they are used: `alinea_submission` for the answers, `alinea_form_version` for each version of a form that answers were sent with, `alinea_submission_file` for uploaded files and `alinea_submission_answer` for a hash of each answer to a unique input, which the database keeps from being stored twice. In Postgres, row level security is turned on for them, so they aren't exposed through an API such as the one of Supabase."
         }
       ]
     },
@@ -254,7 +254,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "During `alinea dev` your handler route answers forms as it does once deployed: `cms.forms` sends answers and uploads to it, and the dev server hands it the requests of the Submissions tab after checking the editor may make them. So your `database`, `files`, `mailer`, `onSubmit` and `limits` all run locally, and there is no separate store for development. Point them at what you want to use locally, for example a SQLite file next to your app:"
+          "text": "During `alinea dev` your handler route answers forms as it does once deployed: `cms.forms` sends answers and uploads to it, and the dev server hands it the requests of the Submissions tab after checking the editor may make them. It sends them to the address of your app in `baseUrl.development`, or of an absolute `handlerUrl`, and without either to a host on your own machine only. So your `database`, `files`, `mailer`, `onSubmit` and `rateLimit` all run locally, and there is no separate store for development. Point them at what you want to use locally, for example a SQLite file next to your app:"
         }
       ]
     },
@@ -364,7 +364,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Its name or type must be in the accepted files of the input, when the input sets them."
+                  "text": "Its name must fit the accepted files of the input, when the input sets them. A type such as `image/*` is matched by the extension of the name, not by the type the browser says it has, and mails attach a file as the type of its extension."
                 }
               ]
             }
@@ -493,7 +493,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Each form takes at most 500 submissions and 1000 uploaded files per hour by default, so a flood of answers can't fill your database or bucket. Change the numbers with `limits: {submissions, uploads}`, or turn the limits off with `limits: false`. Once a form took its share, visitors see a message asking to try again later."
+          "text": "Each form takes at most 500 submissions and 1000 uploaded files per hour by default, so a flood of answers can't fill your database or bucket. Change the numbers with `rateLimit: {submissions, uploads}`, or turn the limits off with `rateLimit: false`. Uploads are counted again as the browser sends them, so a script can't collect tickets first and upload them all. Once a form took its share, visitors see a message asking to try again later."
         }
       ]
     },
@@ -503,7 +503,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "To limit each visitor as well, pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload`: anything that identifies them on your site, such as their IP address or the id of their session. Alinea doesn't guess it from the request, which reaches the handler from your server. One visitor may then send 20 submissions and 50 files per hour, set with `limits: {perVisitor: {submissions, uploads}}`. The handler only stores a hash of the visitor, made with your API key."
+          "text": "To limit each visitor as well, pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload`: anything that identifies them on your site, such as their IP address or the id of their session. Alinea doesn't guess it from the request, which reaches the handler from your server. One visitor may then send 20 submissions and 50 files per hour, set with `rateLimit: {perVisitor: {submissions, uploads}}`. The handler only stores a hash of the visitor, made with your API key."
         }
       ]
     },

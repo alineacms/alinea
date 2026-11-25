@@ -220,7 +220,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Answers to it are checked and stored like those of form entries. Notification mails and the message after sending are only part of form entries. Add `Form.submissions()` to the tabs of the type to read the answers, and `Form.keep()` under the key `keep` to choose how long they are kept:"
+          "text": "Answers to it are checked and stored like those of form entries. Notification mails and the message after sending are only part of form entries. Add `Form.submissions()` to the tabs of the type to read the answers, and `Form.keep()` to choose how long they are kept:"
         }
       ]
     },
@@ -264,7 +264,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The form has to be a field of the entry itself, not one inside a list or a block. When a type has more than one form field, pass the key of the one to submit as the `field` option of `cms.forms.submit`."
+          "text": "The form has to be a field of the entry itself, not one inside a list or a block. An entry holds one form and its submissions are those of the entry, so a type with more than one `Field.form` is an error in your config. Keep submissions and Most submissions are only read from the fields of `Form.keep()` and `Form.limits()`, not from other fields with the same name."
         }
       ]
     },
@@ -359,7 +359,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "When the root of your forms is translated, pass the locale of the page: `cms.forms.submit(entryId, data, {locale})`, and the same option to `cms.forms.prepareUpload`. See "
+          "text": "When the root of your forms is translated, pass the locale of the page: `cms.forms.submit(entryId, data, {locale})`, and the same option to `cms.forms.prepareUpload`. Without it, the form of the default locale of the root is used. See "
         },
         {
           "_type": "text",

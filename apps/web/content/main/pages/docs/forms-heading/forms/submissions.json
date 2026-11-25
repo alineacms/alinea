@@ -818,7 +818,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Each submission shows the labels and options of the form its visitor saw."
+                  "text": "Each submission shows the labels and options of the form its visitor saw. An editor whose role is limited to some languages sees and changes the submissions sent in those only."
                 }
               ]
             }

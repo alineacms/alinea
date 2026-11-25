@@ -925,7 +925,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "In a translated root rules can also use Language: whether the language of the form is any or none of the languages you pick, for example to show an input or send a mail only to Dutch visitors. `<Form>` tests it against its `locale` prop, the server against the language the answers were sent in."
+          "text": "In a translated root rules can also use Language: whether the language of the form is any or none of the languages you pick, for example to show an input or send a mail only to Dutch visitors. `<Form>` tests it against the language the form was queried in, or its `locale` prop when you pass one, the server against the language the answers were sent in."
         }
       ]
     },
@@ -1005,7 +1005,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": ": a parameter of the address of the page, for example `utm_campaign`. When a visitor opens the page with `?utm_campaign=spring`, `spring` is sent. Without the parameter, the fixed value is sent."
+                  "text": ": a parameter of the address of the page, for example `utm_campaign`. When a visitor opens the page with `?utm_campaign=spring`, the input holds `spring` as soon as the form shows, so rules on it apply right away, and `spring` is sent. Without the parameter, the fixed value is sent."
                 }
               ]
             }

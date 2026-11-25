@@ -19,8 +19,35 @@
 - A check has a rich text shown next to its checkbox, eg. with a link to your
   terms, in `settings.text` of the definition. Its label still names the
   answer in submissions and mails, and shows when there is no text.
+- `forms.limits` of `createHandler`, the rate limits of forms, is renamed
+  `forms.rateLimit`, and its type `FormLimits` is `FormRateLimit`. The fields
+  of `Form.limits()` keep their name.
+- An entry holds one form: a type with more than one `Field.form` is a config
+  error, and the `field` option of `cms.forms.submit`, `prepareUpload` and
+  `status` is removed. Keep submissions and Most submissions are read from
+  the fields made with `Form.keep()` and `Form.limits()` only, under any key,
+  not from other fields named `keep` or `limit`.
+- A type in the accepted files of a file input, eg. `image/*`, is matched by
+  the extension of the file name instead of the type the browser declares,
+  and files are kept and attached to mails with the type of their extension.
+- A site that does not pass a `locale` to `cms.forms.submit` gets the form of
+  the default locale of the root, and the page a form goes to after sending
+  is the one in the language of the form.
+- Custom stores of submissions: `storeSubmission` takes the answers to unique
+  inputs as `unique` and returns the keys of those sent before, storing
+  nothing then. `recentActivity` takes the kind, `submissions` or `files`,
+  and returns the count of the form and of the visitor, and `attachFormFiles`
+  returns the ids it attached.
 
 ### New
+
+- `cms.forms.submit` takes `messages`, for the messages it makes before the
+  answers reach the handler, eg. when `verify` fails.
+- `<Form>` tests rules on the language against the language its definition
+  was queried in, so the site no longer passes `locale` for them. The
+  `locale` prop still overrides it.
+- An editor whose role is limited to some languages of a form entry sees and
+  changes the submissions sent in those.
 
 - Form mails have a CC field, passed to the `mailer` as `cc`, and their body
   can insert every answer with `{{all answers}}`. The dashboard shows an error
