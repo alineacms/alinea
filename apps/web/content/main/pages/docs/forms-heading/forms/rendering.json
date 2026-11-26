@@ -148,6 +148,21 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`placeholderLabels`: shows the labels of text inputs, text areas and selects as their placeholder, for example for a compact contact form. The label stays for screen readers, choices and file inputs keep theirs in sight."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

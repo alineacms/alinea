@@ -85,6 +85,20 @@ test('renders inputs with their label, help and constraints', () => {
   ).toEqual(['it', 'hr'])
 })
 
+test('labels can show as placeholders of text inputs', () => {
+  render(
+    <Form aria-label="Contact" definition={definition} placeholderLabels />
+  )
+  // The label is still read, it is out of sight
+  const name = screen.getByRole('textbox', {name: 'Name *'})
+  expect(name.getAttribute('placeholder')).toBe('Name *')
+  const label = screen.getByText('Name').closest('label')!
+  expect(label.style.position).toBe('absolute')
+  // Choices keep their label in sight
+  const service = screen.getByRole('group', {name: 'Service *'})
+  expect(service.querySelector('legend')!.hasAttribute('style')).toBe(false)
+})
+
 test('views restyle parts and replace inputs', () => {
   render(
     <Form

@@ -92,6 +92,8 @@ export interface FormInputViewProps {
   error?: string
   /** The rules of the input disable it for the current answers */
   disabled?: boolean
+  /** The label shows as the placeholder of the control, see `FormProps` */
+  placeholderLabel?: boolean
   views: FormViews
 }
 
@@ -147,6 +149,12 @@ export interface FormProps extends Omit<
    * their view has children
    */
   labels?: Partial<FormLabels>
+  /**
+   * Shows the labels of text inputs, text areas and selects as their
+   * placeholder, eg. for a compact contact form. Screen readers still read
+   * the label, choices and file inputs keep theirs.
+   */
+  placeholderLabels?: boolean
 }
 
 /**
@@ -162,6 +170,7 @@ export function Form({
   upload,
   errors,
   labels: labelsProp,
+  placeholderLabels = false,
   onChange,
   onSubmit,
   ...props
@@ -294,6 +303,7 @@ export function Form({
     ),
     state,
     repeat,
+    placeholderLabels,
     scope: topScope
   }
   return part(
@@ -421,6 +431,7 @@ interface FormItemViewProps {
   errors: Record<string, string>
   state: FormState
   repeat: RepeatActions
+  placeholderLabels: boolean
   scope: FormScope
 }
 
@@ -431,6 +442,7 @@ function FormItemView({
   errors,
   state,
   repeat,
+  placeholderLabels,
   scope
 }: FormItemViewProps) {
   if (state.hidden.has(item.id + scope.suffix)) return null
@@ -443,6 +455,7 @@ function FormItemView({
         errors={errors}
         state={state}
         repeat={repeat}
+        placeholderLabels={placeholderLabels}
       />
     )
   if (item.control === 'content')
@@ -457,6 +470,7 @@ function FormItemView({
     name,
     error: errors[name],
     disabled: state.disabled.has(id),
+    placeholderLabel: placeholderLabels && takesPlaceholder(item),
     views
   }
   const Custom = (views as Record<string, unknown>)[item.type]
@@ -493,6 +507,7 @@ interface FormSectionProps {
   errors: Record<string, string>
   state: FormState
   repeat: RepeatActions
+  placeholderLabels: boolean
 }
 
 function FormSection({
@@ -501,9 +516,10 @@ function FormSection({
   labels,
   errors,
   state,
-  repeat
+  repeat,
+  placeholderLabels
 }: FormSectionProps) {
-  const context = {views, labels, errors, state, repeat}
+  const context = {views, labels, errors, state, repeat, placeholderLabels}
   const {key} = section
   if (!section.repeat || !key)
     return part(views.section, 'fieldset', {'data-section': section.type}, [
@@ -722,6 +738,7 @@ export function FormInput({
   name,
   error,
   disabled,
+  placeholderLabel,
   views
 }: FormInputViewProps) {
   const helpId = input.help ? `${id}-help` : undefined
@@ -749,7 +766,12 @@ export function FormInput({
   const label = part(
     views.label,
     grouped ? 'legend' : 'label',
-    {key: 'label', htmlFor: grouped ? undefined : id},
+    {
+      key: 'label',
+      htmlFor: grouped ? undefined : id,
+      // Screen readers still read the label shown as placeholder
+      style: placeholderLabel ? hidden : undefined
+    },
     [input.label, input.required && <span key="required"> *</span>]
   )
   const help =
@@ -769,6 +791,9 @@ export function FormInput({
     'aria-describedby': describedBy,
     'aria-invalid': error ? true : undefined,
     ...input.attributes,
+    ...(placeholderLabel && {
+      placeholder: input.required ? `${input.label} *` : input.label
+    }),
     disabled: disabled || undefined
   }
   if (input.control === 'check')
@@ -828,6 +853,24 @@ export function FormInput({
   ])
 }
 
+// Placeholders show in text inputs, not in eg. a date or file input
+const placeholderTypes = new Set([
+  'text',
+  'email',
+  'tel',
+  'url',
+  'number',
+  'search',
+  'password'
+])
+
+function takesPlaceholder(input: FormInputData): boolean {
+  if (input.control === 'textarea' || input.control === 'select') return true
+  if (input.control !== 'input') return false
+  const type = input.attributes.type
+  return type === undefined || placeholderTypes.has(String(type))
+}
+
 function formControl(
   input: FormInputData,
   props: Record<string, unknown>,
@@ -838,11 +881,12 @@ function formControl(
   if (input.control === 'textarea')
     return part(views.control, 'textarea', {...props, defaultValue})
   if (input.control === 'select') {
-    const placeholder = input.settings.placeholder
+    // A select shows its placeholder as the empty option
+    const {placeholder = input.settings.placeholder, ...rest} = props
     return part(
       views.control,
       'select',
-      {...props, defaultValue: defaultValue ?? ''},
+      {...rest, defaultValue: defaultValue ?? ''},
       [
         part(
           views.option,

@@ -45,6 +45,9 @@
   answers reach the handler, eg. when `verify` fails.
 - Answers taken for spam are logged with the reason, and in development the
   form shows it instead of the confirmation bots see.
+- `<Form placeholderLabels>` shows the labels of text inputs, text areas and
+  selects as their placeholder, out of sight for people but not for screen
+  readers.
 - `<Form>` tests rules on the language against the language its definition
   was queried in, so the site no longer passes `locale` for them. The
   `locale` prop still overrides it.
