@@ -43,6 +43,8 @@
 
 - `cms.forms.submit` takes `messages`, for the messages it makes before the
   answers reach the handler, eg. when `verify` fails.
+- Answers taken for spam are logged with the reason, and in development the
+  form shows it instead of the confirmation bots see.
 - `<Form>` tests rules on the language against the language its definition
   was queried in, so the site no longer passes `locale` for them. The
   `locale` prop still overrides it.

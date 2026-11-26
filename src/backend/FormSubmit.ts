@@ -36,7 +36,7 @@ import {
   translate,
   translateErrors
 } from '#/field/form/FormMessages.js'
-import {formPage, isSpam} from '#/field/form/FormSpam.js'
+import {formPage, spamReason} from '#/field/form/FormSpam.js'
 import {
   type FormResult,
   type FormValues,
@@ -139,8 +139,9 @@ export async function submitForm(
   {
     forms = {},
     secret,
-    handlerUrl
-  }: {forms?: FormsOptions; secret: string; handlerUrl?: URL}
+    handlerUrl,
+    dev
+  }: {forms?: FormsOptions; secret: string; handlerUrl?: URL; dev?: boolean}
 ): Promise<FormResult> {
   const {entry, type, data, key, field, rows, inputs} = await loadForm(
     config,
@@ -157,8 +158,14 @@ export async function submitForm(
     type && isFormType(type)
       ? afterSending(graph, data, locale)
       : {ok: true as const}
-  // Bots see what people see, so they can not tell they were caught
-  if (isSpam(posted)) return sent()
+  const spam = spamReason(posted)
+  if (spam) {
+    console.warn(`Form ${request.entryId} taken for spam: ${spam}`)
+    // Bots see what people see, so they can not tell they were caught. In
+    // development the reason shows, a test that seems to work saves nothing
+    if (dev) return {ok: false, message: `Taken for spam: ${spam}`}
+    return sent()
+  }
   const now = Math.floor(Date.now() / 1000)
   const visitor = await visitorHash(secret, request.visitor)
   const limited = await overLimit(

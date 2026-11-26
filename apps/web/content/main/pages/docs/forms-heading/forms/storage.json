@@ -454,7 +454,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Every form rendered with `<Form>` has a honeypot input that people don't see, and records when it was shown. The handler takes answers with the honeypot filled in, or sent within two seconds of the form showing, for a bot. Bots are told their answers were sent, so they don't try again, but nothing is stored or mailed."
+          "text": "Every form rendered with `<Form>` has a honeypot input that people don't see, and records when it was shown. The handler takes answers with the honeypot filled in, or sent within two seconds of the form showing, for a bot. Bots are told their answers were sent, so they don't try again, but nothing is stored or mailed. The server logs why answers were taken for spam, and in development the form shows the reason instead, so a test that seems to work doesn't silently save nothing."
         }
       ]
     },

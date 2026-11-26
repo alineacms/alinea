@@ -111,6 +111,8 @@ export interface FormRequestOptions {
   secret: string
   /** Where browsers upload the files of forms to */
   handlerUrl: URL
+  /** Tells why answers were taken for spam instead of hiding it */
+  dev?: boolean
   /**
    * Asserts the editor may do this with the form entry and gives the
    * languages they may, for requests of the dashboard. The caller checks
@@ -125,7 +127,16 @@ export interface FormRequestOptions {
  */
 export async function handleFormRequest(
   request: Request,
-  {config, graph, api, forms, secret, handlerUrl, authorize}: FormRequestOptions
+  {
+    config,
+    graph,
+    api,
+    forms,
+    secret,
+    handlerUrl,
+    dev,
+    authorize
+  }: FormRequestOptions
 ): Promise<Response | undefined> {
   const url = new URL(request.url)
   const action = url.searchParams.get('action')
@@ -149,7 +160,8 @@ export async function handleFormRequest(
       await submitForm(config, graph, api, submit, {
         forms,
         secret,
-        handlerUrl
+        handlerUrl,
+        dev
       })
     )
   }

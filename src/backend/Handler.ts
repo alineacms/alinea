@@ -283,6 +283,7 @@ export function createHandler({
           forms: forms ?? {},
           secret: context.apiKey,
           handlerUrl: context.handlerUrl,
+          dev: context.isDev,
           authorize
         }
       }

@@ -61,13 +61,15 @@ interface SetupOptions {
   forms?: FormsOptions
   /** Places the form in a root with languages, in this one */
   locale?: string
+  dev?: boolean
 }
 
 async function setup({
   form = Contact,
   set = {title: 'Contact', inputs: rows},
   forms,
-  locale
+  locale,
+  dev = false
 }: SetupOptions = {}) {
   const cms = createCMS({
     schema: {Contact, ServiceForm, Named, Kept, Page},
@@ -102,7 +104,8 @@ async function setup({
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
-          authorization: `Bearer ${key}`
+          authorization: `Bearer ${key}`,
+          'x-alinea-dev-key': key
         },
         body: JSON.stringify({
           entryId,
@@ -111,7 +114,7 @@ async function setup({
           data: Object.entries(data)
         })
       }),
-      context
+      {...context, isDev: dev}
     )
     return {status: response.status, body: await response.json()}
   }
@@ -196,6 +199,22 @@ test('bots see the message of the form like people do', async () => {
     _alinea_website: 'https://spam.example'
   })
   expect(result.body).toEqual({ok: true, confirmation: 'Thanks!'})
+})
+
+test('in development answers taken for spam tell why', async () => {
+  const {entryId, store, submit} = await setup({dev: true})
+  const result = await submit({
+    name: 'Ann',
+    email: 'ann@example.com',
+    _alinea_website: 'autofilled'
+  })
+  expect(result.body).toEqual({
+    ok: false,
+    message: 'Taken for spam: the hidden _alinea_website input was filled in'
+  })
+  expect(
+    await store.listSubmissions(entryId).then(page => page.submissions)
+  ).toEqual([])
 })
 
 test('only the server of the site can submit', async () => {

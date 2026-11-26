@@ -1,6 +1,6 @@
 import {Field, Form} from '#/index.js'
 import {expect, test} from 'bun:test'
-import {formSpam, isSpam} from './FormSpam.js'
+import {formSpam, spamReason} from './FormSpam.js'
 import {validateSubmission} from './FormSubmission.js'
 
 const inputs = Field.form('Inputs', {inputs: Form.defaults})
@@ -177,10 +177,14 @@ test('rules on the language test the locale of the form', () => {
 
 test('bots fill in the honeypot or send at once', () => {
   const now = 10_000
-  expect(isSpam(data({[formSpam.honeypot]: 'spam'}), now)).toBe(true)
-  expect(isSpam(data({[formSpam.shownAt]: String(now - 500)}), now)).toBe(true)
-  expect(isSpam(data({[formSpam.shownAt]: String(now - 5000)}), now)).toBe(
-    false
+  expect(spamReason(data({[formSpam.honeypot]: 'spam'}), now)).toBe(
+    'the hidden _alinea_website input was filled in'
   )
-  expect(isSpam(data({}), now)).toBe(false)
+  expect(spamReason(data({[formSpam.shownAt]: String(now - 500)}), now)).toBe(
+    'it was sent within 2 seconds of showing the form'
+  )
+  expect(
+    spamReason(data({[formSpam.shownAt]: String(now - 5000)}), now)
+  ).toBeUndefined()
+  expect(spamReason(data({}), now)).toBeUndefined()
 })
