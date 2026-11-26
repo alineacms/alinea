@@ -16,7 +16,7 @@ import {
   Separator,
   SubmenuTrigger
 } from 'react-aria-components'
-import {IcRoundCheck, IcRoundKeyboardArrowRight} from '#/dashboard/icons.js'
+import {IcRoundKeyboardArrowRight} from '#/dashboard/icons.js'
 import css from './DropdownMenu.module.css'
 import {Icon} from './Icon.js'
 import {placement} from './internal/Placement.js'
@@ -362,7 +362,7 @@ function DropdownMenuItemView({
         )
       }
     >
-      {({hasSubmenu, isSelected}) => (
+      {({hasSubmenu}) => (
         <>
           {icon && (
             <Icon
@@ -372,13 +372,6 @@ function DropdownMenuItemView({
             />
           )}
           {children}
-          {isSelected && (
-            <Icon
-              icon={IcRoundCheck}
-              data-slot="dropdown-menu-item-indicator"
-              className={styles.DropdownMenuItem.indicator()}
-            />
-          )}
           {hasSubmenu && (
             <Icon
               icon={IcRoundKeyboardArrowRight}

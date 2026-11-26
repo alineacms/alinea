@@ -78,6 +78,21 @@
   `locale` of the form is passed to `validate` as a third argument,
   `{locale}`, so messages of your own can be in the language of the visitor.
 
+### Fixes
+
+- Checked items in a dropdown menu are marked by their background only, like
+  the selected option of a select, so labels and badges line up on every row.
+- Untranslated badges are gray instead of the blue of a draft.
+
+## [2.0.2] - 2026-11-25
+
+### Fixes
+
+- The caret below a block that ends a rich text field shows where the new
+  line starts, inside the editor, and leaves no space behind when the field
+  is left without typing. The first and last block keep some room from the
+  edges of the editor.
+
 ## [2.0.1] - 2026-11-25
 
 ### New
