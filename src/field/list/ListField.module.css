@@ -52,15 +52,36 @@
 }
 
 .ListFieldCompactRow-fields {
+  position: relative;
   min-width: 0;
+
+  &.is-suffix [data-slot='text-field-control'] {
+    padding-right: calc(var(--alinea-list-suffix, 0px) + 22px);
+  }
 }
 
-/* A minimum width lines up the fields of rows with short badges */
-.ListFieldCompactRow-settings[data-size='sm'] {
-  justify-content: flex-end;
-  min-width: 96px;
-  max-width: 200px;
-  padding-inline: 4px;
+/* Laid over the end of the input, on the line of its text */
+.ListFieldCompactRow-suffix {
+  position: absolute;
+  top: 9px;
+  right: 11px;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  color: var(--alinea-fg-disabled);
+  pointer-events: none;
+
+  &.is-action {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  &:empty {
+    display: none;
+  }
 }
 
 .ListFieldTypeBadge[data-slot='badge'] {

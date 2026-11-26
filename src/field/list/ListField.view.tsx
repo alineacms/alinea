@@ -6,7 +6,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  Icon,
   SortableListItem,
   type DragMoveEvent,
   SortableList,
@@ -886,7 +885,7 @@ interface ListFieldCompactRowProps {
   sheet: BlockSheetState
   type: Type
   typeName: string
-  /** Shown in the button that opens the settings */
+  /** Shown at the end of the fields, opens the settings */
   badges?: ReactNode
   focus?: RowFocus['at']
   onDelete: () => void
@@ -915,6 +914,8 @@ function ListFieldCompactRow({
 }: ListFieldCompactRowProps) {
   const store = useStore()
   const fields = useRef<HTMLDivElement>(null)
+  const suffix = useRef<HTMLSpanElement>(null)
+  const hasSuffix = Boolean(badges)
   const itemId = useAtomValueRaw(row.field('_id')) as string
   const name = `${label} item ${index + 1}`
 
@@ -928,6 +929,21 @@ function ListFieldCompactRow({
     if (focus === 'end' && 'setSelectionRange' in input)
       input.setSelectionRange(input.value.length, input.value.length)
   }, [focus])
+
+  // The input keeps its text clear of the suffix laid over its end
+  useLayoutEffect(() => {
+    const element = suffix.current
+    const parent = fields.current
+    if (!element || !parent) return
+    const observer = new ResizeObserver(() =>
+      parent.style.setProperty(
+        '--alinea-list-suffix',
+        `${element.offsetWidth}px`
+      )
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [hasSuffix])
 
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
     const target = event.target
@@ -968,7 +984,7 @@ function ListFieldCompactRow({
       {!readOnly && <SortableListItemHandle aria-label={`Move ${name}`} />}
       <div
         ref={fields}
-        className={styles.ListFieldCompactRow.fields()}
+        className={styles.ListFieldCompactRow.fields({suffix: hasSuffix})}
         onKeyDown={keyDown}
       >
         <NodeEditor
@@ -977,25 +993,29 @@ function ListFieldCompactRow({
           readOnly={readOnly}
           inline
         />
+        {hasSuffix && (
+          // A shortcut for the mouse, the settings button does the same
+          <span
+            ref={suffix}
+            className={styles.ListFieldCompactRow.suffix({
+              action: sheet.available
+            })}
+            onClick={sheet.available ? () => sheet.toggle() : undefined}
+          >
+            {badges}
+          </span>
+        )}
       </div>
       {sheet.available && (
         <Button
           {...sheet.triggerProps}
           variant="ghost"
-          size={badges ? 'sm' : 'icon-sm'}
-          icon={badges ? undefined : IcRoundMoreHoriz}
+          size="icon-sm"
+          icon={IcRoundMoreHoriz}
           aria-label={`${label} settings`}
           aria-expanded={sheet.open}
           onClick={() => sheet.toggle()}
-          className={styles.ListFieldCompactRow.settings()}
-        >
-          {badges && (
-            <>
-              {badges}
-              <Icon icon={IcRoundMoreHoriz} />
-            </>
-          )}
-        </Button>
+        />
       )}
       <Button
         variant="ghost"

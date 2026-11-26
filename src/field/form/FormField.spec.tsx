@@ -83,16 +83,48 @@ test('edits the options of a choice under its row', async ({mount, page}) => {
   await expect(third.getByRole('textbox')).toBeFocused()
   await page.keyboard.type('HR')
   await expect.poll(labels).toEqual(['IT', 'Facilities', 'HR'])
-  // The key follows the label and shows on the row, it opens its settings
-  const settings = third.getByRole('button', {name: 'Option settings'})
-  await expect(settings).toHaveText('hr')
-  await settings.click()
+  // The key follows the label and shows in its input, it opens its settings
+  const suffix = third.getByTitle('Key: hr')
+  await expect(suffix).toHaveText('hr')
+  await suffix.click()
   const key = page.getByRole('dialog', {name: 'HR'}).getByRole('textbox', {
     name: 'Key'
   })
   await expect(key).toHaveValue('hr')
-  await key.fill('human-resources')
-  await expect(settings).toHaveText('human-resources')
+  await key.fill('human-resources-and-facility-management')
+  await expect(
+    third.getByTitle('Key: human-resources-and-facility-management')
+  ).toBeVisible()
+})
+
+test('lines up the options whatever the length of their key', async ({
+  mount,
+  page
+}) => {
+  await mount(<Builder />)
+  const options = page.getByRole('list', {name: 'Options'})
+  const second = options.getByRole('listitem', {name: 'Option item 2'})
+  await second.getByRole('textbox').press('Enter')
+  await page.keyboard.type('Facility services and building maintenance')
+  const widths = () =>
+    options
+      .getByRole('textbox')
+      .evaluateAll(inputs =>
+        inputs.map(input => Math.round(input.getBoundingClientRect().width))
+      )
+  await expect.poll(async () => new Set(await widths()).size).toBe(1)
+  // The text of the input stops before the key laid over its end
+  const third = options.getByRole('listitem', {name: 'Option item 3'})
+  const input = third.getByRole('textbox')
+  const suffix = third.getByTitle(
+    'Key: facility-services-and-building-maintenance'
+  )
+  const inputBox = (await input.boundingBox())!
+  const suffixBox = (await suffix.boundingBox())!
+  const padding = await input.evaluate(input =>
+    parseFloat(getComputedStyle(input).paddingRight)
+  )
+  expect(inputBox.x + inputBox.width - padding).toBeLessThan(suffixBox.x)
 })
 
 test('rules of an input use the inputs above it', async ({mount, page}) => {

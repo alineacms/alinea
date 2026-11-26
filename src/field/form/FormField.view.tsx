@@ -219,11 +219,8 @@ function FormOptionKey({row}: ListFieldBadgesProps) {
       ? value
       : slugify(typeof label === 'string' ? label : '')
   if (!key) return null
-  return (
-    <Badge size="sm" title="Key, shared by all languages">
-      {key}
-    </Badge>
-  )
+  // Cut off at the end of the input, so the title shows all of it
+  return <span title={`Key: ${key}`}>{key}</span>
 }
 
 interface Removal {
