@@ -117,6 +117,7 @@ export function createHandlerWithDatabase(
         forms: options.forms ?? {},
         secret: context.apiKey,
         handlerUrl: new URL(handlerPathname(config, url), url.origin),
+        dev: true,
         // The dev server checked the editor may work with every language
         // of the form before it forwarded
         async authorize() {
