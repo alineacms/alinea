@@ -43,17 +43,17 @@ test('resizes both sidebars and preserves widths through navigation and toggling
   const left = pane(app.page, 'left')
   const right = pane(app.page, 'right')
   await expect.poll(() => width(left)).toBe(320)
-  await expect.poll(() => width(right)).toBe(320)
+  await expect.poll(() => width(right)).toBe(400)
 
   await drag(app.page, divider(app.page, 'left'), 60)
   await expect.poll(() => width(left)).toBe(380)
   await drag(app.page, divider(app.page, 'right'), -80)
-  await expect.poll(() => width(right)).toBe(400)
+  await expect.poll(() => width(right)).toBe(480)
   await expect.poll(() => width(left)).toBe(380)
 
   await app.openEntry('Beta')
   await expect.poll(() => width(left)).toBe(380)
-  await expect.poll(() => width(right)).toBe(400)
+  await expect.poll(() => width(right)).toBe(480)
 
   await app.page
     .getByRole('button', {name: 'Close entry sidebar'})
@@ -61,10 +61,10 @@ test('resizes both sidebars and preserves widths through navigation and toggling
     .click()
   await expect(divider(app.page, 'right')).toHaveCount(0)
   await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
-  await expect.poll(() => width(right)).toBe(400)
+  await expect.poll(() => width(right)).toBe(480)
 
   await divider(app.page, 'right').dblclick()
-  await expect.poll(() => width(right)).toBe(320)
+  await expect.poll(() => width(right)).toBe(400)
   await divider(app.page, 'left').dblclick()
   await expect.poll(() => width(left)).toBe(320)
 
@@ -90,9 +90,9 @@ test('restores the saved sidebar width after navigating away and back while clos
     mount(<DashboardScenarioMount slowPreview />)
   )
   const right = pane(app.page, 'right')
-  await expect.poll(() => width(right)).toBe(320)
-  await drag(app.page, divider(app.page, 'right'), -80)
   await expect.poll(() => width(right)).toBe(400)
+  await drag(app.page, divider(app.page, 'right'), -80)
+  await expect.poll(() => width(right)).toBe(480)
   await app.page
     .getByRole('button', {name: 'Close entry sidebar'})
     .first()
@@ -103,7 +103,7 @@ test('restores the saved sidebar width after navigating away and back while clos
   await app.openEntry('Alpha')
   await expect(divider(app.page, 'right')).toHaveCount(0)
   await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
-  await expect.poll(() => width(right)).toBe(400)
+  await expect.poll(() => width(right)).toBe(480)
   await expect(
     app.page.getByRole('tablist', {name: 'Entry sidebar'})
   ).toBeVisible()
