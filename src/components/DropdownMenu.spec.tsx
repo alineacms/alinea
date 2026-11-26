@@ -82,18 +82,15 @@ test('checkbox and radio items', async ({mount, page}) => {
   )
 })
 
-test('unchecked items keep the room of the check', async ({mount, page}) => {
+test('marks checked items by their background only', async ({mount, page}) => {
   await mount(<Selection />)
   await page.getByRole('button', {name: 'Format'}).click()
-  const check = (name: string) =>
-    page
-      .getByRole('menuitemradio', {name})
-      .locator('[data-slot="dropdown-menu-item-indicator"]')
-  await expect(check('Left')).toBeVisible()
-  await expect(check('Center')).toBeHidden()
-  const left = await check('Left').boundingBox()
-  const center = await check('Center').boundingBox()
-  expect(center?.x).toBe(left?.x)
+  const left = page.getByRole('menuitemradio', {name: 'Left'})
+  const center = page.getByRole('menuitemradio', {name: 'Center'})
+  await page.mouse.move(0, 0)
+  await expect(left.locator('svg')).toHaveCount(0)
+  const tint = await left.evaluate(el => getComputedStyle(el).backgroundColor)
+  await expect(center).not.toHaveCSS('background-color', tint)
 })
 
 test('radio groups may share values', async ({mount, page}) => {

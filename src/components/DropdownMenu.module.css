@@ -42,11 +42,6 @@
     }
   }
 
-  /* Unchecked items keep the room of the check so their labels line up */
-  &[aria-checked='false'] .DropdownMenuItem-indicator {
-    visibility: hidden;
-  }
-
   &[aria-disabled='true'] {
     opacity: 0.5;
     pointer-events: none;
