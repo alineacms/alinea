@@ -34,8 +34,8 @@
     color: var(--alinea-status-published-fg);
   }
 
-  &[data-status='draft'],
-  &[data-status='untranslated'] {
+  /* Untranslated keeps the gray of a plain badge */
+  &[data-status='draft'] {
     background: var(--alinea-status-draft);
     color: var(--alinea-status-draft-fg);
   }
