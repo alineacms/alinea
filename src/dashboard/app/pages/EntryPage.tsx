@@ -42,7 +42,7 @@ import {policyAtom} from '#/dashboard/atoms/user.js'
 import {keptEditsAtom, openEditsAtom} from '#/dashboard/atoms/version.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
+import {useEffect, useLayoutEffect, useRef} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -65,12 +65,8 @@ import {
 } from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
 import {Explorer} from './../Explorer.js'
-import {SidebarLayout} from '../SidebarLayout.js'
-import {
-  BlockSheetProvider,
-  BlockSheetSlot,
-  useBlockSheetOpen
-} from '../BlockSheet.js'
+import {BlockSheetProvider} from '../BlockSheet.js'
+import {EntryEditorLayout} from '../EntryEditorLayout.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -549,32 +545,5 @@ function EntryEditorContent({
         </BlockSheetProvider>
       </EntryScope>
     </>
-  )
-}
-
-interface EntryEditorLayoutProps {
-  sidebar: ReactNode
-  children: ReactNode
-}
-
-/**
- * An open block sheet covers the sidebar, it shows the sidebar panel on its
- * own while the sidebar is collapsed
- */
-function EntryEditorLayout({sidebar, children}: EntryEditorLayoutProps) {
-  const sheetOpen = useBlockSheetOpen()
-  return (
-    <SidebarLayout
-      side="right"
-      visible={Boolean(sidebar) || sheetOpen}
-      sidebar={
-        <div className={styles.EntryEditorLayout.sidebar()}>
-          {sidebar}
-          <BlockSheetSlot />
-        </div>
-      }
-    >
-      {children}
-    </SidebarLayout>
   )
 }
