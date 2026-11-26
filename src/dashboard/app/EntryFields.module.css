@@ -16,7 +16,7 @@
 }
 
 /* Below this, half width fields are too narrow for their input */
-@container (max-width: 440px) {
+@container (max-width: 340px) {
   .EditField-slot {
     flex-basis: 100% !important;
   }

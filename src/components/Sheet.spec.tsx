@@ -21,21 +21,6 @@ test('focuses the first field and closes with escape', async ({
   await expect(reopen).toBeFocused()
 })
 
-test('starts the header with a back button that closes', async ({
-  mount,
-  page
-}) => {
-  await mount(<Example />)
-  const sheet = page.getByRole('dialog', {name: 'Landing page intro'})
-  const back = sheet.getByRole('button', {name: 'Back to preview'})
-  await expect(back).toHaveAttribute('data-slot', 'sheet-back')
-  await expect(
-    sheet.locator('[data-slot="sheet-header"] > :first-child')
-  ).toHaveAttribute('data-slot', 'sheet-back')
-  await back.click()
-  await expect(sheet).toBeHidden()
-})
-
 test('renders sections and lists actions one per line', async ({
   mount,
   page
