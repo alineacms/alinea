@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixes
+
+- Checkbox and radio items in a dropdown menu keep the room of the check when
+  unchecked, so their labels and badges line up.
+
 ## [2.0.2] - 2026-11-25
 
 ### Fixes

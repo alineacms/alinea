@@ -362,7 +362,7 @@ function DropdownMenuItemView({
         )
       }
     >
-      {({hasSubmenu, isSelected}) => (
+      {({hasSubmenu, selectionMode}) => (
         <>
           {icon && (
             <Icon
@@ -372,7 +372,7 @@ function DropdownMenuItemView({
             />
           )}
           {children}
-          {isSelected && (
+          {selectionMode !== 'none' && (
             <Icon
               icon={IcRoundCheck}
               data-slot="dropdown-menu-item-indicator"
