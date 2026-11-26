@@ -1,4 +1,4 @@
-.EntryTranslations-status {
-  margin-left: auto;
-  padding-left: 16px;
+.EntryTranslations-locale {
+  flex: 1;
+  padding-right: 16px;
 }

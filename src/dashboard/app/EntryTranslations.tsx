@@ -71,12 +71,11 @@ export function EntryTranslations({entry, locale}: EntryTranslationsProps) {
                 value={item.locale}
                 textValue={localeDisplay(item.locale).textValue}
               >
-                <LocaleLabel locale={item.locale} />
-                <Badge
-                  size="sm"
-                  status={status}
-                  className={styles.EntryTranslations.status()}
-                >
+                {/* The label takes the free space so the badges line up */}
+                <span className={styles.EntryTranslations.locale()}>
+                  <LocaleLabel locale={item.locale} />
+                </span>
+                <Badge size="sm" status={status}>
                   {statusLabel[status]}
                 </Badge>
               </DropdownMenuRadioItem>

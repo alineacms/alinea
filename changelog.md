@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixes
+
+- Checked items in a dropdown menu are marked by their background only, like
+  the selected option of a select, so labels and badges line up on every row.
+- Untranslated badges are gray instead of the blue of a draft.
+
 ## [2.0.2] - 2026-11-25
 
 ### Fixes
