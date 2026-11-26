@@ -24,7 +24,7 @@
   of `Form.limits()` keep their name.
 - An entry holds one form: a type with more than one `Field.form` is a config
   error, and the `field` option of `cms.forms.submit`, `prepareUpload` and
-  `status` is removed. Keep submissions and Most submissions are read from
+  `status` is removed. Keep submissions and Maximum submissions are read from
   the fields made with `Form.keep()` and `Form.limits()` only, under any key,
   not from other fields named `keep` or `limit`.
 - A type in the accepted files of a file input, eg. `image/*`, is matched by

@@ -696,7 +696,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Most submissions"
+          "text": "Maximum submissions"
         }
       ],
       "_anchor": "most-submissions"
@@ -707,7 +707,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Most submissions",
+          "text": "Maximum submissions",
           "marks": [
             {
               "_type": "bold"
@@ -870,7 +870,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": "Most submissions",
+                  "text": "Maximum submissions",
                   "marks": [
                     {
                       "_type": "bold"

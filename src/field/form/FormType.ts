@@ -306,7 +306,7 @@ export function keepFor() {
 export function limitFields() {
   const limit = setting(
     'limit',
-    number('Most submissions', {
+    number('Maximum submissions', {
       minValue: 1,
       // The places are those of all languages together
       shared: true,

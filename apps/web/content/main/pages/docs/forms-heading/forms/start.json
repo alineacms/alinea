@@ -264,7 +264,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The form has to be a field of the entry itself, not one inside a list or a block. An entry holds one form and its submissions are those of the entry, so a type with more than one `Field.form` is an error in your config. Keep submissions and Most submissions are only read from the fields of `Form.keep()` and `Form.limits()`, not from other fields with the same name."
+          "text": "The form has to be a field of the entry itself, not one inside a list or a block. An entry holds one form and its submissions are those of the entry, so a type with more than one `Field.form` is an error in your config. Keep submissions and Maximum submissions are only read from the fields of `Form.keep()` and `Form.limits()`, not from other fields with the same name."
         }
       ]
     },
