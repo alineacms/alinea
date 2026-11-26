@@ -4,6 +4,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--alinea-field-gap);
+  /* Fields follow the width they get rather than the viewport's, eg. in a
+     sheet next to the editor */
+  container-type: inline-size;
 }
 
 .EditField-slot {
@@ -12,7 +15,8 @@
   min-width: 0;
 }
 
-@media (max-width: 768px) {
+/* Below this, half width fields are too narrow for their input */
+@container (max-width: 440px) {
   .EditField-slot {
     flex-basis: 100% !important;
   }

@@ -11,7 +11,9 @@ import {
   navigationSidebarWidthAtom
 } from '../atoms/dashboard.js'
 
-const defaultWidth = 320
+// The entry sidebar also holds the sheets that edit blocks and list rows,
+// which need the room of a form
+const defaultWidth = {left: 320, right: 400}
 
 export interface SidebarLayoutProps {
   children: ReactNode
@@ -36,7 +38,7 @@ export function SidebarLayout({
     <ResizablePanel
       key="sidebar"
       size={width}
-      defaultSize={defaultWidth}
+      defaultSize={defaultWidth[side]}
       minSize={isMobile ? 0 : side === 'left' ? 200 : 300}
       maxSize={isMobile ? Infinity : side === 'left' ? 480 : 640}
       onSizeChange={size => {
