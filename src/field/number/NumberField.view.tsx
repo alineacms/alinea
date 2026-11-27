@@ -22,6 +22,7 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
         options.placeholder ?? (options.inline ? options.label : undefined)
       }
       shared={options.shared}
+      formatOptions={options.formatOptions}
       max={options.maxValue}
       min={options.minValue}
       onValueChange={setValue}

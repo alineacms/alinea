@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Features
+
+- `Field.number` takes `formatOptions`, which set how the value is shown and
+  parsed, eg. `{maximumFractionDigits: 6}` with `step: 0.000001` for a
+  latitude or longitude.
+
 ### Fixes
 
 - Checked items in a dropdown menu are marked by their background only, like

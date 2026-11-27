@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Formatted, States} from './NumberField.stories.js'
+import {Coordinate, Example, Formatted, States} from './NumberField.stories.js'
 
 test('steps, clamps and clears the value', async ({mount, page}) => {
   await mount(<Example />)
@@ -42,4 +42,12 @@ test('reflects invalid, disabled and read-only', async ({mount, page}) => {
     'readonly',
     ''
   )
+})
+
+test('keeps the decimals of a coordinate', async ({mount, page}) => {
+  await mount(<Coordinate />)
+  const input = page.getByRole('textbox', {name: 'Latitude'})
+  await input.fill('51.054342')
+  await input.blur()
+  await expect(input).toHaveValue('51.054342')
 })
