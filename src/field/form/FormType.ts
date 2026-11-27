@@ -349,7 +349,7 @@ function afterSending() {
  * sent in a Submissions tab and what happens after sending in Notifications.
  * Keep form entries in a root of their own and link pages to them. With
  * `seo` or `details` a form is a page of its own, with the SEO and Details
- * tabs of `Config.document`.
+ * tabs of `Config.document` at the end.
  */
 export function formType<
   Inputs extends Record<string, Input>,
@@ -393,7 +393,6 @@ export function formType<
     fields: <any>tabs(
       tab('Form', {icon: IcRoundEdit, fields: formFields}),
       ...values(extraTabs),
-      ...(page ? [page.seo] : []),
       submissionsTab(),
       tab('Notifications', {
         icon: IcRoundSend,
@@ -415,7 +414,7 @@ export function formType<
           ...limitFields()
         }
       }),
-      ...(page ? [page.details] : [])
+      ...(page ? [page.seo, page.details] : [])
     )
   })
   formTypes.add(result)

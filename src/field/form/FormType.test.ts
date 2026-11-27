@@ -25,8 +25,8 @@ test('a form with seo is a page with the tabs of a document', () => {
   })
   const fields = Object.keys(Type.fields(FormPage))
   expect(isDocument(FormPage)).toBe(true)
-  expect(fields.indexOf('metadata')).toBeLessThan(fields.indexOf('mails'))
-  expect(fields.indexOf('owner')).toBeGreaterThan(fields.indexOf('full'))
+  expect(fields.indexOf('metadata')).toBeGreaterThan(fields.indexOf('full'))
+  expect(fields.indexOf('owner')).toBeGreaterThan(fields.indexOf('metadata'))
   expect(isDocument(Form.type('Form', {inputs: Form.defaults}))).toBe(false)
 })
 

@@ -163,7 +163,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "When a form is a page of its own, with its own url, pass `seo` and `details` as you would to `Config.document`. The form then has an SEO tab with its metadata and previews before Submissions, and a Details tab with when it was created and updated at the end. Moving or archiving it asks where its url should redirect to, like a page:"
+          "text": "When a form is a page of its own, with its own url, pass `seo` and `details` as you would to `Config.document`. The form then ends with an SEO tab with its metadata and previews, and a Details tab with when it was created and updated. Moving or archiving it asks where its url should redirect to, like a page:"
         }
       ]
     },
