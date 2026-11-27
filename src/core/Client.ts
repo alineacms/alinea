@@ -436,6 +436,9 @@ export class Client implements LocalConnection {
           if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error
           else errorMessage = JSON.stringify(body, null, 2)
+        } else if (res.headers.get('content-type')?.includes('text/html')) {
+          // A page from in front of the handler, eg. a basic auth prompt
+          errorMessage = blockedMessage(url, res)
         } else {
           errorMessage = await res.text()
         }
@@ -481,4 +484,14 @@ export class Client implements LocalConnection {
     const text = await res.text()
     throw new HttpError(res.status, text || res.statusText)
   }
+}
+
+function blockedMessage(url: string, res: Response): string {
+  const status = `${res.status} ${res.statusText}`.trim()
+  const reason =
+    res.status === 401 || res.status === 403
+      ? ': is the site behind a password, eg. basic auth? Let requests to ' +
+        `${url} through`
+      : ''
+  return `${url} answered ${status} with a page instead of Alinea${reason}`
 }
