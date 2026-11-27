@@ -59,12 +59,13 @@ export interface ClientOptions {
 // the response has to arrive in time: a large blob download takes as long as
 // it needs. The handler answers reads within its own sync wait, while
 // mutations and uploads may take as long as they need.
-const readTimeout = 60_000
-const reads = new Set<HandleAction>([
-  HandleAction.Tree,
-  HandleAction.Sha,
-  HandleAction.Blob,
-  HandleAction.Resolve
+const readTimeouts = new Map<HandleAction, number>([
+  [HandleAction.Tree, 60_000],
+  [HandleAction.Sha, 60_000],
+  [HandleAction.Blob, 60_000],
+  [HandleAction.Resolve, 60_000],
+  // A page waits for the status of its form while it renders
+  [HandleAction.FormStatus, 10_000]
 ])
 
 interface OutdatedState {
@@ -391,11 +392,12 @@ export class Client implements LocalConnection {
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
-    const timer = reads.has(params.action)
+    const timeout = readTimeouts.get(params.action)
+    const timer = timeout
       ? setTimeout(() => {
-          const seconds = readTimeout / 1000
+          const seconds = timeout / 1000
           controller.abort(new Error(`No response within ${seconds}s`))
-        }, readTimeout)
+        }, timeout)
       : undefined
     const headers = new Headers(init.headers)
     if (configFingerprint)

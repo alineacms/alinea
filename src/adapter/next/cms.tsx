@@ -8,7 +8,7 @@ import {createThrottledSync, syncWait} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import {type Forms, formsOf} from '#/core/Forms.js'
+import {type Forms, type FormsClient, formsOf} from '#/core/Forms.js'
 import {
   type RequestContext,
   type UploadMetadata,
@@ -365,6 +365,9 @@ export class NextCMS<
 
   /** Submits the answers of visitors to forms, see `Field.form` */
   forms: Forms = formsOf(async () => {
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+    // A build has no submissions to count, the handler checks them on submit
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return buildForms
     const context = await requestContext(this.config)
     // During development forms go to the handler of this app, which
     // answers them with its own options, as it does once deployed
@@ -413,6 +416,19 @@ export class NextCMS<
         root={root}
       />
     )
+  }
+}
+
+/** Forms while pages are built: open, they cannot be sent then */
+const buildForms: FormsClient = {
+  async formStatus() {
+    return {open: true}
+  },
+  async submit() {
+    throw new Error('Forms cannot be sent during a build')
+  },
+  async prepareFormUpload() {
+    throw new Error('Forms cannot be sent during a build')
   }
 }
 

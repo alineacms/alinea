@@ -75,6 +75,15 @@ test('forwards Edge queries to the configured handler', async () => {
   expect(handlerFetch).toHaveBeenCalledTimes(1)
 })
 
+test('forms are open during a build without asking the handler', async () => {
+  process.env.NEXT_PHASE = 'production-build'
+  handlerFetch = mock(async () => Response.json({open: false}))
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+
+  expect(await cms.forms.status('form')).toEqual({open: true})
+  expect(handlerFetch).toHaveBeenCalledTimes(0)
+})
+
 test('draft mode queries with the preview status unless one is given', async () => {
   process.env.NEXT_RUNTIME = 'edge'
   const statuses = Array<unknown>()

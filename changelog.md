@@ -87,6 +87,11 @@
 
 ### Fixes
 
+- `cms.forms.status` answers open while Next.js builds pages, instead of
+  asking the handler of the deployed site, which a build may not reach. Once
+  the site runs it gives up on the handler after 10 seconds, so a page that
+  shows a form does not wait on it. The handler checks the limit of a form
+  again when it is sent.
 - When a page answers instead of the handler, eg. the password prompt of basic
   auth in front of a staging site, the error names the url and the status
   instead of holding the html of that page.
