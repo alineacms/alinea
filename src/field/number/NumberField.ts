@@ -18,6 +18,8 @@ export interface NumberOptions extends FieldOptions<number | null> {
   maxValue?: number
   /** Specifies the legal number intervals */
   step?: number
+  /** How the value is shown and parsed, eg. `{maximumFractionDigits: 6}` */
+  formatOptions?: Intl.NumberFormatOptions
 }
 
 export class NumberField extends ScalarField<number | null, NumberOptions> {}

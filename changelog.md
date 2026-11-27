@@ -83,11 +83,22 @@
 
 ### Fixes
 
+- The settings of a link to an entry have Edit entry, which opens the entry
+  in the dashboard, instead of opening it in another tab.
+
+## [2.0.3] - 2026-11-27
+
+### New
+
+- `Field.number` takes `formatOptions`, which set how the value is shown and
+  parsed, eg. `{maximumFractionDigits: 6}` with `step: 0.000001` for a
+  latitude or longitude.
+
+### Fixes
+
 - Checked items in a dropdown menu are marked by their background only, like
   the selected option of a select, so labels and badges line up on every row.
 - Untranslated badges are gray instead of the blue of a draft.
-- The settings of a link to an entry have Edit entry, which opens the entry
-  in the dashboard, instead of opening it in another tab.
 
 ## [2.0.2] - 2026-11-25
 
