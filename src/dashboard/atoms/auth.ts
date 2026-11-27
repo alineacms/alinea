@@ -91,57 +91,7 @@ export const authAtom = Object.assign(
         return
       }
 
-      if (!get(authRequiredAtom)) return
-
-      const client = get(clientAtom)
-      if (!(client instanceof Client)) {
-        set(authState, {
-          status: 'error',
-          error: new Error('Cannot authenticate with non http client')
-        })
-        return
-      }
-
-      set(authState, {status: 'loading'})
-      try {
-        const result = await client.authStatus()
-        switch (result.type) {
-          case AuthResultType.NeedsRefresh:
-            set(authState, {
-              status: 'error',
-              error: new Error(
-                'Authentication failure, please refresh the page'
-              )
-            })
-            return
-          case AuthResultType.Authenticated:
-            set(
-              clientAtom,
-              client.authenticate(
-                options => options,
-                () => set(authAtom, {type: 'check'})
-              )
-            )
-            set(authState, {
-              status: 'authenticated',
-              user: result.user,
-              capabilities: result.capabilities
-            })
-            return
-          case AuthResultType.UnAuthenticated:
-            set(authState, {status: 'redirecting'})
-            window.location.href = appendFrom(result.redirect)
-            return
-          case AuthResultType.MissingApiKey:
-            set(authState, {
-              status: 'missingApiKey',
-              setupUrl: result.setupUrl
-            })
-            return
-        }
-      } catch {
-        set(authState, {status: 'missingHandler'})
-      }
+      return set(checkAuthAtom)
     }
   ),
   {
@@ -150,6 +100,60 @@ export const authAtom = Object.assign(
     }
   }
 )
+
+// Apart from authAtom, so the client can ask it to check again: an atom may
+// not set itself from its own write
+const checkAuthAtom = atom(null, async (get, set) => {
+  if (!get(authRequiredAtom)) return
+
+  const client = get(clientAtom)
+  if (!(client instanceof Client)) {
+    set(authState, {
+      status: 'error',
+      error: new Error('Cannot authenticate with non http client')
+    })
+    return
+  }
+
+  set(authState, {status: 'loading'})
+  try {
+    const result = await client.authStatus()
+    switch (result.type) {
+      case AuthResultType.NeedsRefresh:
+        set(authState, {
+          status: 'error',
+          error: new Error('Authentication failure, please refresh the page')
+        })
+        return
+      case AuthResultType.Authenticated:
+        set(
+          clientAtom,
+          client.authenticate(
+            options => options,
+            () => set(authAtom, {type: 'check'})
+          )
+        )
+        set(authState, {
+          status: 'authenticated',
+          user: result.user,
+          capabilities: result.capabilities
+        })
+        return
+      case AuthResultType.UnAuthenticated:
+        set(authState, {status: 'redirecting'})
+        window.location.href = appendFrom(result.redirect)
+        return
+      case AuthResultType.MissingApiKey:
+        set(authState, {
+          status: 'missingApiKey',
+          setupUrl: result.setupUrl
+        })
+        return
+    }
+  } catch {
+    set(authState, {status: 'missingHandler'})
+  }
+})
 
 function appendFrom(url: string): string {
   const {location} = window

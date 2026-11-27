@@ -87,6 +87,9 @@
 
 ### Fixes
 
+- The dashboard checks the session again when the handler refuses a request,
+  instead of stopping with "atom not writable", and then shows why it was
+  refused.
 - `cms.forms.status` answers open while Next.js builds pages, instead of
   asking the handler of the deployed site, which a build may not reach. Once
   the site runs it gives up on the handler after 10 seconds, so a page that
