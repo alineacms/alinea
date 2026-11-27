@@ -64,3 +64,28 @@ test('continues from a missing API key to cloud setup', async () => {
     'about:blank?setup=1&from=about%3A%2F%2Fblank'
   )
 })
+
+test('checks again when the handler refuses a request', async () => {
+  const config = Config.create({schema: {}, workspaces: {}})
+  const client = new Client({config, url: '/api/cms'})
+  let checks = 0
+  client.authStatus = async (): Promise<AuthResult> => {
+    checks++
+    return {type: AuthResultType.Authenticated, user: localUser}
+  }
+  let unauthorized = () => {}
+  client.authenticate = (_, refused) => {
+    unauthorized = refused
+    return client
+  }
+  const store = createStore()
+  store.set(alineaDevAtom, false)
+  store.set(localAtom, false)
+  store.set(clientAtom, client)
+  await store.set(authAtom, {type: 'check'})
+
+  unauthorized()
+  await Promise.resolve()
+
+  expect(checks).toBe(2)
+})
