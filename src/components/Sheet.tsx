@@ -10,7 +10,7 @@ import {
   useMemo,
   useRef
 } from 'react'
-import {IcRoundArrowBack, IcRoundClose} from '#/dashboard/icons.js'
+import {IcRoundClose} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import css from './Sheet.module.css'
@@ -25,7 +25,6 @@ const focusables =
 
 interface SheetContextValue {
   titleId: string
-  backLabel: string
   onClose?: () => void
 }
 
@@ -48,8 +47,6 @@ function first(root: Element, selector: string): HTMLElement | undefined {
 export interface SheetContentProps extends StyleProps, AriaProps, DataProps {
   /** Called on Escape while focus is inside the sheet, and by `SheetClose` */
   onClose?: () => void
-  /** Accessible label of the back button in the header, defaults to "Back" */
-  backLabel?: string
   children: ReactNode
 }
 
@@ -61,7 +58,6 @@ export interface SheetContentProps extends StyleProps, AriaProps, DataProps {
  */
 export function SheetContent({
   onClose,
-  backLabel = 'Back',
   className,
   children,
   'aria-label': ariaLabel,
@@ -70,10 +66,7 @@ export function SheetContent({
 }: SheetContentProps) {
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
-  const context = useMemo(
-    () => ({titleId, backLabel, onClose}),
-    [titleId, backLabel, onClose]
-  )
+  const context = useMemo(() => ({titleId, onClose}), [titleId, onClose])
   useLayoutEffect(() => {
     const root = ref.current
     if (!root) return
@@ -119,31 +112,14 @@ export interface SheetPartProps extends StyleProps, AriaProps, DataProps {
 
 export interface SheetHeaderProps extends SheetPartProps {}
 
-/**
- * Top bar of the sheet, eg. a badge, the title, a key hint and SheetClose.
- * Starts with a back button when the sheet has an `onClose`.
- */
-export function SheetHeader({className, children, ...props}: SheetHeaderProps) {
-  const context = useContext(SheetContext)
+/** Top bar of the sheet, eg. a badge, the title, a key hint and SheetClose */
+export function SheetHeader({className, ...props}: SheetHeaderProps) {
   return (
     <div
       data-slot="sheet-header"
       {...props}
       className={styles.SheetHeader(styler.merge({className}))}
-    >
-      {context?.onClose && (
-        <Button
-          data-slot="sheet-back"
-          variant="ghost"
-          size="icon-sm"
-          icon={IcRoundArrowBack}
-          aria-label={context.backLabel}
-          className={styles.SheetHeader.back()}
-          onClick={context.onClose}
-        />
-      )}
-      {children}
-    </div>
+    />
   )
 }
 

@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebasedEdits} from './ReactiveNode.js'
 
 interface Article {
   title: string
@@ -343,4 +343,36 @@ test('starts from edits that are not saved yet', () => {
   const readOnly = new ReactiveNode(saved, true, {title: 'Edited', tags: []})
   expect(store.get(readOnly.value)).toEqual(saved)
   expect(store.get(readOnly.isDirty)).toBe(false)
+})
+
+test('rebases the edits of a list row onto the row with its id', () => {
+  const row = (id: string, index: string, label: string) => ({
+    _id: id,
+    _index: index,
+    _type: 'text',
+    label
+  })
+  const [a, b, c] = [
+    row('a', 'a0', 'A'),
+    row('b', 'a1', 'B'),
+    row('c', 'a2', 'C')
+  ]
+  const checkpoint = {inputs: [a, b, c]}
+  const edited = {
+    inputs: [a, {...b, label: 'B edited'}, c, row('d', 'a3', 'D')]
+  }
+  // Another language removed a and saved the form it shares
+  const saved = {inputs: [b, c]}
+  expect(rebasedEdits(checkpoint, edited, saved)).toEqual({
+    inputs: [{...b, label: 'B edited'}, c, row('d', 'a3', 'D')]
+  })
+  // A row the editor removed stays removed, one the save added stays
+  expect(
+    rebasedEdits(
+      checkpoint,
+      {inputs: [a, c]},
+      {inputs: [a, b, c, row('e', 'a4', 'E')]}
+    )
+  ).toEqual({inputs: [a, c, row('e', 'a4', 'E')]})
+  expect(rebasedEdits(checkpoint, checkpoint, saved)).toBeUndefined()
 })

@@ -1,0 +1,248 @@
+{
+  "_id": "3L5XXuUQMLEB9kGNnBI6bijFhoc",
+  "_type": "FormEntry",
+  "_index": "a1",
+  "_i18nId": "3L5XXuUQMLEB9kGNnBI6bijFhoc",
+  "_root": "forms",
+  "title": "Service request",
+  "path": "service-request",
+  "inputs": [
+    {
+      "_id": "service-about",
+      "_index": "a0",
+      "_type": "section",
+      "label": "About you",
+      "inputs": [
+        {
+          "_id": "service-name",
+          "_index": "a0",
+          "_type": "text",
+          "label": "Name",
+          "required": true,
+          "width": "full"
+        },
+        {
+          "_id": "service-email",
+          "_index": "a1",
+          "_type": "email",
+          "label": "Email",
+          "required": true,
+          "width": "half"
+        },
+        {
+          "_id": "service-phone",
+          "_index": "a2",
+          "_type": "tel",
+          "label": "Phone",
+          "width": "half"
+        }
+      ]
+    },
+    {
+      "_id": "service-request",
+      "_index": "a1",
+      "_type": "section",
+      "label": "Your request",
+      "help": "We usually answer within two working days.",
+      "inputs": [
+        {
+          "_id": "service-service",
+          "_index": "a0",
+          "_type": "radio",
+          "label": "Service",
+          "required": true,
+          "width": "full",
+          "options": [
+            {
+              "_id": "it",
+              "_index": "a0",
+              "_type": "option",
+              "label": "IT"
+            },
+            {
+              "_id": "facilities",
+              "_index": "a1",
+              "_type": "option",
+              "label": "Facilities"
+            },
+            {
+              "_id": "hr",
+              "_index": "a2",
+              "_type": "option",
+              "label": "HR"
+            }
+          ]
+        },
+        {
+          "_id": "service-device",
+          "_index": "a1",
+          "_type": "select",
+          "label": "Device",
+          "width": "half",
+          "placeholder": "Choose a device",
+          "options": [
+            {
+              "_id": "laptop",
+              "_index": "a0",
+              "_type": "option",
+              "label": "Laptop"
+            },
+            {
+              "_id": "desktop",
+              "_index": "a1",
+              "_type": "option",
+              "label": "Desktop"
+            },
+            {
+              "_id": "phone",
+              "_index": "a2",
+              "_type": "option",
+              "label": "Phone"
+            }
+          ],
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-device",
+                "input": "service-service",
+                "op": "is",
+                "value": [
+                  "it"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "_id": "service-room",
+          "_index": "a2",
+          "_type": "text",
+          "label": "Room number",
+          "width": "half",
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-room",
+                "input": "service-service",
+                "op": "is",
+                "value": [
+                  "facilities"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "_id": "service-description",
+          "_index": "a3",
+          "_type": "textarea",
+          "label": "Description",
+          "help": "Tell us what happened and when",
+          "required": true,
+          "width": "full",
+          "maxLength": 2000
+        },
+        {
+          "_id": "service-screenshots",
+          "_index": "a4",
+          "_type": "file",
+          "label": "Screenshots",
+          "width": "full",
+          "accept": ".png, .jpg, .pdf",
+          "maxSize": 10,
+          "multiple": true,
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-shots",
+                "input": "service-device",
+                "op": "filled"
+              }
+            ]
+          }
+        },
+        {
+          "_id": "service-rating",
+          "_index": "a5",
+          "_type": "rating",
+          "label": "How did we do last time?",
+          "width": "full",
+          "max": 5
+        }
+      ]
+    },
+    {
+      "_id": "service-privacy",
+      "_index": "a2",
+      "_type": "check",
+      "label": "I agree to the privacy policy",
+      "required": true,
+      "width": "full"
+    }
+  ],
+  "after": "message",
+  "message": "Thanks, we received your request and will reply within two working days.",
+  "mails": [
+    {
+      "_id": "service-mail-it",
+      "_index": "a0",
+      "_type": "mail",
+      "name": "IT helpdesk",
+      "to": "address",
+      "address": "it-helpdesk@example.com",
+      "replyTo": "service-email",
+      "sendWhen": {
+        "match": "all",
+        "rules": [
+          {
+            "id": "rule-mail-it",
+            "input": "service-service",
+            "op": "is",
+            "value": [
+              "it"
+            ]
+          }
+        ]
+      },
+      "subject": "New request from {{name}}: {{device}}",
+      "body": "{{name}} ({{email}}) asked for help with {{device}}:\n\n{{description}}"
+    },
+    {
+      "_id": "service-mail-facilities",
+      "_index": "a1",
+      "_type": "mail",
+      "name": "Facilities",
+      "to": "address",
+      "address": "facilities@example.com",
+      "replyTo": "service-email",
+      "sendWhen": {
+        "match": "all",
+        "rules": [
+          {
+            "id": "rule-mail-fac",
+            "input": "service-service",
+            "op": "is",
+            "value": [
+              "facilities"
+            ]
+          }
+        ]
+      },
+      "subject": "Room {{room-number}}: request from {{name}}",
+      "body": "{{description}}"
+    },
+    {
+      "_id": "service-mail-confirm",
+      "_index": "a2",
+      "_type": "mail",
+      "name": "Confirmation to the sender",
+      "to": "input",
+      "input": "service-email",
+      "subject": "We received your request",
+      "body": "Hi {{name}},\n\nThanks, we received your request and will reply within two working days."
+    }
+  ]
+}

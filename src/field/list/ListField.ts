@@ -26,6 +26,12 @@ export interface ListOptions<Definitions extends Schema> extends Omit<
   help?: ReactNode
   /** Display a minimal version, without label and fold */
   inline?: boolean
+  /**
+   * Show each row on one line with its fields side by side and without their
+   * labels, for short rows such as options. Enter adds a row below, Backspace
+   * in an empty row removes it, the tabs of a row open from its "…" button.
+   */
+  compact?: boolean
   /** Show the rows folded when the entry opens, added rows start open.
    * Ignored for inline lists, which can not be folded */
   collapsed?: boolean

@@ -13,6 +13,10 @@ import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {EditFields} from '#/dashboard/app/EntryFields.js'
 import {TabsSection} from '#/field/tabs.js'
+import {ViewSection} from '#/field/view.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {useOptionalDashboardContext} from '#/dashboard/hooks.js'
+import {useState} from 'react'
 
 interface TabsViewProps {
   section: Section
@@ -21,9 +25,19 @@ interface TabsViewProps {
 export function TabsView({section}: TabsViewProps) {
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
+  // A link to a submission opens the tab with the submissions of the form
+  const submission = useOptionalDashboardContext()?.page.submission
+  const index = visibleTypes.findIndex(holdsSubmissions)
+  const linked = submission && index >= 0 ? String(index) : undefined
+  const [tab, setTab] = useState(linked ?? '0')
+  const [requested, setRequested] = useState(submission)
+  if (submission !== requested) {
+    setRequested(submission)
+    if (linked) setTab(linked)
+  }
   if (!visibleTypes.length) return null
   return (
-    <Tabs defaultValue="0">
+    <Tabs value={tab} onValueChange={setTab}>
       <Surface>
         <SurfaceHeader>
           <TabsList>
@@ -48,4 +62,11 @@ export function TabsView({section}: TabsViewProps) {
       </Surface>
     </Tabs>
   )
+}
+
+function holdsSubmissions(type: Type): boolean {
+  return Type.sections(type).some(section => {
+    const data = section[Section.Data]
+    return data instanceof ViewSection && data.view === viewKeys.FormSubmissions
+  })
 }

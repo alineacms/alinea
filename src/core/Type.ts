@@ -155,10 +155,19 @@ export namespace Type {
     return Boolean(type && hasType(type))
   }
 
-  export function sharedData(type: Type, entryData: Record<string, unknown>) {
+  /**
+   * The values of the shared fields of an entry, as they are written into
+   * another language: into its data when given, or into a new translation
+   */
+  export function sharedData(
+    type: Type,
+    entryData: Record<string, unknown>,
+    target?: Record<string, unknown>
+  ) {
     const res: Record<string, unknown> = {}
     for (const [key, field] of entries(fields(type))) {
-      if (Field.options(field).shared) res[key] = entryData[key]
+      if (Field.options(field).shared)
+        res[key] = Field.share(field, entryData[key], target?.[key])
     }
     if (keys(res).length === 0) return undefined
     return res

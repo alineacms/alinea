@@ -4,6 +4,7 @@ import {
   Children,
   isValidElement,
   type KeyboardEvent,
+  type MouseEvent,
   type ReactElement,
   type ReactNode,
   useEffect,
@@ -274,6 +275,12 @@ export function ResizablePanelGroup({
     )
   }
 
+  // Dividers are focusable for the arrow keys, but dragging one leaves focus
+  // where it was, eg. in a sheet that closes once focus leaves it
+  function mouseDown(event: MouseEvent<HTMLDivElement>) {
+    if (sashes().includes(event.target as HTMLElement)) event.preventDefault()
+  }
+
   return (
     <div
       data-slot="resizable-panel-group"
@@ -282,6 +289,7 @@ export function ResizablePanelGroup({
       data-direction={direction}
       className={styles.ResizablePanelGroup(styler.merge({className}))}
       onKeyDown={keyDown}
+      onMouseDown={mouseDown}
     >
       <Allotment
         ref={allotment}

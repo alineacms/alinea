@@ -431,7 +431,7 @@ export class EntryTransaction implements AsyncDisposable {
         const typeInstance = config.schema[type]
         assert(typeInstance, `Type not found: ${type}`)
         // Fill in shared fields missing from data without moving its keys
-        const shared = Type.sharedData(typeInstance, from.data) ?? {}
+        const shared = Type.sharedData(typeInstance, from.data, data) ?? {}
         const missing = entries(shared).filter(
           ([key]) => data[key] === undefined
         )
@@ -1188,12 +1188,14 @@ export class EntryTransaction implements AsyncDisposable {
   ): Promise<void> {
     const typeInstance = this.#workingDatabase.config.schema[type]
     assert(typeInstance, `Type not found: ${type}`)
-    const shared = Type.sharedData(typeInstance, data)
-    if (!shared) return
+    if (!Type.sharedData(typeInstance, data)) return
     const translations = (await this.#versions(id)).filter(
       entry => entry.locale !== locale
     )
     for (const translation of translations) {
+      // Each language keeps what its fields do not share, eg. the texts of
+      // a shared form
+      const shared = Type.sharedData(typeInstance, data, translation.data)!
       // Leave translations alone unless a shared value actually changed
       const changed = entries(shared).some(
         ([key, value]) =>

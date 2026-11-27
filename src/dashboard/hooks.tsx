@@ -137,6 +137,11 @@ export function useDashboardContext(): DashboardContextValue {
   return value
 }
 
+/** The dashboard context, null outside of a dashboard, eg. in a story */
+export function useOptionalDashboardContext(): DashboardContextValue | null {
+  return useContext(dashboardContext)
+}
+
 export interface EntryScopeProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
@@ -174,7 +179,8 @@ export function useOptionalEntryAtoms(): EntryContextValue | null {
 export function useNodeEditor(
   node: EditorNode,
   type: Type,
-  readOnly?: boolean
+  readOnly?: boolean,
+  inline?: boolean
 ) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
@@ -188,9 +194,11 @@ export function useNodeEditor(
       activeVersion ?? undefined,
       policy,
       scope?.richTextImages,
-      readOnly
+      readOnly,
+      inline
     )
   }, [
+    inline,
     activeVersion,
     node,
     parent,

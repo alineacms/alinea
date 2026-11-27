@@ -94,7 +94,7 @@ test('opens single-link settings from the linked row', async ({
   await expect(settings).toBeVisible()
   await expect(settings.getByText('Page', {exact: true})).toBeVisible()
   await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
-  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(settings.getByRole('button', {name: 'Edit entry'})).toBeVisible()
   await expect(
     settings.getByRole('button', {name: 'Replace link'})
   ).toBeVisible()
@@ -131,7 +131,7 @@ test('opens multiple-link settings from the linked row', async ({
   await firstLink.click()
   const home = page.getByRole('dialog', {name: 'Home'})
   await expect(home).toBeVisible()
-  await expect(home.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(home.getByRole('button', {name: 'Edit entry'})).toBeVisible()
   await expect(firstRow).toHaveAttribute('aria-current', 'true')
   await page.keyboard.press('Escape')
   await expect(home).toBeHidden()

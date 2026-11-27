@@ -382,3 +382,12 @@ test('applies outer marks on close tag for nested marks', () => {
     }
   ] satisfies TextDoc)
 })
+
+test('plain text, stored before the field was rich text, is a paragraph', async () => {
+  const field = richText('Text')
+  const loader = {resolveTargets: async () => []} as unknown as LinkResolver
+  const doc = [{_type: 'paragraph', content: [{_type: 'text', text: 'Hi'}]}]
+  test.equal(await Field.queryValue(field, 'Hi' as any, loader), doc)
+  test.equal(Field.isEmpty(field, 'Hi'), false)
+  test.equal(Field.isEmpty(field, ''), true)
+})

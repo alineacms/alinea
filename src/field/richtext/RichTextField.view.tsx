@@ -2,7 +2,7 @@ import {Field} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
 import type {Schema} from '#/core/Schema.js'
-import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
+import {BlockNode, Node, type TextDoc, textDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {rootEditor} from '#/dashboard/atoms/editor.js'
@@ -143,7 +143,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     options.schema
   ])
   const content = useMemo(
-    () => editorContent(store.get(fieldNode.value), richTextImages),
+    () => editorContent(textDoc(store.get(fieldNode.value)), richTextImages),
     [fieldNode, richTextImages, store]
   )
 
@@ -221,9 +221,10 @@ export function RichTextFieldView<Blocks extends Schema>({
       return
     }
     const documentValue = store.get(fieldNode.value)
-    editor.commands.setContent(editorContent(documentValue, richTextImages), {
-      emitUpdate: false
-    })
+    editor.commands.setContent(
+      editorContent(textDoc(documentValue), richTextImages),
+      {emitUpdate: false}
+    )
     lastEditorDocument.current = documentKey
     pendingExternalDocument.current = undefined
   }, [documentKey, editor, fieldNode, resolveBlock, richTextImages, store])

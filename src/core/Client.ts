@@ -10,8 +10,17 @@ import {
   type BackendCapabilities,
   configFingerprintHeader,
   type DraftTransport,
+  type FormStatus,
+  type FormStatusRequest,
   type LocalConnection,
+  type PrepareUploadRequest,
+  type PrepareUploadResult,
   type Revision,
+  type SubmissionPage,
+  type SubmissionQuery,
+  type SubmissionStatus,
+  type SubmitRequest,
+  type SubmitResult,
   type UploadMetadata,
   type UploadResponse
 } from './Connection.js'
@@ -50,12 +59,13 @@ export interface ClientOptions {
 // the response has to arrive in time: a large blob download takes as long as
 // it needs. The handler answers reads within its own sync wait, while
 // mutations and uploads may take as long as they need.
-const readTimeout = 60_000
-const reads = new Set<HandleAction>([
-  HandleAction.Tree,
-  HandleAction.Sha,
-  HandleAction.Blob,
-  HandleAction.Resolve
+const readTimeouts = new Map<HandleAction, number>([
+  [HandleAction.Tree, 60_000],
+  [HandleAction.Sha, 60_000],
+  [HandleAction.Blob, 60_000],
+  [HandleAction.Resolve, 60_000],
+  // A page waits for the status of its form while it renders
+  [HandleAction.FormStatus, 10_000]
 ])
 
 interface OutdatedState {
@@ -214,6 +224,13 @@ export class Client implements LocalConnection {
     ).then<{sha: string}>(this.#failOnHttpError)
   }
 
+  submit(request: SubmitRequest): Promise<SubmitResult> {
+    return this.#requestJson(
+      {action: HandleAction.Submit},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<SubmitResult>(this.#failOnHttpError)
+  }
+
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client(
       {...this.#options, applyAuth, unauthorized},
@@ -222,6 +239,63 @@ export class Client implements LocalConnection {
   }
 
   // History
+  // Forms
+  submissions(
+    entryId: string,
+    query: SubmissionQuery = {}
+  ): Promise<SubmissionPage> {
+    return this.#requestJson({
+      action: HandleAction.Submissions,
+      entryId,
+      query: JSON.stringify(query)
+    }).then<SubmissionPage>(this.#failOnHttpError)
+  }
+
+  async updateSubmission(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'POST', body: JSON.stringify({status})}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async deleteSubmission(entryId: string, id: string): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'DELETE'}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async submissionFile(entryId: string, id: string): Promise<Blob> {
+    const response = await this.#request({
+      action: HandleAction.SubmissionFile,
+      entryId,
+      id
+    })
+    if (!response.ok) throw new Error(`Could not download the file`)
+    return response.blob()
+  }
+
+  formStatus(location: FormStatusRequest): Promise<FormStatus> {
+    return this.#requestJson({
+      action: HandleAction.FormStatus,
+      entryId: location.entryId,
+      ...(location.locale && {locale: location.locale})
+    }).then<FormStatus>(this.#failOnHttpError)
+  }
+
+  prepareFormUpload(
+    request: PrepareUploadRequest
+  ): Promise<PrepareUploadResult> {
+    return this.#requestJson(
+      {action: HandleAction.FormUpload},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<PrepareUploadResult>(this.#failOnHttpError)
+  }
+
   revisions(file: string): Promise<Array<Revision>> {
     return this.#requestJson({action: HandleAction.History, file}).then<
       Array<Revision>
@@ -318,11 +392,12 @@ export class Client implements LocalConnection {
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
-    const timer = reads.has(params.action)
+    const timeout = readTimeouts.get(params.action)
+    const timer = timeout
       ? setTimeout(() => {
-          const seconds = readTimeout / 1000
+          const seconds = timeout / 1000
           controller.abort(new Error(`No response within ${seconds}s`))
-        }, readTimeout)
+        }, timeout)
       : undefined
     const headers = new Headers(init.headers)
     if (configFingerprint)
@@ -363,6 +438,9 @@ export class Client implements LocalConnection {
           if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error
           else errorMessage = JSON.stringify(body, null, 2)
+        } else if (res.headers.get('content-type')?.includes('text/html')) {
+          // A page from in front of the handler, eg. a basic auth prompt
+          errorMessage = blockedMessage(url, res)
         } else {
           errorMessage = await res.text()
         }
@@ -408,4 +486,13 @@ export class Client implements LocalConnection {
     const text = await res.text()
     throw new HttpError(res.status, text || res.statusText)
   }
+}
+
+function blockedMessage(url: string, res: Response): string {
+  const status = `${res.status} ${res.statusText}`.trim()
+  const reason =
+    res.status === 401 || res.status === 403
+      ? ': is the site behind a password, eg. basic auth?'
+      : ''
+  return `${url} answered ${status} with a page instead of Alinea${reason}`
 }

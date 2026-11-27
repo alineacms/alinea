@@ -1,0 +1,138 @@
+import type {Entry} from '#/core/Entry.js'
+import {Field} from '#/core/Field.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {atom, useAtomValueRaw} from 'jotai'
+import {useContext, useMemo} from 'react'
+import {
+  type EntryContextValue,
+  entryContext,
+  useFieldInfo
+} from '../contexts.js'
+import {useLocale} from '../hooks.js'
+
+export interface MissingTranslation {
+  /** The other languages that filled the field in */
+  languages: ReadonlyArray<string>
+  /** What the first of them filled in, to show what is to be translated */
+  value?: unknown
+}
+
+const translatedField: MissingTranslation = {languages: []}
+
+/** The records of an entry with an id, eg. list rows and blocks, by id */
+const byIdCache = new WeakMap<object, Map<string, Record<string, unknown>>>()
+
+function recordsById(data: object): Map<string, Record<string, unknown>> {
+  const cached = byIdCache.get(data)
+  if (cached) return cached
+  const result = new Map<string, Record<string, unknown>>()
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) return value.forEach(visit)
+    if (!isRecord(value)) return
+    if (typeof value._id === 'string') result.set(value._id, value)
+    Object.values(value).forEach(visit)
+  }
+  visit(data)
+  byIdCache.set(data, result)
+  return result
+}
+
+const statusOrder = ['published', 'draft', 'archived']
+
+/** One version of the entry for each other language, published first */
+function otherLanguages(versions: Array<Entry>, locale: string): Array<Entry> {
+  const byLocale = new Map<string, Entry>()
+  const sorted = [...versions].sort(
+    (a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+  )
+  for (const version of sorted)
+    if (
+      version.locale &&
+      version.locale !== locale &&
+      !byLocale.has(version.locale)
+    )
+      byLocale.set(version.locale, version)
+  return [...byLocale.values()]
+}
+
+const noEntry = atom<{entries: Array<Entry>} | null>(null)
+const noId = atom(undefined)
+const translated = atom(false)
+
+/** The entry being edited in each other language, published first */
+export function useOtherVersions(): Array<Entry> {
+  const context = useContext(entryContext)
+  const locale = useLocale()
+  const data = useAtomValueRaw(context?.entry.data ?? noEntry)
+  return useMemo(
+    () => (data && locale ? otherLanguages(data.entries, locale) : []),
+    [data, locale]
+  )
+}
+
+/**
+ * The record with this id, eg. a list row, in the other languages of the
+ * entry being edited, to compare what each language filled in
+ */
+export function useOtherLanguages(
+  id: string | null
+): Array<{locale: string; record: Record<string, unknown>}> {
+  const context = useContext(entryContext)
+  const locale = useLocale()
+  const data = useAtomValueRaw(context?.entry.data ?? noEntry)
+  const untranslated = useAtomValueRaw(
+    context?.localeData.untranslated ?? translated
+  )
+  return useMemo(() => {
+    if (!data || !locale || !id || untranslated) return []
+    return otherLanguages(data.entries, locale).flatMap(version => {
+      const record = recordsById(version.data as object).get(id)
+      return record ? [{locale: version.locale!, record}] : []
+    })
+  }, [data, id, locale, untranslated])
+}
+
+/**
+ * The other languages of the entry that filled in a field the language
+ * being edited left empty, and what the first of them filled in. Fields of
+ * the entry are found by key, fields of list rows and blocks by the id of
+ * their row. Shared fields are the same in every language and are not
+ * compared.
+ */
+export function useMissingLanguages(
+  context: EntryContextValue,
+  field: Field,
+  shared: boolean
+): MissingTranslation {
+  const locale = useLocale()
+  const info = useFieldInfo(field)
+  const value = useAtomValueRaw(info.value)
+  const nested = Boolean(info.editor.parent)
+  // Only the id of the row, its other fields change as the editor types
+  const id = useAtomValueRaw(
+    useMemo(
+      () => (nested ? info.editor.node.field('_id') : noId),
+      [info.editor, nested]
+    )
+  )
+  const versions = useOtherVersions()
+  const untranslated = useAtomValueRaw(context.localeData.untranslated)
+  return useMemo(() => {
+    if (!locale || shared || untranslated) return translatedField
+    if (!Field.isEmpty(field, value)) return translatedField
+    const rowId = typeof id === 'string' ? id : null
+    // Fields of an object have no row id to find them by
+    if (nested && !rowId) return translatedField
+    const languages = Array<string>()
+    let first: unknown
+    for (const version of versions) {
+      const theirs = nested
+        ? recordsById(version.data as object).get(rowId!)
+        : (version.data as Record<string, unknown>)
+      const other = theirs?.[info.key]
+      if (!theirs || Field.isEmpty(field, other)) continue
+      if (languages.push(version.locale!) === 1) first = other
+    }
+    return languages.length > 0 ? {languages, value: first} : translatedField
+  }, [field, id, info, locale, nested, shared, untranslated, value, versions])
+}

@@ -1,0 +1,5 @@
+/* Shrinks to the room left in the header of the row, the whole text on hover */
+.FormRowBadges-error[data-slot='badge'] {
+  flex-shrink: 1;
+  min-width: 0;
+}

@@ -10,7 +10,7 @@ import {
   forwardedMutationHeader
 } from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
-import {fetch, Headers, Request, type Response} from '@alinea/iso'
+import {fetch, Headers, Request, Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import {generate} from '../Generate.js'
@@ -152,6 +152,17 @@ export async function createDevServer(
           db,
           forwardMutations(request) {
             return forwardMutation(request, cms, context.apiKey)
+          },
+          // The app answers forms with its own options and storage, so its
+          // whole flow runs during development
+          async forwardForms(request) {
+            return (
+              (await forwardToApp(request, cms, context.apiKey)) ??
+              new Response(
+                'Open the dashboard through your app to work with forms',
+                {status: 501}
+              )
+            )
           }
         })
         const nextServer = createLocalServer(
@@ -210,7 +221,19 @@ export async function forwardMutation(
 ): Promise<Response | undefined> {
   // The app ran its hooks and sent the mutation back to commit here.
   if (request.headers.has(forwardedMutationHeader)) return
-  const origin = forwardedRequestOrigin(request)
+  return forwardToApp(request, cms, apiKey)
+}
+
+/**
+ * Sends a request on to the handler of the app, which the dashboard reaches
+ * through the app. Undefined when the request did not come through it.
+ */
+async function forwardToApp(
+  request: Request,
+  cms: CMS,
+  apiKey: string
+): Promise<Response | undefined> {
+  const origin = appOrigin(request, cms)
   if (!origin) return
   const source = new URL(request.url)
   const target = forwardedHandlerUrl(
@@ -228,7 +251,17 @@ export async function forwardMutation(
     signal: request.signal,
     duplex: 'half'
   }
-  return fetch(new Request(target, init))
+  const response = await fetch(new Request(target, init))
+  // fetch decoded the body, but kept the headers of the encoded one, which
+  // browsers fail to decode again
+  const answer = new Headers(response.headers)
+  answer.delete('content-encoding')
+  answer.delete('content-length')
+  return new Response(response.body ?? undefined, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: answer
+  })
 }
 
 function forwardedHandlerUrl(
@@ -259,6 +292,27 @@ const hopByHopHeaders = [
 function firstHeaderValue(value: string | null): string | undefined {
   return value?.split(',')[0]?.trim() || undefined
 }
+
+/**
+ * Where the app is that a request came through. The forwarded host is not
+ * trusted: requests are sent on with the api key, also those of visitors
+ * that upload a file to a form.
+ */
+function appOrigin(request: Request, cms: CMS): string | undefined {
+  const forwarded = forwardedRequestOrigin(request)
+  if (!forwarded) return
+  const configured =
+    URL.parse(Config.handlerUrl(cms.config))?.origin ??
+    URL.parse(Config.baseUrl(cms.config, 'development') ?? '')?.origin
+  if (configured) return configured
+  // Without a baseUrl the app is taken to run on this machine
+  const {hostname} = new URL(forwarded)
+  return loopback.has(hostname) || hostname.endsWith('.localhost')
+    ? forwarded
+    : undefined
+}
+
+const loopback = new Set(['localhost', '127.0.0.1', '[::1]'])
 
 function forwardedRequestOrigin(request: Request): string | undefined {
   const host = firstHeaderValue(request.headers.get('x-forwarded-host'))

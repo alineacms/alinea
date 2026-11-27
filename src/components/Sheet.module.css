@@ -7,6 +7,7 @@
   background: var(--alinea-bg-muted);
   color: var(--alinea-fg);
   outline: none;
+  container: sheet / inline-size;
 }
 
 .SheetHeader {
@@ -16,12 +17,8 @@
   align-items: center;
   gap: 8px;
   height: 48px;
-  padding: 0 8px 0 10px;
+  padding: 0 8px 0 20px;
   border-bottom: 1px solid var(--alinea-border);
-}
-
-.SheetHeader-back[data-slot] {
-  --alinea-button-accent: var(--alinea-fg-muted);
 }
 
 .SheetTitle {
@@ -83,5 +80,33 @@
   /* Actions read like menu items, one per line */
   [data-slot='button'] {
     font-weight: 500;
+  }
+}
+
+/* At the narrow widths of a sidebar, like an inspector panel: less padding
+   around the fields, and their help on a line of its own in a smaller size */
+@container sheet (max-width: 360px) {
+  .SheetHeader {
+    padding-left: 12px;
+  }
+
+  .SheetSection {
+    gap: 12px;
+    padding: 14px 12px 16px;
+  }
+
+  /* Lines the icons of the actions up with the fields */
+  .SheetFooter {
+    padding-inline: 2px;
+  }
+
+  .SheetBody [data-slot='field-header'] {
+    row-gap: 2px;
+  }
+
+  .SheetBody [data-slot='field-description'] {
+    flex-basis: 100%;
+    font-size: 0.75rem;
+    line-height: 1.25;
   }
 }

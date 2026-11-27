@@ -23,6 +23,16 @@
   padding: 0;
 }
 
+.ListFieldRowSheet-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Below the settings, at the bottom when they are short */
+.ListFieldRowSheet-actions {
+  margin-top: auto;
+}
+
 .ListFieldRowSheet-anchor {
   display: flex;
   align-items: flex-end;
@@ -32,6 +42,46 @@
 .ListFieldRowSheet-anchor-field {
   flex: 1;
   min-width: 0;
+}
+
+.ListFieldCompactRow {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 2px;
+}
+
+.ListFieldCompactRow-fields {
+  position: relative;
+  min-width: 0;
+
+  &.is-suffix [data-slot='text-field-control'] {
+    padding-right: calc(var(--alinea-list-suffix, 0px) + 22px);
+  }
+}
+
+/* Laid over the end of the input, on the line of its text */
+.ListFieldCompactRow-suffix {
+  position: absolute;
+  top: 9px;
+  right: 11px;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  color: var(--alinea-fg-disabled);
+  pointer-events: none;
+
+  &.is-action {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  &:empty {
+    display: none;
+  }
 }
 
 .ListFieldTypeBadge[data-slot='badge'] {

@@ -29,6 +29,11 @@
     color: var(--alinea-primary-subtle-fg);
   }
 
+  &[data-color='destructive'] {
+    background: var(--alinea-danger-subtle);
+    color: var(--alinea-danger-subtle-fg);
+  }
+
   &[data-status='published'] {
     background: var(--alinea-status-published);
     color: var(--alinea-status-published-fg);

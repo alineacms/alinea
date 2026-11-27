@@ -37,7 +37,7 @@ dashboardMobileAtom.onMount = setMobile => {
 }
 
 export const navigationSidebarWidthAtom = atom(320)
-export const entrySidebarWidthAtom = atom(320)
+export const entrySidebarWidthAtom = atom(400)
 
 export type EntrySidebarTab = 'preview' | 'history' | 'references'
 

@@ -721,6 +721,65 @@ test('invalid fields are reported but do not block publishing', async () => {
   expect(published).toBe('')
 })
 
+test('a node being edited follows changes saved from elsewhere', async () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title'), tag: Field.text('Tag')}
+  })
+  const config = Config.create({schema: {Page}, workspaces: {}})
+  const selectedEntry: Entry = {
+    active: true,
+    childrenDir: '',
+    data: {title: 'Entry', tag: 'old'},
+    fileHash: '',
+    filePath: '',
+    id: 'entry-id',
+    index: 'a0',
+    level: 0,
+    locale: null,
+    main: true,
+    parentDir: '',
+    parentId: null,
+    parents: [],
+    path: 'entry',
+    root: 'pages',
+    rowHash: '',
+    searchableText: '',
+    seeded: null,
+    status: 'published',
+    title: 'Entry',
+    type: 'Page',
+    url: '/entry',
+    workspace: 'main'
+  }
+  const entryData = {
+    id: selectedEntry.id,
+    type: selectedEntry.type,
+    parentId: selectedEntry.parentId,
+    workspace: selectedEntry.workspace,
+    root: selectedEntry.root,
+    hasChildren: false,
+    parents: [],
+    entries: [selectedEntry]
+  }
+  const entryDataAtom = atom(entryData)
+  const entry = new EntryAtoms(selectedEntry.id, entryDataAtom)
+  const {store} = await createDashboardAtomFixture()
+  store.set(configAtom, config)
+  await store.get(userPolicyReadyAtom)
+  const locale = entry.locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  // An edit of the editor, then a save of another field from elsewhere
+  store.set(node.field('title'), 'Edited')
+  store.set(entryDataAtom, {
+    ...entryData,
+    entries: [{...selectedEntry, data: {title: 'Entry', tag: 'new'}}]
+  })
+  await store.set(locale.refreshEditing)
+  expect(await store.get(locale.selectedNode)).toBe(node)
+  expect(store.get(node.value)).toMatchObject({title: 'Edited', tag: 'new'})
+})
+
 test('history leaves out the current content, not the latest revision', async () => {
   const {parent, store} = await createDashboardAtomFixture()
   await store.get(userPolicyReadyAtom)

@@ -5,7 +5,13 @@ import type {ObjectField} from '#/field/object.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {memo} from 'react'
+import {type ReactNode, memo, useContext} from 'react'
+import {
+  FieldMissingIn,
+  FieldTranslationValue
+} from '#/components/internal/FieldTranslation.js'
+import {type EntryContextValue, entryContext} from '../contexts.js'
+import {useMissingLanguages} from './useMissingLanguages.js'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
 import {
   EditorScope,
@@ -131,6 +137,7 @@ export interface EditFieldProps {
  */
 export const EditField = memo(function EditField({field}: EditFieldProps) {
   const options = useFieldOptions(field) as FieldOptions<unknown>
+  const context = useContext(entryContext)
   const View = useFieldView(field)
   if (options.hidden || field instanceof HiddenField) return null
   if (!View) return <div>Missing view for field: {Field.label(field)}</div>
@@ -139,10 +146,47 @@ export const EditField = memo(function EditField({field}: EditFieldProps) {
       className={styles.EditField.slot()}
       style={{flexBasis: fieldWidth(options.width)}}
     >
-      <View field={field} />
+      {context ? (
+        <FieldTranslation
+          context={context}
+          field={field}
+          shared={Boolean(options.shared)}
+        >
+          <View field={field} />
+        </FieldTranslation>
+      ) : (
+        <View field={field} />
+      )}
     </div>
   )
 })
+
+interface FieldTranslationProps {
+  context: EntryContextValue
+  field: Field
+  shared: boolean
+  children: ReactNode
+}
+
+/**
+ * Tells the chrome of a field which other languages filled it in, and the
+ * field what they filled in
+ */
+function FieldTranslation({
+  context,
+  field,
+  shared,
+  children
+}: FieldTranslationProps) {
+  const {languages, value} = useMissingLanguages(context, field, shared)
+  return (
+    <FieldMissingIn.Provider value={languages}>
+      <FieldTranslationValue.Provider value={value}>
+        {children}
+      </FieldTranslationValue.Provider>
+    </FieldMissingIn.Provider>
+  )
+}
 
 export function fieldWidth(width = 1): string {
   const fraction = Math.max(0, Math.min(1, width))

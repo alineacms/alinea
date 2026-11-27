@@ -22,11 +22,6 @@
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-  /* A focused value is highlighted like a focused date segment */
-  &:has(.NumberFieldInput:focus:not([readonly])) {
-    background-color: var(--alinea-primary-subtle);
-  }
-
   &:has(.NumberFieldInput[aria-invalid='true']) {
     border-color: var(--alinea-danger);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-danger) 20%, transparent);
@@ -59,10 +54,6 @@
 
   &::placeholder {
     color: var(--alinea-fg-disabled);
-  }
-
-  &:focus:not([readonly]) {
-    color: var(--alinea-primary);
   }
 
   &[readonly] {

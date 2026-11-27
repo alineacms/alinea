@@ -1,4 +1,5 @@
 import {TextField as TextFieldInput} from '#/components.js'
+import {FieldTranslationValue} from '#/components/internal/FieldTranslation.js'
 import {
   useField,
   useFieldError,
@@ -7,7 +8,7 @@ import {
 } from '#/dashboard/hooks.js'
 import {TextField} from '#/field/text.js'
 import {useSetAtom} from 'jotai'
-import {memo} from 'react'
+import {memo, useContext} from 'react'
 
 export interface TextInputProps {
   field: TextField
@@ -21,6 +22,8 @@ export const TextFieldView = memo(function TextFieldView({
   const setFieldNode = useSetAtom(fieldNode.value)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
+  // An untranslated text shows what is to be translated
+  const translation = useContext(FieldTranslationValue)
   return (
     <TextFieldInput
       autoFocus={options.autoFocus}
@@ -37,7 +40,9 @@ export const TextFieldView = memo(function TextFieldView({
         setFieldNode(value)
       }}
       placeholder={
-        options.placeholder ?? (options.inline ? options.label : undefined)
+        (typeof translation === 'string' ? translation : undefined) ??
+        options.placeholder ??
+        (options.inline ? options.label : undefined)
       }
       type={options.type}
       startIcon={options.iconLeft}

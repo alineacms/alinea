@@ -1170,37 +1170,23 @@ function EntryLinkRowActions({
   const linkLocale =
     type === 'entry' ? (locale ?? scope?.localeData.requestedLocale) : undefined
   const href = `#${nav.entry(entry.workspace, entry.root, entry.id, linkLocale)}`
-  if (entry.file) {
-    const label = isImage(entry.file.extension ?? '')
+  const label = !entry.file
+    ? 'Edit entry'
+    : isImage(entry.file.extension ?? '')
       ? 'Edit image'
       : 'Edit file'
-    return (
-      <Button
-        aria-label={label}
-        variant="ghost"
-        size="sm"
-        icon={IcRoundEdit}
-        onClick={() => {
-          closeActions()
-          window.location.hash = href
-        }}
-      >
-        {label}
-      </Button>
-    )
-  }
   return (
     <Button
-      aria-label="Open link"
+      aria-label={label}
       variant="ghost"
       size="sm"
-      icon={IcRoundOpenInNew}
+      icon={IcRoundEdit}
       onClick={() => {
-        window.open(href, '_blank', 'noopener,noreferrer')
         closeActions()
+        window.location.hash = href
       }}
     >
-      Open link
+      {label}
     </Button>
   )
 }

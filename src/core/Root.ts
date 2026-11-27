@@ -91,6 +91,32 @@ export namespace Root {
     return getRoot(root).i18n?.locales[0]
   }
 
+  /**
+   * The versions of an entry in the other locales, in the order a text they
+   * are missing is taken from them: the `fallback` of the root, its default
+   * locale, then any other locale
+   */
+  export function fallbackOrder<Version extends {locale: string | null}>(
+    i18n: RootI18n | undefined,
+    locale: string,
+    versions: Array<Version>
+  ): Array<Version> {
+    const own = locale.toLowerCase()
+    const order = [
+      ...(i18n?.fallback?.(locale) ?? []),
+      ...(i18n?.locales ?? [])
+    ]
+      .map(name => name.toLowerCase())
+      .filter(name => name !== own)
+    const rank = (version: Version) => {
+      const index = order.indexOf(version.locale?.toLowerCase() ?? '')
+      return index < 0 ? order.length : index
+    }
+    return versions
+      .filter(version => version.locale && version.locale.toLowerCase() !== own)
+      .sort((a, b) => rank(a) - rank(b))
+  }
+
   /** The default order of children: `overview.sort`, or `orderChildrenBy` */
   export function childrenOrder(
     root: RootData

@@ -13,6 +13,15 @@ export async function createFileHash(data: Uint8Array) {
   return toHex(digest)
 }
 
+/** The SHA-256 of a text in hex */
+export async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(digest))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export async function createRowHash(entry: Omit<Entry, 'rowHash'>) {
   const encoder = new TextEncoder()
   const data = encoder.encode(

@@ -33,10 +33,7 @@ export function Example() {
       </Button>
       <div style={frameStyle}>
         {open && (
-          <SheetContent
-            backLabel="Back to preview"
-            onClose={() => setOpen(false)}
-          >
+          <SheetContent onClose={() => setOpen(false)}>
             <SheetHeader>
               <Badge icon={IcRoundPanorama} size="sm">
                 Hero

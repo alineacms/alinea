@@ -117,3 +117,26 @@ test('other conflicts of an outdated dashboard keep their error', () =>
       test.not.ok(error instanceof OutdatedDashboardError)
     }
   ))
+
+test('a page in front of the handler gets a short error', () =>
+  withHandler(
+    () =>
+      new Response('<!DOCTYPE html><title>Error 401</title>', {
+        status: 401,
+        headers: {'content-type': 'text/html'}
+      }),
+    async url => {
+      const client = new Client({config: cms.config, url})
+      let error: unknown
+      try {
+        await client.mutate([])
+      } catch (caught) {
+        error = caught
+      }
+      test.is(
+        (error as Error).message,
+        `${url} answered 401 Unauthorized with a page instead of Alinea: ` +
+          'is the site behind a password, eg. basic auth? @ POST action mutate'
+      )
+    }
+  ))

@@ -1,0 +1,310 @@
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ListFieldBase} from '#/core/field/ListField.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
+import type {Schema} from '#/core/Schema.js'
+import {type FieldGetter, track} from '#/core/Tracker.js'
+import {Type, type} from '#/core/Type.js'
+import {entries, fromEntries, keys} from '#/core/util/Objects.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {IcRoundCallSplit} from '#/dashboard/icons.js'
+import {check} from '#/field/check.js'
+import {number} from '#/field/number.js'
+import {path} from '#/field/path.js'
+import {richText} from '#/field/richtext.js'
+import {select} from '#/field/select.js'
+import {tab} from '#/field/tabs.js'
+import {text} from '#/field/text.js'
+import type {ReactNode} from 'react'
+import {
+  type FormDefinition,
+  type FormItem,
+  type FormRow,
+  fixedKeys,
+  formDefinition,
+  formErrors,
+  inLocale
+} from './FormDefinition.js'
+import type {FormCondition} from './FormConditions.js'
+import {readingOrder, ruleErrors} from './FormRules.js'
+import {fillForm, languageText, shareForm} from './FormShare.js'
+import {Input} from './FormInput.js'
+import {markForm} from './FormMark.js'
+
+/** Optional settings to configure a form field */
+export interface FormOptions<Inputs extends Record<string, Input>> extends Omit<
+  FieldOptions<Array<FormRow>>,
+  'initialValue' | 'validate'
+> {
+  /** The inputs editors can add, eg. `{...Form.defaults, rating: Rating}` */
+  inputs: Inputs
+  /** Width of the field in the dashboard UI (0-1) */
+  width?: number
+  /** Add instructional text to a field */
+  help?: ReactNode
+  /** Display a minimal version */
+  inline?: boolean
+}
+
+/** The options the dashboard sees, the inputs as the types of the rows */
+export interface FormFieldOptions<
+  Inputs extends Record<string, Input>
+> extends FormOptions<Inputs> {
+  schema: Schema
+}
+
+export class FormField<Type extends string = string> extends ListFieldBase<
+  FormRow,
+  FormItem<Type>,
+  FormFieldOptions<Record<Type, Input>>
+> {}
+
+/** Create a form builder: editors add, configure and order inputs */
+export function form<Inputs extends Record<string, Input>>(
+  label: string,
+  options: WithoutLabel<FormOptions<Inputs>>
+): FormField<Extract<keyof Inputs, string>> {
+  const {inputs} = options
+  const fields = entries(inputs as Record<string, Input>)
+  const inSection = fields.filter(([, input]) => input.control !== 'section')
+  const nested = fromEntries(
+    inSection.map(([key, input]) => [key, rowType(input)])
+  )
+  const schema = fromEntries(
+    fields.map(([key, input]) => [
+      key,
+      input.control === 'section'
+        ? sectionType(input, inputs, nested)
+        : nested[key]
+    ])
+  )
+  type Keys = Extract<keyof Inputs, string>
+  const field: FormField<Keys> = new FormField(schema, {
+    options: {label, ...options, schema},
+    view: viewKeys.FormInput,
+    nestedErrors(value, context) {
+      return [
+        ...formErrors(inputs, value, context.path, context.labels),
+        ...ruleErrors(readingOrder(inputs, value, context.path, context.labels))
+      ]
+    },
+    // A shared form shares its structure, each language keeps its texts
+    ...(options.shared && {
+      share: (source: Array<FormRow>, target: Array<FormRow> | undefined) =>
+        shareForm(inputs, source, target) as Array<FormRow>
+    }),
+    // Publishing a draft does not save it again, so keys are fixed whenever
+    // the form is saved
+    beforeSave({value}) {
+      return fixedKeys(inputs, value) as Array<FormRow>
+    },
+    async queryValue(value, loader) {
+      // Texts a language has not translated yet show in another language
+      const rows = options.shared
+        ? fillForm(inputs, value, await loader.translations(field))
+        : value
+      // The site renders it in this language without having to say so
+      return inLocale(
+        formDefinition(inputs, rows),
+        loader.locale
+      ) as FormDefinition<any>
+    }
+  })
+  return markForm(field)
+}
+
+/** The form field of a type and its key, an entry holds one form */
+export function formOf(
+  type: Type | undefined
+): {key: string; field: FormField} | undefined {
+  if (!type) return undefined
+  for (const [key, field] of entries(Type.fields(type)))
+    if (field instanceof FormField) return {key, field}
+  return undefined
+}
+
+/** Inputs with one answer that can be compared, not files or checks */
+function canBeUnique(input: Input): boolean {
+  const kind = Input.kind(input)
+  return kind === 'text' || kind === 'choice'
+}
+
+const types = new WeakMap<Input, Type>()
+
+/** Inputs are the same type in every form and section they are used in */
+function rowType(input: Input): Type {
+  let result = types.get(input)
+  if (!result) types.set(input, (result = createRowType(input)))
+  return result
+}
+
+/** Marks the fields of an input that are texts of each language */
+function markTexts(input: Input) {
+  const own = {...input.fields, ...input.settings} as Record<string, unknown>
+  for (const key of input.strings ?? []) {
+    const field = own[key]
+    if (field) languageText(field as Parameters<typeof languageText>[0])
+  }
+}
+
+function createRowType(input: Input): Type {
+  markTexts(input)
+  if (input.control === 'content') return contentType(input)
+  const settings = input.settings ?? {}
+  return type(input.label, {
+    icon: input.icon,
+    fields: input.fields ?? {},
+    tabs: {
+      input: tab('Input', {
+        fields: {
+          label: languageText(
+            text('Label', {
+              required: true,
+              help:
+                input.control === 'check'
+                  ? 'Used as the column in submissions and in mails. Visitors see the text next to the checkbox.'
+                  : undefined
+            })
+          ),
+          key: path('Key', {
+            from: 'label',
+            help: 'Used in exports and in the data sent to your site'
+          }),
+          help: languageText(richText('Help text')),
+          required: check('Required', {description: 'Must be filled in'}),
+          ...(canBeUnique(input) && {
+            unique: check('Unique', {
+              description:
+                'Each answer can be sent once, eg. one sign-up per email address'
+            })
+          }),
+          width: select('Width', {
+            options: {full: 'Full', half: 'Half'},
+            initialValue: 'full'
+          })
+        }
+      }),
+      ...(keys(settings).length > 0 && {
+        settings: tab(input.label, {fields: settings})
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {
+          showWhen: condition('Show this input', 'show'),
+          disableWhen: condition('Disable this input', 'disable'),
+          requireWhen: condition('Require this input', 'require')
+        }
+      })
+    }
+  })
+}
+
+/**
+ * Content between the inputs: its fields, a name for editors, its settings
+ * and when it shows
+ */
+function contentType(input: Input): Type {
+  const settings = input.settings ?? {}
+  return type(input.label, {
+    icon: input.icon,
+    fields: input.fields ?? {},
+    tabs: {
+      input: tab(input.label, {
+        fields: {
+          label: languageText(
+            text('Name', {
+              help: 'Only shown in the form builder, eg. Privacy notice'
+            })
+          ),
+          ...settings
+        }
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {showWhen: condition('Show this text', 'show')}
+      })
+    }
+  })
+}
+
+export interface FormConditionOptions extends FieldOptions<FormCondition | null> {
+  /** Whether the rules show, disable or require an input, or send a mail */
+  effect: 'show' | 'disable' | 'require' | 'send'
+}
+
+/** The rules of an input or section, edited in its Logic tab */
+export function condition(
+  label: string,
+  effect: FormConditionOptions['effect']
+): ScalarField<FormCondition | null, FormConditionOptions> {
+  return new ScalarField<FormCondition | null, FormConditionOptions>({
+    options: {label, effect, initialValue: null},
+    view: viewKeys.FormConditionInput
+  })
+}
+
+function sectionType(
+  input: Input,
+  inputs: Record<string, Input>,
+  nested: Schema
+): Type {
+  const inSection = fromEntries(
+    entries(inputs).filter(([key]) => key in nested)
+  )
+  const repeat = check('Repeatable', {
+    description: 'Visitors can add this section more than once'
+  })
+  // The other settings of a repeatable section show once it repeats
+  const hidden = (get: FieldGetter) => ({hidden: get(repeat) !== true})
+  return type(input.label, {
+    icon: input.icon,
+    fields: {
+      // Validated and turned into a definition by the form field
+      inputs: new FormField(nested, {
+        // Without a label the rows show without a fold above them
+        options: {
+          label: '',
+          inputs: inSection,
+          schema: nested
+        },
+        view: viewKeys.FormInput
+      })
+    },
+    tabs: {
+      input: tab('Section', {
+        fields: {
+          label: languageText(text('Title', {required: true})),
+          help: languageText(richText('Description')),
+          repeat,
+          key: track.options(
+            path('Key', {
+              from: 'label',
+              help: 'The answers are a list under this key'
+            }),
+            hidden
+          ),
+          min: track.options(
+            number('Fewest items', {
+              initialValue: 1,
+              minValue: 0,
+              width: 0.5,
+              help: 'Shown when the form opens'
+            }),
+            hidden
+          ),
+          max: track.options(
+            number('Most items', {minValue: 1, width: 0.5}),
+            hidden
+          ),
+          add: track.options(
+            languageText(text('Add button', {help: 'Eg. Add a participant'})),
+            hidden
+          )
+        }
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {showWhen: condition('Show this section', 'show')}
+      })
+    }
+  })
+}

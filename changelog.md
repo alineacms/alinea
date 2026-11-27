@@ -2,11 +2,104 @@
 
 ## [Unreleased]
 
+### Upgrading
+
+- Visitors upload the files of form file inputs to the handler with `PUT`
+  requests. Add `export const PUT = handler` next to `GET` and `POST` in the
+  route of `createHandler`, eg. `app/(alinea)/api/cms/route.ts`: routes made
+  before only export those two and refuse the uploads. Export
+  `OPTIONS = handler` as well: browsers ask before they upload to the
+  `baseUrl` of your config from another address, eg. `www.` or a preview
+  deployment, and Next.js answers that itself without allowing it. A file
+  that could not be uploaded shows an error under its input in the language
+  of the form, and the console of the browser tells why.
+- The help texts of form inputs and the descriptions of sections are rich
+  text, so they can include links. In a form definition `help` is a `TextDoc`,
+  render it with `RichText`. Help saved as plain text reads as paragraphs.
+- A check has a rich text shown next to its checkbox, eg. with a link to your
+  terms, in `settings.text` of the definition. Its label still names the
+  answer in submissions and mails, and shows when there is no text.
+- `forms.limits` of `createHandler`, the rate limits of forms, is renamed
+  `forms.rateLimit`, and its type `FormLimits` is `FormRateLimit`. The fields
+  of `Form.limits()` keep their name.
+- An entry holds one form: a type with more than one `Field.form` is a config
+  error, and the `field` option of `cms.forms.submit`, `prepareUpload` and
+  `status` is removed. Keep submissions and Maximum submissions are read from
+  the fields made with `Form.keep()` and `Form.limits()` only, under any key,
+  not from other fields named `keep` or `limit`.
+- A type in the accepted files of a file input, eg. `image/*`, is matched by
+  the extension of the file name instead of the type the browser declares,
+  and files are kept and attached to mails with the type of their extension.
+- A site that does not pass a `locale` to `cms.forms.submit` gets the form of
+  the default locale of the root, and the page a form goes to after sending
+  is the one in the language of the form.
+- Custom stores of submissions: `storeSubmission` takes the answers to unique
+  inputs as `unique` and returns the keys of those sent before, storing
+  nothing then. `recentActivity` takes the kind, `submissions` or `files`,
+  and returns the count of the form and of the visitor, and `attachFormFiles`
+  returns the ids it attached.
+
+### New
+
+- `cms.forms.submit` takes `messages`, for the messages it makes before the
+  answers reach the handler, eg. when `verify` fails.
+- Answers taken for spam are logged with the reason, and in development the
+  form shows it instead of the confirmation bots see.
+- `<Form placeholderLabels>` shows the labels of text inputs, text areas and
+  selects as their placeholder, out of sight for people but not for screen
+  readers.
+- `<Form>` tests rules on the language against the language its definition
+  was queried in, so the site no longer passes `locale` for them. The
+  `locale` prop still overrides it.
+- An editor whose role is limited to some languages of a form entry sees and
+  changes the submissions sent in those.
+
+- Form mails have a CC field, passed to the `mailer` as `cc`, and their body
+  can insert every answer with `{{all answers}}`. The dashboard shows an error
+  for a `{{key}}` the form does not have, in the subject or body of any
+  language.
+- The body of form mails is rich text and is sent as `html` next to `text`:
+  `{{all answers}}` is a table of labels and answers and answers are escaped.
+  A site with its own design wraps `content`, the body as an html fragment,
+  eg. `mailer: mail => resend.emails.send({from, ...mail, html:
+  brand(mail.content)})`. Bodies written as plain text read as paragraphs.
+- Form mails can link to the submission in the dashboard with
+  `{{submission link}}`, which opens it in the Submissions tab of the form,
+  also `href({entryId, submission})`, and attach the uploaded files with Attach uploaded files, passed to the
+  `mailer` as `attachments` with their content as base64. A checked check
+  and the text of the link are in the language of the form, `checked` and
+  `viewSubmission` of `forms.messages`.
+
+### New
+
+- The errors and messages forms show visitors are in the language of the form,
+  with texts in English, Dutch, French and German. Replace texts or add a
+  language with `forms.messages` in `createHandler`, eg.
+  `{nl: {tooLong: ({max}) => ...}}`. Results that did not pass have the
+  `codes` of their errors next to the `errors`, `validate` of an input can
+  return a message by its code and `Form.validate` takes a `locale`. The
+  `locale` of the form is passed to `validate` as a third argument,
+  `{locale}`, so messages of your own can be in the language of the visitor.
+
+- `Form.type` takes `seo` and `details` like `Config.document`, for forms that
+  are pages of their own: they get the SEO tab with metadata and previews, the
+  Details tab, and ask for a redirect when they are moved or archived.
+
 ### Fixes
 
 - The dashboard checks the session again when the handler refuses a request,
   instead of stopping with "atom not writable", and then shows why it was
   refused.
+- `cms.forms.status` answers open while Next.js builds pages, instead of
+  asking the handler of the deployed site, which a build may not reach. Once
+  the site runs it gives up on the handler after 10 seconds, so a page that
+  shows a form does not wait on it. The handler checks the limit of a form
+  again when it is sent.
+- When a page answers instead of the handler, eg. the password prompt of basic
+  auth in front of a staging site, the error names the url and the status
+  instead of holding the html of that page.
+- The settings of a link to an entry have Edit entry, which opens the entry
+  in the dashboard, instead of opening it in another tab.
 
 ## [2.0.3] - 2026-11-27
 

@@ -9,6 +9,10 @@ export const Docs = Config.document('Docs', {
     navigationTitle: Field.text('Title in navigation', {
       searchable: true
     }),
+    navigationOnly: Field.check('Heading only', {
+      description:
+        'A heading of the navigation without a page, its pages are listed below it'
+    }),
     body: bodyField()
   }
 })
