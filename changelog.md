@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixes
+
+- The dashboard checks the session again when the handler refuses a request,
+  instead of stopping with "atom not writable", and then shows why it was
+  refused.
+
 ## [2.0.3] - 2026-11-27
 
 ### New
