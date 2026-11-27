@@ -136,8 +136,7 @@ test('a page in front of the handler gets a short error', () =>
       test.is(
         (error as Error).message,
         `${url} answered 401 Unauthorized with a page instead of Alinea: ` +
-          'is the site behind a password, eg. basic auth? Let requests to ' +
-          `${url} through @ POST action mutate`
+          'is the site behind a password, eg. basic auth? @ POST action mutate'
       )
     }
   ))

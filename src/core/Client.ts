@@ -490,8 +490,7 @@ function blockedMessage(url: string, res: Response): string {
   const status = `${res.status} ${res.statusText}`.trim()
   const reason =
     res.status === 401 || res.status === 403
-      ? ': is the site behind a password, eg. basic auth? Let requests to ' +
-        `${url} through`
+      ? ': is the site behind a password, eg. basic auth?'
       : ''
   return `${url} answered ${status} with a page instead of Alinea${reason}`
 }

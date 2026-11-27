@@ -88,8 +88,8 @@
 ### Fixes
 
 - When a page answers instead of the handler, eg. the password prompt of basic
-  auth in front of a staging site, the error names the url and asks to let
-  requests to it through, instead of holding the html of that page.
+  auth in front of a staging site, the error names the url and the status
+  instead of holding the html of that page.
 - The settings of a link to an entry have Edit entry, which opens the entry
   in the dashboard, instead of opening it in another tab.
 
