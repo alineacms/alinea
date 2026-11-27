@@ -34,22 +34,11 @@ export type Document = {
 export type DocumentConfig<Fields, Seo, Details, Tabs = {}> = (
   | TypeConfig<Fields>
   | ContainerTypeConfig<Fields>
-) & {
-  /** Tabs after the Details tab, eg. an Analytics tab with a view */
-  tabs?: Tabs
-  /** Fields shown in the SEO tab, above the previews */
-  seo?: Seo
-  /** Fields shown in the Details tab, above the created and updated details */
-  details?: Details
-}
-
-function documentFields() {
-  return {
-    title: text('Title', {required: true, width: 0.5}),
-    path: createPath('Path', {required: true, width: 0.5}),
-    metadata: createMetadata('Metadata', {sections: true})
+) &
+  PageTabsConfig<Seo, Details> & {
+    /** Tabs after the Details tab, eg. an Analytics tab with a view */
+    tabs?: Tabs
   }
-}
 
 export function document<
   Fields extends FieldsDefinition = {},
@@ -66,20 +55,14 @@ export function document<
     ...config
   }: DocumentConfig<Fields, Seo, Details, Tabs>
 ): Type<Document & Fields & Seo & Details & TabFields<Tabs>> {
-  const {title, path, metadata} = documentFields()
+  const title = text('Title', {required: true, width: 0.5})
+  const path = createPath('Path', {required: true, width: 0.5})
   // Fields may replace the title and path; the other tabs add fields.
-  const taken = new Set([
-    ...keys({title, path, metadata}),
-    ...fieldNames(fields)
-  ])
-  for (const name of [
-    ...fieldNames(seo),
-    ...fieldNames(details),
-    ...values(extraTabs).flatMap(tab => keys(Type.fields(tab)))
-  ]) {
-    if (taken.has(name)) throw new Error(`Field "${name}" is defined twice`)
-    taken.add(name)
-  }
+  const page = pageTabs(
+    {seo, details},
+    {title, path, ...fields},
+    ...values(extraTabs)
+  )
   const fieldsWithMeta: Document & Fields & Seo & Details & TabFields<Tabs> = <
     any
   >tabs(
@@ -87,22 +70,56 @@ export function document<
       icon: IcRoundDescription,
       fields: {title, path, ...fields}
     }),
-    tab('SEO', {
-      icon: IcRoundBolt,
-      fields: {metadata, ...seo, ...metadataPreviews()}
-    }),
-    tab('Details', {
-      icon: IcRoundInfo,
-      fields: {...details, ...metadataDetails(metadata)}
-    }),
+    page.seo,
+    page.details,
     // Custom tabs, eg. an Analytics tab with a view
     ...values(extraTabs)
   )
-  const result = type(label, {
-    ...config,
-    fields: fieldsWithMeta
-  })
-  return Object.assign(result, {[documentMarker]: true})
+  return asDocument(type(label, {...config, fields: fieldsWithMeta}))
+}
+
+export interface PageTabsConfig<Seo, Details> {
+  /** Fields shown in the SEO tab, above the previews */
+  seo?: Seo
+  /** Fields shown in the Details tab, above the created and updated details */
+  details?: Details
+}
+
+/**
+ * The SEO and Details tabs of an entry that is a page: its metadata with
+ * previews, and when it was created and updated. Throws when a field of them
+ * is named like one of `fields` or `others`.
+ */
+export function pageTabs(
+  {seo = {}, details = {}}: PageTabsConfig<FieldsDefinition, FieldsDefinition>,
+  fields: FieldsDefinition,
+  ...others: Array<Type>
+): {seo: Type; details: Type} {
+  const metadata = createMetadata('Metadata', {sections: true})
+  const taken = new Set(['metadata', ...fieldNames(fields)])
+  for (const name of [
+    ...fieldNames(seo),
+    ...fieldNames(details),
+    ...others.flatMap(tab => keys(Type.fields(tab)))
+  ]) {
+    if (taken.has(name)) throw new Error(`Field "${name}" is defined twice`)
+    taken.add(name)
+  }
+  return {
+    seo: tab('SEO', {
+      icon: IcRoundBolt,
+      fields: {metadata, ...seo, ...metadataPreviews()}
+    }),
+    details: tab('Details', {
+      icon: IcRoundInfo,
+      fields: {...details, ...metadataDetails(metadata)}
+    })
+  }
+}
+
+/** Mark `type` as a page, so moving or archiving it asks for a redirect */
+export function asDocument<T extends Type>(type: T): T {
+  return Object.assign(type, {[documentMarker]: true})
 }
 
 /** Whether `type` was created with `Config.document` */

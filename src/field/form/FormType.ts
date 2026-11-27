@@ -1,3 +1,4 @@
+import {type PageTabsConfig, asDocument, pageTabs} from '#/core/Document.js'
 import {track} from '#/core/Tracker.js'
 import {
   type FieldsDefinition,
@@ -17,6 +18,7 @@ import {
   IcRoundSend
 } from '#/dashboard/icons.js'
 import {check} from '#/field/check.js'
+import type {MetadataField} from '#/field/metadata.js'
 import {entry} from '#/field/link/EntryLink.js'
 import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
@@ -42,16 +44,18 @@ import {languageText, mailTexts, shareRows} from './FormShare.js'
 export interface FormTypeConfig<
   Inputs extends Record<string, Input>,
   Fields extends FieldsDefinition,
-  Tabs extends Record<string, Type> = {}
-> extends Omit<TypeConfig<Fields>, 'fields' | 'tabs'> {
+  Tabs extends Record<string, Type> = {},
+  Seo extends FieldsDefinition | undefined = undefined,
+  Details extends FieldsDefinition | undefined = undefined
+>
+  extends
+    Omit<TypeConfig<Fields>, 'fields' | 'tabs'>,
+    PageTabsConfig<Seo, Details> {
   /** The inputs editors can add, eg. `{...Form.defaults, rating: Rating}` */
   inputs: Inputs
   /** Fields of the form entry next to its inputs, eg. an intro */
   fields?: Fields
-  /**
-   * Tabs after the Form tab, eg. a Page tab when forms are pages of their
-   * own, made with `Field.tab`
-   */
+  /** Tabs after the Form tab, eg. blocks shown below the form on its page */
   tabs?: Tabs
   /**
    * Every language of the form asks the same: its inputs, keys, settings,
@@ -73,6 +77,11 @@ export interface FormTypeFields<Type extends string> {
   limit: ReturnType<typeof limitFields>['limit']
   full: ReturnType<typeof limitFields>['full']
 }
+
+/** The metadata of a form that is a page, made with `seo` or `details` */
+export type FormPageFields<Seo, Details> = [Seo | Details] extends [undefined]
+  ? {}
+  : {metadata: MetadataField} & NonNullable<Seo> & NonNullable<Details>
 
 const formTypes = new WeakSet<Type>()
 
@@ -338,12 +347,16 @@ function afterSending() {
 /**
  * A type for form entries: their inputs in a Form tab, the answers visitors
  * sent in a Submissions tab and what happens after sending in Notifications.
- * Keep form entries in a root of their own and link pages to them.
+ * Keep form entries in a root of their own and link pages to them. With
+ * `seo` or `details` a form is a page of its own, with the SEO and Details
+ * tabs of `Config.document`.
  */
 export function formType<
   Inputs extends Record<string, Input>,
   Fields extends FieldsDefinition = {},
-  Tabs extends Record<string, Type> = {}
+  Tabs extends Record<string, Type> = {},
+  Seo extends FieldsDefinition | undefined = undefined,
+  Details extends FieldsDefinition | undefined = undefined
 >(
   label: string,
   {
@@ -351,28 +364,36 @@ export function formType<
     fields,
     tabs: extraTabs = {} as Tabs,
     shared,
+    seo,
+    details,
     ...config
-  }: FormTypeConfig<Inputs, Fields, Tabs>
+  }: FormTypeConfig<Inputs, Fields, Tabs, Seo, Details>
 ): Type<
-  FormTypeFields<Extract<keyof Inputs, string>> & Fields & TabFields<Tabs>
+  FormTypeFields<Extract<keyof Inputs, string>> &
+    Fields &
+    TabFields<Tabs> &
+    FormPageFields<Seo, Details>
 > {
   const after = afterSending()
   const inputsField = form('Inputs', {inputs, shared})
+  const formFields = {
+    title: text('Title', {required: true, width: 0.5}),
+    path: path('Path', {required: true, width: 0.5}),
+    ...fields,
+    inputs: inputsField
+  }
+  const page =
+    seo || details
+      ? pageTabs({seo, details}, formFields, ...values(extraTabs))
+      : undefined
   const result = type(label, {
     icon: IcRoundRule,
     ...config,
     // Tabs are a section, typed by the fields they hold
     fields: <any>tabs(
-      tab('Form', {
-        icon: IcRoundEdit,
-        fields: {
-          title: text('Title', {required: true, width: 0.5}),
-          path: path('Path', {required: true, width: 0.5}),
-          ...fields,
-          inputs: inputsField
-        }
-      }),
+      tab('Form', {icon: IcRoundEdit, fields: formFields}),
       ...values(extraTabs),
+      ...(page ? [page.seo] : []),
       submissionsTab(),
       tab('Notifications', {
         icon: IcRoundSend,
@@ -393,9 +414,10 @@ export function formType<
           keep: keepFor(),
           ...limitFields()
         }
-      })
+      }),
+      ...(page ? [page.details] : [])
     )
   })
   formTypes.add(result)
-  return result as any
+  return (page ? asDocument(result) : result) as any
 }

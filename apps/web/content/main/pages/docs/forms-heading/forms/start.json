@@ -163,6 +163,24 @@
       "content": [
         {
           "_type": "text",
+          "text": "When a form is a page of its own, with its own url, pass `seo` and `details` as you would to `Config.document`. The form then has an SEO tab with its metadata and previews before Submissions, and a Details tab with when it was created and updated at the end. Moving or archiving it asks where its url should redirect to, like a page:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "Rq7vKe2mWn5xTb9LpHc3s",
+      "code": "import {Form} from 'alinea'\n\nexport const FormEntry = Form.type('Form', {\n  inputs: Form.defaults,\n  entryUrl: ({path}) => `/form/${path}`,\n  seo: {},\n  details: {}\n})",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
           "text": "Keep form entries in a root of their own, so editors find them in one place and pages can link to them:"
         }
       ]

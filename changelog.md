@@ -81,6 +81,10 @@
   `locale` of the form is passed to `validate` as a third argument,
   `{locale}`, so messages of your own can be in the language of the visitor.
 
+- `Form.type` takes `seo` and `details` like `Config.document`, for forms that
+  are pages of their own: they get the SEO tab with metadata and previews, the
+  Details tab, and ask for a redirect when they are moved or archived.
+
 ### Fixes
 
 - The settings of a link to an entry have Edit entry, which opens the entry

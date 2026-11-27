@@ -1,5 +1,6 @@
 import {createCMS} from '#/core.js'
 import {Config, Field, Form} from '#/index.js'
+import {isDocument} from '#/core/Document.js'
 import {Type} from '#/core/Type.js'
 import {expect, test} from 'bun:test'
 
@@ -14,6 +15,19 @@ test('form types take tabs of their own after the Form tab', () => {
   expect(fields).toContain('intro')
   expect(fields.indexOf('intro')).toBeGreaterThan(fields.indexOf('inputs'))
   expect(fields.indexOf('intro')).toBeLessThan(fields.indexOf('mails'))
+})
+
+test('a form with seo is a page with the tabs of a document', () => {
+  const FormPage = Form.type('Form page', {
+    inputs: Form.defaults,
+    seo: {},
+    details: {owner: Field.text('Owner')}
+  })
+  const fields = Object.keys(Type.fields(FormPage))
+  expect(isDocument(FormPage)).toBe(true)
+  expect(fields.indexOf('metadata')).toBeLessThan(fields.indexOf('mails'))
+  expect(fields.indexOf('owner')).toBeGreaterThan(fields.indexOf('full'))
+  expect(isDocument(Form.type('Form', {inputs: Form.defaults}))).toBe(false)
 })
 
 test('an entry holds one form', () => {
