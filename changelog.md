@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [2.0.3] - 2026-11-27
 
-### Features
+### New
 
 - `Field.number` takes `formatOptions`, which set how the value is shown and
   parsed, eg. `{maximumFractionDigits: 6}` with `step: 0.000001` for a
