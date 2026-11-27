@@ -78,6 +78,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`formatOptions`: [`Intl.NumberFormat` options](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#options) for how the value is shown and parsed, eg. a currency, a unit or a percentage. Grouping is off unless you turn it on."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`placeholder`: text shown while the field is empty."
                 }
               ]
@@ -168,6 +182,28 @@
       "_type": "ExampleBlock",
       "_id": "FTmS0mD2qcabtj5xwOI9D",
       "code": "import {Field} from 'alinea'\n\nexport default Field.number('Price', {\n  help: 'The buttons change the value by 0.01',\n  initialValue: 9.99,\n  minValue: 0,\n  step: 0.01\n})"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The number is shown with at most 3 decimals unless you change `formatOptions`. A latitude or longitude needs 6:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "Lq8mWc2pXvN4tRb7HsJ1d",
+      "code": "import {Field} from 'alinea'\n\nField.number('Latitude', {\n  minValue: -90,\n  maxValue: 90,\n  step: 0.000001,\n  formatOptions: {maximumFractionDigits: 6}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "Zk3nYf8aQe5uBw2GtPx6r",
+      "code": "import {Field} from 'alinea'\n\nexport default Field.number('Latitude', {\n  initialValue: 51.054342,\n  minValue: -90,\n  maxValue: 90,\n  step: 0.000001,\n  formatOptions: {maximumFractionDigits: 6}\n})"
     }
   ],
   "metadata": {

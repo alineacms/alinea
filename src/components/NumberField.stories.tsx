@@ -50,6 +50,18 @@ export function Formatted() {
   )
 }
 
+export function Coordinate() {
+  return (
+    <NumberField
+      label="Latitude"
+      min={-90}
+      max={90}
+      step={0.000001}
+      formatOptions={{maximumFractionDigits: 6}}
+    />
+  )
+}
+
 export function States() {
   return (
     <div style={column}>
